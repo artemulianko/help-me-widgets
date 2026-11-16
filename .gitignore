@@ -13,3 +13,4 @@ keystore/
 # Secrets (never commit)
 .env
 releases/
+.DS_Store
