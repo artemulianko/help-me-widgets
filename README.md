@@ -12,7 +12,7 @@ The stock Pixel weather options are a one-line At a Glance and a widget you can 
 
 ## Download
 
-**[⬇ Download Nimbus Weather 0.1.0 (APK)](https://github.com/artemulianko/help-me-weather/raw/main/releases/nimbus-weather-0.1.0.apk)** · Android 12+ · 4.3 MB · [release notes](releases/0.1.0.md)
+**[⬇ Download Nimbus Weather 0.1.0 (APK)](https://github.com/artemulianko/help-me-weather/releases/download/v0.1.0/nimbus-weather-0.1.0.apk)** · Android 12+ · 4.3 MB · [release notes](https://github.com/artemulianko/help-me-weather/releases/tag/v0.1.0)
 
 SHA-256 `c81bf47a1524fb563842c42effb92b9a2c1c4751e3847430398269cad3c2b875`
 
