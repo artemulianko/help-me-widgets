@@ -76,7 +76,7 @@ private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val w:
     val cfg get() = s.cfg
     val bold get() = cfg.style == WidgetStyle.BOLD
     private val symbols get() = cfg.iconStyle == IconStyle.SYMBOLS
-    private val tone get() = when (cfg.themeMode) {
+    private val tone get() = c.iconTone ?: when (cfg.themeMode) {
         ThemeMode.SYSTEM -> IconTone.AUTO
         ThemeMode.LIGHT -> IconTone.LIGHT
         ThemeMode.DARK -> IconTone.DARK

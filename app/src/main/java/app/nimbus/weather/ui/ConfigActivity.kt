@@ -169,21 +169,28 @@ fun WidgetEditor(initial: WidgetConfig, app: AppSettings, store: Store, onClose:
                 }
 
                 SettingsGroup("Appearance") {
-                    customRow {
-                        Text("Colors", modifier = Modifier.padding(bottom = 8.dp))
-                        PaletteSwatches(cfg.palette) { cfg = cfg.copy(palette = it) }
-                    }
-                    choiceRow("Theme", listOf(ThemeMode.SYSTEM to "Auto", ThemeMode.LIGHT to "Light", ThemeMode.DARK to "Dark"), cfg.themeMode, "theme") { cfg = cfg.copy(themeMode = it) }
-                    choiceRow("Background", listOf(BgTone.SURFACE to "Neutral", BgTone.SECONDARY to "Tonal", BgTone.PRIMARY to "Vibrant"), cfg.bgTone, "bg") { cfg = cfg.copy(bgTone = it) }
-                    customRow {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Background opacity", modifier = Modifier.weight(1f))
-                            Text("${cfg.opacity}%", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    switchRow(
+                        "Match At a Glance", cfg.matchGlance,
+                        "Same high-contrast backdrop and text as Pixel’s At a Glance. Follows your wallpaper.",
+                        tag = "sw_glance",
+                    ) { cfg = cfg.copy(matchGlance = it) }
+                    if (!cfg.matchGlance) {
+                        customRow {
+                            Text("Colors", modifier = Modifier.padding(bottom = 8.dp))
+                            PaletteSwatches(cfg.palette) { cfg = cfg.copy(palette = it) }
                         }
-                        Slider(
-                            value = cfg.opacity.toFloat(), onValueChange = { cfg = cfg.copy(opacity = (it / 10f).toInt() * 10) },
-                            valueRange = 0f..100f, steps = 9, modifier = Modifier.testTag("opacity"),
-                        )
+                        choiceRow("Theme", listOf(ThemeMode.SYSTEM to "Auto", ThemeMode.LIGHT to "Light", ThemeMode.DARK to "Dark"), cfg.themeMode, "theme") { cfg = cfg.copy(themeMode = it) }
+                        choiceRow("Background", listOf(BgTone.SURFACE to "Neutral", BgTone.SECONDARY to "Tonal", BgTone.PRIMARY to "Vibrant"), cfg.bgTone, "bg") { cfg = cfg.copy(bgTone = it) }
+                        customRow {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Background opacity", modifier = Modifier.weight(1f))
+                                Text("${cfg.opacity}%", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                            }
+                            Slider(
+                                value = cfg.opacity.toFloat(), onValueChange = { cfg = cfg.copy(opacity = (it / 10f).toInt() * 10) },
+                                valueRange = 0f..100f, steps = 9, modifier = Modifier.testTag("opacity"),
+                            )
+                        }
                     }
                     choiceRow("Icons", listOf(IconStyle.GOOGLE to "Google", IconStyle.SYMBOLS to "Monochrome"), cfg.iconStyle, "icons") { cfg = cfg.copy(iconStyle = it) }
                 }
