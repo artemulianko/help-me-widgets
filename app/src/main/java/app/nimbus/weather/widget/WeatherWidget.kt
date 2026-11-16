@@ -5,8 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
@@ -57,14 +55,11 @@ class WeatherWidget : GlanceAppWidget() {
         setOf(DpSize(110.dp, 110.dp), DpSize(250.dp, 110.dp), DpSize(250.dp, 250.dp)),
     )
 
+    /** Called by [WidgetRenderer] via compose(): read state once, render once. */
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
-        val flow = stateFlow(Store(context), appWidgetId)
-        val initial = flow.first()
-        provideContent {
-            val state by flow.collectAsState(initial)
-            WeatherContent(state)
-        }
+        val state = stateFlow(Store(context), appWidgetId).first()
+        provideContent { WeatherContent(state) }
     }
 
     override suspend fun providePreview(context: Context, widgetCategory: Int) {

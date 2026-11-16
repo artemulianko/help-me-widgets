@@ -49,6 +49,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.DpSize
@@ -90,7 +92,10 @@ fun NimbusTheme(content: @Composable () -> Unit) {
     val dark = isSystemInDarkTheme()
     val scheme = if (dark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
     val typography = remember { Typography().withFamily(systemDisplayFamily()) }
-    MaterialExpressiveTheme(colorScheme = scheme, typography = typography, content = content)
+    MaterialExpressiveTheme(colorScheme = scheme, typography = typography) {
+        // Expose test tags as resource ids so UiAutomator end-to-end tests can find them.
+        Box(Modifier.semantics { testTagsAsResourceId = true }) { content() }
+    }
 }
 
 // ---- live widget preview: renders the real Glance RemoteViews -----------------------------

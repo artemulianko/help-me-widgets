@@ -9,6 +9,11 @@
     <!-- Optional: lets "Current location" widgets follow you while the app is closed. -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
+    <!-- No notifications, ever: WorkManager's foreground-service path (the only thing that could
+         post one) is removed. Refreshes run as plain/expedited jobs, which need no notification. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:node="remove" />
+
     <queries>
         <package android:name="com.google.android.apps.weather" />
         <package android:name="com.google.android.googlequicksearchbox" />
@@ -62,7 +67,11 @@
             <intent-filter>
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
             </intent-filter>
         </receiver>
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            tools:node="remove" />
     </application>
 </manifest>

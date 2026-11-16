@@ -62,8 +62,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.glance.appwidget.GlanceAppWidgetManager
-import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.lifecycleScope
@@ -79,7 +77,7 @@ import app.nimbus.weather.data.TimeFormat
 import app.nimbus.weather.data.WeatherRepository
 import app.nimbus.weather.data.WidgetConfig
 import app.nimbus.weather.widget.SampleData
-import app.nimbus.weather.widget.WeatherWidget
+import app.nimbus.weather.widget.WidgetRenderer
 import app.nimbus.weather.widget.WeatherWidgetReceiver
 import app.nimbus.weather.widget.WidgetState
 import app.nimbus.weather.work.RefreshWorker
@@ -102,10 +100,7 @@ private suspend fun publishPickerPreviews(ctx: Context) {
     if (Build.VERSION.SDK_INT < 35) return
     val prefs = ctx.getSharedPreferences("meta", Context.MODE_PRIVATE)
     if (prefs.getInt("previews_v", 0) == BuildConfig.VERSION_CODE) return
-    runCatching {
-        val r = GlanceAppWidgetManager(ctx).setWidgetPreviews(WeatherWidgetReceiver::class)
-        if (r == GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_SUCCESS) prefs.edit().putInt("previews_v", BuildConfig.VERSION_CODE).apply()
-    }
+    if (WidgetRenderer.publishPreviews(ctx)) prefs.edit().putInt("previews_v", BuildConfig.VERSION_CODE).apply()
 }
 
 @Composable
@@ -125,7 +120,7 @@ private fun HomeScreen() {
         WeatherRepository.refresh(ctx, force = force, foreground = true)
         RefreshWorker.scheduleNow(ctx)
     }
-    fun updateApp(f: (AppSettings) -> AppSettings) = scope.launch { store.updateApp(f); WeatherWidget().updateAll(ctx) }
+    fun updateApp(f: (AppSettings) -> AppSettings) = scope.launch { store.updateApp(f); WidgetRenderer.renderAll(ctx) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         hasLoc = Locations.hasForeground(ctx)
@@ -274,7 +269,7 @@ private fun ApiKeyField(app: AppSettings, onSave: (String) -> Unit) {
     val ctx = LocalContext.current
     OutlinedTextField(
         value = key, onValueChange = { key = it.trim() },
-        label = { Text(if (BuildConfig.GOOGLE_WEATHER_KEY.isNotBlank()) "API key (built-in key active)" else "Google Maps Platform API key") },
+        label = { Text("Google Maps Platform API key") },
         singleLine = true, visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         shape = RoundedCornerShape(16.dp),

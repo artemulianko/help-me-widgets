@@ -2,27 +2,34 @@ package app.nimbus.weather.data
 
 import android.content.Context
 import android.util.Log
-import androidx.glance.appwidget.GlanceAppWidgetManager
-import androidx.glance.appwidget.updateAll
-import app.nimbus.weather.BuildConfig
-import app.nimbus.weather.widget.WeatherWidget
+import app.nimbus.weather.widget.WidgetRenderer
 
 object WeatherRepository {
     private const val TAG = "NimbusRepo"
 
+    /** Package + signing-cert SHA-1 headers for Google API key app restrictions. */
+    @Volatile private var appHeaders: Map<String, String>? = null
+
+    fun init(ctx: Context) {
+        if (appHeaders != null) return
+        appHeaders = runCatching {
+            val info = ctx.packageManager.getPackageInfo(ctx.packageName, android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES)
+            val cert = info.signingInfo!!.apkContentsSigners.first().toByteArray()
+            val sha1 = java.security.MessageDigest.getInstance("SHA-1").digest(cert).joinToString("") { "%02X".format(it) }
+            mapOf("X-Android-Package" to ctx.packageName, "X-Android-Cert" to sha1)
+        }.getOrDefault(emptyMap())
+    }
+
     fun sourceFor(app: AppSettings): Pair<WeatherSource, WeatherSource?> {
-        val key = app.googleApiKey.ifBlank { BuildConfig.GOOGLE_WEATHER_KEY }
+        val key = app.googleApiKey
         return if (app.provider == ProviderPref.GOOGLE && key.isNotBlank()) {
-            GoogleWeatherSource(key) to OpenMeteoSource()
+            GoogleWeatherSource(key, appHeaders.orEmpty()) to OpenMeteoSource()
         } else {
             OpenMeteoSource() to null
         }
     }
 
-    suspend fun widgetIds(ctx: Context): List<Int> = runCatching {
-        val m = GlanceAppWidgetManager(ctx)
-        m.getGlanceIds(WeatherWidget::class.java).map { m.getAppWidgetId(it) }
-    }.getOrDefault(emptyList())
+    fun widgetIds(ctx: Context): List<Int> = WidgetRenderer.ids(ctx).toList()
 
     /**
      * Fetch forecasts for every place a widget (or the app) shows. Each place is only fetched
@@ -30,9 +37,14 @@ object WeatherRepository {
      * overlapping triggers never cost extra network or battery.
      */
     suspend fun refresh(ctx: Context, force: Boolean, foreground: Boolean = false): Result<Unit> {
+        init(ctx)
         val store = Store(ctx)
-        store.setRefreshing(true)
-        WeatherWidget().updateAll(ctx)
+        // Spinner only for user-initiated refreshes; background refreshes cost a single render.
+        if (force) {
+            store.setRefreshing(true)
+            WidgetRenderer.renderAll(ctx)
+        }
+        var changed = false
         try {
             var app = store.appNow()
             val configs = widgetIds(ctx).map { store.widgetNow(it) }
@@ -44,7 +56,9 @@ object WeatherRepository {
             if (needsDevice && (force || locStale || app.deviceLocation == null) &&
                 (foreground || Locations.hasBackground(ctx))
             ) {
-                runCatching { Locations.devicePlace(ctx) }.getOrNull()?.let { p ->
+                // Known location → wait at most a few seconds for a better fix, so a manual refresh stays snappy.
+                val timeout = if (app.deviceLocation != null) 5_000L else 25_000L
+                runCatching { Locations.devicePlace(ctx, timeout) }.getOrNull()?.let { p ->
                     store.updateApp { it.copy(deviceLocation = p, deviceLocationAt = System.currentTimeMillis()) }
                     app = store.appNow()
                 }
@@ -71,6 +85,7 @@ object WeatherRepository {
                     error = e.message ?: e.javaClass.simpleName
                 }.getOrNull() ?: continue
                 store.putWeather(data.copy(place = place))
+                changed = true
             }
             store.pruneWeather(places.map { it.key }.toSet() + listOfNotNull(app.deviceLocation?.key))
             store.setError(error)
@@ -80,8 +95,10 @@ object WeatherRepository {
             store.setError(e.message)
             return Result.failure(e)
         } finally {
-            store.setRefreshing(false)
-            WeatherWidget().updateAll(ctx)
+            if (force) store.setRefreshing(false)
+            // Running Glance sessions already recompose from the DataStore flows; this
+            // re-renders widgets whose session has ended. Skipped when nothing changed.
+            if (force || changed) WidgetRenderer.renderAll(ctx)
         }
     }
 }

@@ -5,3 +5,11 @@ local.properties
 *.iml
 .kotlin/
 captures/
+
+# Release signing (never commit)
+keystore/
+*.jks
+
+# Secrets (never commit)
+.env
+dist/

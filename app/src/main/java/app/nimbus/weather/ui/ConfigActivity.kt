@@ -53,7 +53,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.lifecycleScope
 import app.nimbus.weather.R
 import app.nimbus.weather.data.AppSettings
@@ -70,7 +69,7 @@ import app.nimbus.weather.data.WeatherRepository
 import app.nimbus.weather.data.WidgetConfig
 import app.nimbus.weather.data.WidgetStyle
 import app.nimbus.weather.widget.SampleData
-import app.nimbus.weather.widget.WeatherWidget
+import app.nimbus.weather.widget.WidgetRenderer
 import app.nimbus.weather.widget.WidgetState
 import app.nimbus.weather.work.RefreshWorker
 import kotlinx.coroutines.delay
@@ -104,7 +103,7 @@ class ConfigActivity : ComponentActivity() {
         lifecycleScope.launch {
             store.updateWidget(widgetId) { cfg }
             cfg.location?.let { p -> store.updateApp { a -> a.copy(recentPlaces = (listOf(p) + a.recentPlaces).distinctBy { it.key }.take(5)) } }
-            runCatching { WeatherWidget().update(this@ConfigActivity, GlanceAppWidgetManager(this@ConfigActivity).getGlanceIdBy(widgetId)) }
+            WidgetRenderer.render(this@ConfigActivity, widgetId)
             RefreshWorker.scheduleNow(this@ConfigActivity)
             RefreshWorker.refreshNow(this@ConfigActivity, force = false)
             finish()
@@ -125,6 +124,7 @@ fun WidgetEditor(initial: WidgetConfig, app: AppSettings, store: Store, onClose:
     LaunchedEffect(place?.key, cached == null) {
         fetched = null
         if (place != null && cached == null) {
+            WeatherRepository.init(ctx)
             val (src, fallback) = WeatherRepository.sourceFor(app)
             fetched = runCatching { src.fetch(place) }.recoverCatching { fallback?.fetch(place) ?: throw it }.getOrNull()
                 ?.copy(place = place)?.also { store.putWeather(it) }

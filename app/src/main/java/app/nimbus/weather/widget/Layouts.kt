@@ -248,8 +248,14 @@ private fun RowScope.ForecastCell(x: Scope, cell: Cell, iconSize: Dp, showPop: B
         } else {
             Spacer(GlanceModifier.height(6.dp))
         }
-        Text(cell.top, style = style(x.c.text, tempSize, FontWeight.Medium, align = TextAlign.Center), maxLines = 1)
-        cell.bottom?.let { Text(it, style = style(x.c.textVariant, tempSize - 1f, align = TextAlign.Center), maxLines = 1) }
+        // High and low share one line (low dimmed) so daily rows are as compact as hourly ones.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(cell.top, style = style(x.c.text, tempSize, FontWeight.Medium), maxLines = 1)
+            cell.bottom?.let {
+                Spacer(GlanceModifier.width(4.dp))
+                Text(it, style = style(x.c.textVariant, tempSize - 1f), maxLines = 1)
+            }
+        }
     }
 }
 
@@ -266,7 +272,7 @@ private fun cells(x: Scope, mode: ForecastMode, n: Int): List<Cell> = if (mode =
 
 /** Height a forecast row needs, so layouts can decide what fits. */
 private fun forecastHeight(daily: Boolean, iconSize: Float, pop: Boolean) =
-    16f + 6f + iconSize + (if (pop) 15f else 6f) + 20f + (if (daily) 18f else 0f)
+    16f + 6f + iconSize + (if (pop) 15f else 6f) + 20f
 
 @Composable
 private fun ForecastRow(x: Scope, width: Float, mode: ForecastMode, modifier: GlanceModifier, iconSize: Dp, allowPop: Boolean, minCell: Float = 44f, labelSize: Float = 12f, tempSize: Float = 15f) {
@@ -358,27 +364,29 @@ private fun Compact(x: Scope) {
     }
 }
 
-/** 4x1 / 5x1 — everything on one line, hourly strip if it fits. */
+/** 4x1 / 5x1 — current conditions, then a compact hourly strip when there's room. */
 @Composable
 private fun Strip(x: Scope) {
-    val infoW = min(150f, x.width * 0.3f)
-    Row(modifier = GlanceModifier.fillMaxSize().padding(start = PAD, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+    val withForecast = x.cfg.forecast != ForecastMode.NONE && x.width >= 300f
+    Row(modifier = GlanceModifier.fillMaxSize().padding(start = PAD, end = if (x.cfg.showRefresh) 4.dp else PAD), verticalAlignment = Alignment.CenterVertically) {
         x.NowIcon(40.dp)
-        Spacer(GlanceModifier.width(8.dp))
-        Hero(x, 34f)
-        Spacer(GlanceModifier.width(GAP))
-        Column(modifier = GlanceModifier.width(infoW.dp)) {
-            if (x.cfg.showCondition) Text(x.conditionText, style = style(x.c.text, 14f, FontWeight.Medium), maxLines = 1)
+        Spacer(GlanceModifier.width(10.dp))
+        Column(modifier = if (withForecast) GlanceModifier else GlanceModifier.defaultWeight()) {
+            Hero(x, 30f)
+            val sub = when {
+                x.cfg.showLocation -> null
+                withForecast -> x.subLine
+                else -> listOfNotNull(if (x.cfg.showCondition) x.conditionText else null, x.subLine).joinToString("  ").ifEmpty { null }
+            }
             if (x.cfg.showLocation) LocationLabel(x, 12f)
-            else x.subLine?.let { Text(it, style = style(x.c.textVariant, 12f), maxLines = 1) }
+            sub?.let { Text(it, style = style(x.c.textVariant, 12f), maxLines = 1) }
         }
-        val rest = x.width - 16f - 40f - 8f - 84f - 12f - infoW - (if (x.cfg.showRefresh) 48f else 12f)
-        if (x.cfg.forecast != ForecastMode.NONE && rest >= 96f && x.height >= 72f) {
-            ForecastRow(x, rest, x.cfg.forecast, GlanceModifier.defaultWeight(), 20.dp, allowPop = false, minCell = 44f, labelSize = 11f, tempSize = 13f)
-        } else {
-            Spacer(GlanceModifier.defaultWeight())
+        if (withForecast) {
+            Spacer(GlanceModifier.width(GAP))
+            val rest = x.width - 16f - 50f - 96f - 12f - (if (x.cfg.showRefresh) 52f else 16f)
+            ForecastRow(x, rest, x.cfg.forecast, GlanceModifier.defaultWeight(), 22.dp, allowPop = false, minCell = 44f, labelSize = 11f, tempSize = 13f)
         }
-        if (x.cfg.showRefresh) RefreshButton(x) else Spacer(GlanceModifier.width(12.dp))
+        if (x.cfg.showRefresh) RefreshButton(x)
     }
 }
 
@@ -397,10 +405,10 @@ private fun Small(x: Scope) {
                     Hero(x, 38f)
                 }
             } else {
-                Hero(x, if (x.height >= 150) 48f else 40f)
+                Hero(x, if (x.height >= 150) 52f else 40f)
             }
             Spacer(GlanceModifier.defaultWeight())
-            Summary(x, withIcon = !x.bold && x.height >= 150, iconSize = 24.dp, condSize = 13f, subSize = 12f)
+            Summary(x, withIcon = !x.bold && x.height >= 150, iconSize = 32.dp, condSize = 14f, subSize = 13f)
         }
         CornerRefresh(x)
     }

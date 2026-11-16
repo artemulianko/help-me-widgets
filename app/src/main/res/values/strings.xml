@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Nimbus Weather</string>
     <string name="widget_name">Weather</string>
-    <string name="widget_description">Current conditions and forecast from Google weather</string>
+    <string name="widget_description">Conditions and hourly forecast, in your colors</string>
     <string name="today">Today</string>
     <string name="now">Now</string>
     <string name="hi_lo">H:%1$s L:%2$s</string>

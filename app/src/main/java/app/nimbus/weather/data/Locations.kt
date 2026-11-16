@@ -30,7 +30,7 @@ object Locations {
      * otherwise ask for a single balanced-power (cell/Wi-Fi, no GPS) fix. Never keeps a listener.
      */
     @SuppressLint("MissingPermission")
-    suspend fun device(ctx: Context, maxAgeMs: Long = 30 * 60_000L): Location? {
+    suspend fun device(ctx: Context, maxAgeMs: Long = 30 * 60_000L, timeoutMs: Long = 25_000): Location? {
         if (!hasForeground(ctx)) return null
         val client = LocationServices.getFusedLocationProviderClient(ctx)
         val last = runCatching { client.lastLocation.await() }.getOrNull()
@@ -38,9 +38,9 @@ object Locations {
         val req = CurrentLocationRequest.Builder()
             .setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY)
             .setMaxUpdateAgeMillis(maxAgeMs)
-            .setDurationMillis(20_000)
+            .setDurationMillis(timeoutMs)
             .build()
-        return withTimeoutOrNull(25_000) { runCatching { client.getCurrentLocation(req, null).await() }.getOrNull() } ?: last
+        return withTimeoutOrNull(timeoutMs) { runCatching { client.getCurrentLocation(req, null).await() }.getOrNull() } ?: last
     }
 
     /** On-device reverse geocoding (no network quota); falls back to coordinates. */
@@ -64,8 +64,8 @@ object Locations {
     private fun fallbackName(lat: Double, lon: Double) = "%.2f, %.2f".format(Locale.US, lat, lon)
 
     /** Resolve the device location to a named Place, or null if unavailable. */
-    suspend fun devicePlace(ctx: Context): Place? {
-        val loc = device(ctx) ?: return null
+    suspend fun devicePlace(ctx: Context, timeoutMs: Long = 25_000): Place? {
+        val loc = device(ctx, timeoutMs = timeoutMs) ?: return null
         val (name, region) = nameFor(ctx, loc.latitude, loc.longitude)
         return Place(name, loc.latitude, loc.longitude, region)
     }

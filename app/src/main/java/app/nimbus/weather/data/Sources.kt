@@ -33,18 +33,29 @@ internal val JsonElement?.arr: List<JsonElement> get() = (this as? JsonArray).or
 
 private fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
 
+/** ~1 km precision: plenty for a forecast, and providers never get your exact position. */
+internal fun Double.coarse(): String = "%.2f".format(Locale.US, this)
+
 // ---- Google Maps Platform Weather API — same Google weather backend Pixel Weather uses ----
-class GoogleWeatherSource(private val apiKey: String, private val language: String = Locale.getDefault().toLanguageTag()) : WeatherSource {
+/**
+ * @param appHeaders `X-Android-Package` / `X-Android-Cert`, so the key can be restricted to this
+ *   app in Google Cloud ("Android apps" restriction) and is useless if extracted elsewhere.
+ */
+class GoogleWeatherSource(
+    private val apiKey: String,
+    private val appHeaders: Map<String, String> = emptyMap(),
+    private val language: String = Locale.getDefault().toLanguageTag(),
+) : WeatherSource {
     private val base = "https://weather.googleapis.com/v1"
 
     private fun url(path: String, place: Place, extra: String) =
-        "$base/$path?key=${enc(apiKey)}&location.latitude=${place.lat}&location.longitude=${place.lon}" +
+        "$base/$path?key=${enc(apiKey)}&location.latitude=${place.lat.coarse()}&location.longitude=${place.lon.coarse()}" +
             "&unitsSystem=METRIC&languageCode=${enc(language)}$extra"
 
     override suspend fun fetch(place: Place): WeatherData = coroutineScope {
-        val cur = async { Http.getJson(url("currentConditions:lookup", place, "")) }
-        val hrs = async { Http.getJson(url("forecast/hours:lookup", place, "&hours=24&pageSize=24")) }
-        val days = async { Http.getJson(url("forecast/days:lookup", place, "&days=10&pageSize=10")) }
+        val cur = async { Http.getJson(url("currentConditions:lookup", place, ""), appHeaders) }
+        val hrs = async { Http.getJson(url("forecast/hours:lookup", place, "&hours=24&pageSize=24"), appHeaders) }
+        val days = async { Http.getJson(url("forecast/days:lookup", place, "&days=10&pageSize=10"), appHeaders) }
         parse(place, cur.await(), hrs.await(), days.await())
     }
 
@@ -120,7 +131,7 @@ class GoogleWeatherSource(private val apiKey: String, private val language: Stri
 // ---- Open-Meteo — free, keyless, open data (ECMWF/DWD/NOAA/… "best match" blend) ---------
 class OpenMeteoSource : WeatherSource {
     override suspend fun fetch(place: Place): WeatherData {
-        val url = "https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}" +
+        val url = "https://api.open-meteo.com/v1/forecast?latitude=${place.lat.coarse()}&longitude=${place.lon.coarse()}" +
             "&current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,weather_code,wind_speed_10m,uv_index" +
             "&hourly=temperature_2m,weather_code,precipitation_probability,is_day" +
             "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset" +
