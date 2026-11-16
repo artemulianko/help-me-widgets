@@ -113,6 +113,8 @@ private fun HomeScreen() {
     val lastError by store.lastError.collectAsState(null)
     var hasLoc by remember { mutableStateOf(Locations.hasForeground(ctx)) }
     var hasBg by remember { mutableStateOf(Locations.hasBackground(ctx)) }
+    // Android 12+ "Pause app activity if unused" can stop a rarely-opened app after ~3 months.
+    var hibernationExempt by remember { mutableStateOf(ctx.packageManager.isAutoRevokeWhitelisted) }
     var widgets by remember { mutableStateOf<List<Pair<Int, WidgetConfig>>>(emptyList()) }
     var tick by remember { mutableIntStateOf(0) }
 
@@ -125,6 +127,7 @@ private fun HomeScreen() {
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         hasLoc = Locations.hasForeground(ctx)
         hasBg = Locations.hasBackground(ctx)
+        hibernationExempt = ctx.packageManager.isAutoRevokeWhitelisted
         tick++
         refresh(false) // cheap no-op when fresh; refreshes location while we have foreground access
     }
@@ -235,6 +238,17 @@ private fun HomeScreen() {
                                 label = { Text(label) }, modifier = Modifier.testTag("interval_$m"),
                             )
                         }
+                    }
+                }
+                if (!hibernationExempt && widgets.isNotEmpty()) {
+                    infoRow("Keep updating if unused", "Turn off “Pause app activity if unused” so Android never pauses the widget when you don’t open the app for months") {
+                        TextButton(onClick = {
+                            runCatching {
+                                ctx.startActivity(Intent(Intent.ACTION_AUTO_REVOKE_PERMISSIONS, Uri.fromParts("package", ctx.packageName, null)))
+                            }.onFailure {
+                                ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", ctx.packageName, null)))
+                            }
+                        }, modifier = Modifier.testTag("hibernation")) { Text("Turn off") }
                     }
                 }
                 switchRow("Wi‑Fi only", app.unmeteredOnly, "Background updates wait for an unmetered network") { v ->

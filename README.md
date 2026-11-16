@@ -36,32 +36,6 @@ The layout adapts to the real cell size the launcher reports, from 1×1 up to 4�
 
 <p align="center"><img src="docs/screenshots/all-sizes.png" alt="Widget at every size from 1x1 to 4x4 and landscape" width="900"></p>
 
-## Make it yours
-
-<p align="center"><img src="docs/screenshots/customization.png" alt="Customization variants: styles, palettes, opacity, icon sets" width="900"></p>
-
-Per widget, so you can run several (home city plus where you are):
-
-- **Location**: current location (approximate, no GPS) or any city via search
-- **Style**: Classic (iOS-like) or Large icon (One UI-like)
-- **Forecast row**: hourly, daily, or none
-- **Colors**: wallpaper colors (Material You) or Blue, Teal, Green, Amber, Rose, Violet, Mono
-- **Theme**: follow the system, always light, or always dark
-- **Background**: neutral, tonal, or vibrant, with opacity from 0% to 100%
-- **Icons**: Google (colorful) or monochrome Material Symbols
-- **Show or hide**: location name, condition, high/low, feels-like, last-updated time, **refresh button**
-- **On tap**: open Google weather, open this app, refresh, or nothing
-
-App-wide settings: °C / °F / follow regional preferences, 12-hour / 24-hour / follow system, refresh interval (30 min, 1, 2, 3 or 6 hours, or manual only), Wi‑Fi-only updates, and the data source.
-
-<p align="center">
-  <img src="docs/screenshots/app-home.png" alt="App home screen" width="270">
-  &nbsp;
-  <img src="docs/screenshots/editor-dark.png" alt="Widget editor in dark mode" width="270">
-  &nbsp;
-  <img src="docs/screenshots/widget-picker.png" alt="Adding the widget" width="270">
-</p>
-
 ## Battery
 
 Designed to be invisible in your battery stats. Measured on an Android 17 emulator:

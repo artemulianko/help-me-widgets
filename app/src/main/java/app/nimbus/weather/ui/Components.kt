@@ -2,6 +2,7 @@
 
 package app.nimbus.weather.ui
 
+import android.app.WallpaperManager
 import android.content.Context
 import android.graphics.Typeface
 import android.widget.FrameLayout
@@ -44,6 +45,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -118,19 +121,42 @@ fun WidgetPreview(state: WidgetState, size: DpSize, modifier: Modifier = Modifie
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(28.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            .padding(vertical = 20.dp)
             .testTag("widget_preview"),
         contentAlignment = Alignment.Center,
     ) {
+        // A stand-in for your home screen, so background opacity reads exactly as it will there.
+        WallpaperBackdrop(Modifier.matchParentSize())
         AndroidView(
             factory = { FrameLayout(it) },
             update = { fl ->
                 fl.removeAllViews()
                 rv?.let { runCatching { fl.addView(it.apply(fl.context, fl)) } }
             },
-            modifier = Modifier.size(size),
+            modifier = Modifier.padding(vertical = 20.dp).size(size),
         )
+    }
+}
+
+/**
+ * Soft wallpaper-like backdrop from the colors of *your* wallpaper (WallpaperManager exposes
+ * them without any permission), falling back to the theme's accents.
+ */
+@Composable
+private fun WallpaperBackdrop(modifier: Modifier) {
+    val ctx = LocalContext.current
+    val cs = MaterialTheme.colorScheme
+    val wc = remember { runCatching { WallpaperManager.getInstance(ctx).getWallpaperColors(WallpaperManager.FLAG_SYSTEM) }.getOrNull() }
+    val a = wc?.primaryColor?.let { Color(it.toArgb()) } ?: cs.primary
+    val b = wc?.secondaryColor?.let { Color(it.toArgb()) } ?: cs.tertiary
+    val c = wc?.tertiaryColor?.let { Color(it.toArgb()) } ?: cs.secondaryContainer
+    Canvas(modifier) {
+        drawRect(Brush.linearGradient(listOf(a, b), start = Offset.Zero, end = Offset(size.width, size.height)))
+        val r1 = size.minDimension * 0.9f
+        val p1 = Offset(size.width * 0.12f, size.height * 0.15f)
+        drawCircle(Brush.radialGradient(listOf(c, c.copy(alpha = 0f)), center = p1, radius = r1), radius = r1, center = p1)
+        val r2 = size.minDimension * 0.7f
+        val p2 = Offset(size.width * 0.9f, size.height * 0.95f)
+        drawCircle(Brush.radialGradient(listOf(a.copy(alpha = 0.9f), a.copy(alpha = 0f)), center = p2, radius = r2), radius = r2, center = p2)
     }
 }
 
