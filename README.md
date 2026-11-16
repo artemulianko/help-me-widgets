@@ -106,7 +106,7 @@ Requirements: JDK 21, Android SDK with platform 37, and an emulator or device ru
 
 ```bash
 ./gradlew assembleDebug                 # debug APK
-./gradlew assembleRelease               # minified release (signed with keystore/ if present, else the debug key)
+./gradlew assembleRelease               # minified release → releases/nimbus-weather-<version>.apk
 ./gradlew testDebugUnitTest             # parsing and mapping unit tests
 ./gradlew connectedDebugAndroidTest     # on-device: live network, every widget size and config rendered, UI flow
 ```

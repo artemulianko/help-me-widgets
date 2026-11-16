@@ -12,4 +12,4 @@ keystore/
 
 # Secrets (never commit)
 .env
-dist/
+releases/
