@@ -12,7 +12,9 @@ The stock Pixel weather options are a one-line At a Glance and a widget you can 
 
 ## Download
 
-**[⬇ Nimbus Weather 0.1.0 (APK)](https://github.com/artemulianko/help-me-weather/releases/latest)** · Android 12+ · 4.3 MB
+**[⬇ Download Nimbus Weather 0.1.0 (APK)](https://github.com/artemulianko/help-me-weather/raw/main/releases/nimbus-weather-0.1.0.apk)** · Android 12+ · 4.3 MB · [release notes](releases/0.1.0.md)
+
+SHA-256 `c81bf47a1524fb563842c42effb92b9a2c1c4751e3847430398269cad3c2b875`
 
 1. Download the APK on your phone and open it (allow "Install unknown apps" for your browser when asked).
 2. Open **Nimbus Weather** once and allow approximate location, or skip that and pick a city.
