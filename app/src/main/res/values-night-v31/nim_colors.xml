@@ -11,7 +11,4 @@
     <color name="nim_auto_primary">@color/nim_dark_primary</color>
     <color name="nim_auto_tertiary">@color/nim_dark_tertiary</color>
     <color name="nim_auto_outline_variant">@color/nim_dark_outline_variant</color>
-    <color name="nim_auto_icon_cloud">@color/nim_dark_icon_cloud</color>
-    <color name="nim_auto_icon_shade">@color/nim_dark_icon_shade</color>
-    <color name="nim_auto_icon_dark">@color/nim_dark_icon_dark</color>
 </resources>

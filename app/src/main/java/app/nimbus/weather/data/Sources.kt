@@ -91,29 +91,28 @@ class GoogleWeatherSource(private val apiKey: String, private val language: Stri
             return WeatherData(place, zid.id, System.currentTimeMillis(), Provider.GOOGLE, current, hourly, daily)
         }
 
-        /** Maps Google's WeatherCondition.Type enum onto our compact set. */
-        fun mapGoogle(type: String?): Condition {
-            val t = type ?: return Condition.CLOUDY
-            return when {
-                t == "CLEAR" -> Condition.CLEAR
-                t == "MOSTLY_CLEAR" -> Condition.MOSTLY_CLEAR
-                t == "PARTLY_CLOUDY" -> Condition.PARTLY_CLOUDY
-                t == "MOSTLY_CLOUDY" -> Condition.MOSTLY_CLOUDY
-                t == "CLOUDY" -> Condition.CLOUDY
-                "THUNDER" in t -> Condition.THUNDERSTORM
-                "HAIL" in t -> Condition.HAIL
-                "RAIN_AND_SNOW" in t || "SLEET" in t || "FREEZING" in t -> Condition.SLEET
-                "SNOW" in t -> if ("HEAVY" in t || "STORM" in t || "BLOWING" in t) Condition.HEAVY_SNOW else Condition.SNOW
-                t == "WIND_AND_RAIN" -> Condition.HEAVY_RAIN
-                "RAIN" in t || "SHOWER" in t -> when {
-                    "HEAVY" in t -> Condition.HEAVY_RAIN
-                    t.startsWith("LIGHT_RAIN") || t.startsWith("CHANCE") || t == "LIGHT_RAIN_SHOWERS" -> Condition.DRIZZLE
-                    else -> Condition.RAIN
-                }
-                "WIND" in t -> Condition.WINDY
-                "FOG" in t || "HAZE" in t || "MIST" in t -> Condition.FOG
-                else -> Condition.CLOUDY
-            }
+        /** Google WeatherCondition.Type → our set (per Google's condition→icon table). */
+        fun mapGoogle(type: String?): Condition = when (type) {
+            "CLEAR" -> Condition.CLEAR
+            "MOSTLY_CLEAR" -> Condition.MOSTLY_CLEAR
+            "PARTLY_CLOUDY" -> Condition.PARTLY_CLOUDY
+            "MOSTLY_CLOUDY" -> Condition.MOSTLY_CLOUDY
+            "CLOUDY" -> Condition.CLOUDY
+            "WINDY" -> Condition.WINDY
+            "LIGHT_RAIN_SHOWERS", "CHANCE_OF_SHOWERS", "LIGHT_RAIN" -> Condition.DRIZZLE
+            "SCATTERED_SHOWERS" -> Condition.SCATTERED_SHOWERS
+            "WIND_AND_RAIN", "RAIN_SHOWERS", "LIGHT_TO_MODERATE_RAIN", "RAIN" -> Condition.RAIN
+            "HEAVY_RAIN_SHOWERS", "MODERATE_TO_HEAVY_RAIN", "HEAVY_RAIN", "RAIN_PERIODICALLY_HEAVY" -> Condition.HEAVY_RAIN
+            "LIGHT_SNOW_SHOWERS", "LIGHT_SNOW" -> Condition.FLURRIES
+            "CHANCE_OF_SNOW_SHOWERS", "LIGHT_TO_MODERATE_SNOW", "SNOW", "SNOWSTORM" -> Condition.SNOW
+            "SCATTERED_SNOW_SHOWERS", "SNOW_SHOWERS" -> Condition.SCATTERED_SNOW
+            "HEAVY_SNOW_SHOWERS", "MODERATE_TO_HEAVY_SNOW", "HEAVY_SNOW", "SNOW_PERIODICALLY_HEAVY", "HEAVY_SNOW_STORM" -> Condition.HEAVY_SNOW
+            "BLOWING_SNOW" -> Condition.BLOWING_SNOW
+            "RAIN_AND_SNOW", "HAIL_SHOWERS" -> Condition.WINTRY_MIX
+            "HAIL" -> Condition.HAIL
+            "THUNDERSTORM", "THUNDERSHOWER", "LIGHT_THUNDERSTORM_RAIN", "HEAVY_THUNDERSTORM" -> Condition.THUNDERSTORM
+            "SCATTERED_THUNDERSTORMS" -> Condition.SCATTERED_THUNDERSTORMS
+            else -> Condition.CLOUDY
         }
     }
 }
@@ -169,21 +168,23 @@ class OpenMeteoSource : WeatherSource {
             return WeatherData(place, zone, System.currentTimeMillis(), Provider.OPEN_METEO, current, hourly, daily)
         }
 
-        /** WMO weather interpretation codes. */
+        /** WMO weather interpretation codes → our set, matching Google's buckets. */
         fun mapWmo(code: Int?): Condition = when (code) {
             0 -> Condition.CLEAR
             1 -> Condition.MOSTLY_CLEAR
             2 -> Condition.PARTLY_CLOUDY
             3 -> Condition.CLOUDY
             45, 48 -> Condition.FOG
-            51, 53, 55 -> Condition.DRIZZLE
-            56, 57, 66, 67 -> Condition.SLEET
-            61, 63, 80, 81 -> Condition.RAIN
+            51, 53, 55, 61 -> Condition.DRIZZLE
+            80 -> Condition.SCATTERED_SHOWERS
+            63, 81 -> Condition.RAIN
             65, 82 -> Condition.HEAVY_RAIN
-            71, 73, 77, 85 -> Condition.SNOW
+            71, 77 -> Condition.FLURRIES
+            73 -> Condition.SNOW
+            85 -> Condition.SCATTERED_SNOW
             75, 86 -> Condition.HEAVY_SNOW
-            95 -> Condition.THUNDERSTORM
-            96, 99 -> Condition.HAIL
+            56, 57, 66, 67 -> Condition.WINTRY_MIX
+            95, 96, 99 -> Condition.THUNDERSTORM
             else -> Condition.CLOUDY
         }
     }

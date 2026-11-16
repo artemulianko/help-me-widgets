@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+
 package app.nimbus.weather.ui
 
 import android.Manifest
@@ -14,9 +16,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,29 +26,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.BatteryChargingFull
-import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeTopAppBar
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -61,12 +54,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -76,11 +68,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.lifecycleScope
 import app.nimbus.weather.BuildConfig
+import app.nimbus.weather.R
 import app.nimbus.weather.data.AppSettings
 import app.nimbus.weather.data.Locations
 import app.nimbus.weather.data.Provider
 import app.nimbus.weather.data.ProviderPref
 import app.nimbus.weather.data.Store
+import app.nimbus.weather.data.TempUnit
+import app.nimbus.weather.data.TimeFormat
 import app.nimbus.weather.data.WeatherRepository
 import app.nimbus.weather.data.WidgetConfig
 import app.nimbus.weather.widget.SampleData
@@ -89,6 +84,7 @@ import app.nimbus.weather.widget.WeatherWidgetReceiver
 import app.nimbus.weather.widget.WidgetState
 import app.nimbus.weather.work.RefreshWorker
 import kotlinx.coroutines.launch
+import java.text.DateFormat
 
 class MainActivity : ComponentActivity() {
     companion object { const val EXTRA_WIDGET_ID = "widget_id" }
@@ -112,7 +108,6 @@ private suspend fun publishPickerPreviews(ctx: Context) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeScreen() {
     val ctx = LocalContext.current
@@ -123,25 +118,22 @@ private fun HomeScreen() {
     val lastError by store.lastError.collectAsState(null)
     var hasLoc by remember { mutableStateOf(Locations.hasForeground(ctx)) }
     var hasBg by remember { mutableStateOf(Locations.hasBackground(ctx)) }
-    var widgetIds by remember { mutableStateOf<List<Int>>(emptyList()) }
-    var widgetConfigs by remember { mutableStateOf<Map<Int, WidgetConfig>>(emptyMap()) }
+    var widgets by remember { mutableStateOf<List<Pair<Int, WidgetConfig>>>(emptyList()) }
     var tick by remember { mutableIntStateOf(0) }
 
     fun refresh(force: Boolean) = scope.launch {
         WeatherRepository.refresh(ctx, force = force, foreground = true)
         RefreshWorker.scheduleNow(ctx)
     }
+    fun updateApp(f: (AppSettings) -> AppSettings) = scope.launch { store.updateApp(f); WeatherWidget().updateAll(ctx) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         hasLoc = Locations.hasForeground(ctx)
         hasBg = Locations.hasBackground(ctx)
         tick++
-        refresh(false) // no-op if fresh; uses foreground location access while visible
+        refresh(false) // cheap no-op when fresh; refreshes location while we have foreground access
     }
-    LaunchedEffect(tick) {
-        widgetIds = WeatherRepository.widgetIds(ctx)
-        widgetConfigs = widgetIds.associateWith { store.widgetNow(it) }
-    }
+    LaunchedEffect(tick) { widgets = WeatherRepository.widgetIds(ctx).map { it to store.widgetNow(it) } }
 
     val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         hasLoc = granted
@@ -149,62 +141,71 @@ private fun HomeScreen() {
     }
     val bgLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { hasBg = it }
 
-    val place = app.deviceLocation ?: widgetConfigs.values.firstNotNullOfOrNull { it.location }
+    val place = app.deviceLocation ?: widgets.firstNotNullOfOrNull { it.second.location }
     val weather by remember(place?.key) { store.weather(place) }.collectAsState(null)
 
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val bg = MaterialTheme.colorScheme.surfaceContainer
     Scaffold(
         modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
-        topBar = { LargeTopAppBar(title = { Text("Weather") }, scrollBehavior = scroll) },
+        containerColor = bg,
+        topBar = {
+            LargeTopAppBar(
+                title = { Text("Weather") }, scrollBehavior = scroll,
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = bg, scrolledContainerColor = bg),
+            )
+        },
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).verticalScroll(rememberScrollState())) {
-            // Hero: the real widget, rendered with your data.
             Column(Modifier.padding(horizontal = 16.dp)) {
                 val w = weather ?: SampleData.weather()
                 WidgetPreview(
                     WidgetState(app, WidgetConfig(location = if (app.deviceLocation == null) place else null), w, refreshing, place ?: w.place, 0),
-                    previewSizes[2].second,
+                    previewSizes[3].second,
                 )
-                Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilledTonalButton(onClick = { refresh(true) }, enabled = !refreshing, modifier = Modifier.weight(1f).testTag("refresh_now")) {
-                        Icon(Icons.Default.Refresh, null); Spacer(Modifier.padding(4.dp)); Text(if (refreshing) "Refreshing…" else "Refresh now")
-                    }
-                    Button(onClick = { requestPin(ctx) }, modifier = Modifier.weight(1f).testTag("add_widget")) {
-                        Icon(Icons.Default.Add, null); Spacer(Modifier.padding(4.dp)); Text("Add widget")
-                    }
-                }
-                weather?.let {
-                    val src = if (it.source == Provider.GOOGLE) "Google Weather" else "Open-Meteo"
+                Text(
+                    weather?.let {
+                        val src = if (it.source == Provider.GOOGLE) "Google" else "Open-Meteo"
+                        "Updated ${DateFormat.getTimeInstance(DateFormat.SHORT).format(it.fetchedAt)} · $src"
+                    } ?: "Sample forecast",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 16.dp, top = 12.dp).testTag("status_line"),
+                )
+                lastError?.let {
                     Text(
-                        "${it.place.name} · $src · updated ${java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(it.fetchedAt)}",
-                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 8.dp, start = 4.dp).testTag("status_line"),
+                        it.take(140), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(start = 16.dp, top = 2.dp),
                     )
                 }
-                lastError?.let {
-                    Row(Modifier.padding(top = 4.dp, start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.ErrorOutline, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.padding(end = 6.dp))
-                        Text(it.take(160), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                Row(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalButton(
+                        onClick = { refresh(true) }, enabled = !refreshing,
+                        modifier = Modifier.weight(1f).height(48.dp).testTag("refresh_now"),
+                        contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+                    ) {
+                        Icon(painterResource(R.drawable.ms_refresh), null, Modifier.size(ButtonDefaults.IconSize))
+                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                        Text(if (refreshing) "Refreshing" else "Refresh")
                     }
+                    Button(
+                        onClick = { requestPin(ctx) },
+                        modifier = Modifier.weight(1f).height(48.dp).testTag("add_widget"),
+                    ) { Text("Add to home screen") }
                 }
             }
 
-            Section("Location") {
+            SettingsGroup("Location") {
                 if (!hasLoc) {
-                    InfoRow(Icons.Default.MyLocation, "Use your location", "Approximate (city-level) location is enough. No GPS, no tracking.") {
-                        Button(onClick = { permLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION) }, modifier = Modifier.testTag("grant_location")) { Text("Allow") }
+                    infoRow("Use your location", "City-level accuracy only. No GPS.", R.drawable.ms_near_me) {
+                        TextButton(onClick = { permLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION) }, modifier = Modifier.testTag("grant_location")) { Text("Allow") }
                     }
                 } else {
-                    InfoRow(Icons.Default.LocationOn, app.deviceLocation?.name ?: "Locating…", app.deviceLocation?.region ?: "Current location")
+                    infoRow(app.deviceLocation?.name ?: "Finding location…", app.deviceLocation?.region ?: "Current location", R.drawable.ms_near_me)
                     if (!hasBg) {
-                        InfoRow(
-                            Icons.Default.MyLocation, "Update location in background",
-                            "Choose “Allow all the time” so widgets follow you while the app is closed. Otherwise the location updates whenever you open the app.",
-                        ) {
+                        infoRow("Follow me while closed", "Choose “Allow all the time” so widgets update location in the background") {
                             TextButton(onClick = {
-                                if (Build.VERSION.SDK_INT >= 30) {
-                                    runCatching { bgLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION) }
-                                        .onFailure { ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", ctx.packageName, null))) }
+                                runCatching { bgLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION) }.onFailure {
+                                    ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", ctx.packageName, null)))
                                 }
                             }) { Text("Allow") }
                         }
@@ -212,72 +213,57 @@ private fun HomeScreen() {
                 }
             }
 
-            Section("Your widgets") {
-                if (widgetIds.isEmpty()) {
-                    InfoRow(Icons.Default.Widgets, "No widgets yet", "Long-press your home screen → Widgets → Nimbus Weather, or tap “Add widget”.")
+            SettingsGroup("Widgets") {
+                if (widgets.isEmpty()) {
+                    infoRow("No widgets yet", "Touch & hold the home screen, then Widgets → Nimbus Weather")
                 }
-                widgetIds.forEachIndexed { i, id ->
-                    val c = widgetConfigs[id] ?: WidgetConfig()
-                    ListItem(
-                        headlineContent = { Text("Widget ${i + 1}") },
-                        supportingContent = { Text(c.location?.name ?: "Current location") },
-                        leadingContent = { Icon(Icons.Default.Widgets, null) },
-                        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        modifier = Modifier.clickable {
-                            ctx.startActivity(Intent(ctx, ConfigActivity::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id))
-                        }.testTag("widget_row_$i"),
-                    )
-                }
-            }
-
-            Section("Weather source") {
-                Segmented(
-                    "Provider",
-                    listOf(ProviderPref.GOOGLE to "Google Weather", ProviderPref.OPEN_METEO to "Open-Meteo"),
-                    app.provider, { p -> scope.launch { store.updateApp { it.copy(provider = p) }; refresh(true) } }, "provider",
-                )
-                if (app.provider == ProviderPref.GOOGLE) ApiKeyField(app) { k -> scope.launch { store.updateApp { it.copy(googleApiKey = k) }; refresh(true) } }
-                Text(
-                    if (app.provider == ProviderPref.GOOGLE)
-                        "Google Weather is the same Google forecast Pixel Weather and At a Glance show. It needs a free Google Maps Platform key with the Weather API enabled. Without a key — or if Google is unreachable — Open-Meteo is used automatically."
-                    else "Open-Meteo blends national weather services (ECMWF, DWD, NOAA…). Free, no key needed.",
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-                )
-            }
-
-            Section("Units") {
-                UnitsPrefs(app) { f -> scope.launch { store.updateApp(f); WeatherWidget().updateAll(ctx) } }
-            }
-
-            Section("Background refresh") {
-                Text("Update every", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 20.dp, top = 8.dp))
-                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf(30 to "30m", 60 to "1h", 120 to "2h", 180 to "3h", 360 to "6h", 0 to "Off").forEach { (m, label) ->
-                        FilterChip(
-                            selected = app.refreshMinutes == m,
-                            onClick = { scope.launch { store.updateApp { it.copy(refreshMinutes = m) }; RefreshWorker.scheduleNow(ctx) } },
-                            label = { Text(label) },
-                            modifier = Modifier.testTag("interval_$m"),
-                        )
+                widgets.forEachIndexed { i, (id, c) ->
+                    navRow("Widget ${i + 1}", c.location?.name ?: "Current location", tag = "widget_row_$i") {
+                        ctx.startActivity(Intent(ctx, ConfigActivity::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id))
                     }
                 }
-                SwitchRow(
-                    "Only on Wi‑Fi", app.unmeteredOnly,
-                    { v -> scope.launch { store.updateApp { it.copy(unmeteredOnly = v) }; RefreshWorker.scheduleNow(ctx) } },
-                    "Background updates wait for an unmetered network",
-                )
-                InfoRow(
-                    Icons.Default.BatteryChargingFull, "Battery friendly",
-                    "Updates are batched by Android (WorkManager), skipped on low battery, use cell/Wi‑Fi location instead of GPS, and only download what a widget shows.",
-                )
             }
 
-            Section("About") {
-                InfoRow(Icons.Default.Cloud, "Data", "Google Weather API (Google Maps Platform). Fallback weather data by Open-Meteo.com, CC BY 4.0. City search by Open-Meteo geocoding.")
+            SettingsGroup("Units") {
+                choiceRow("Temperature", listOf(TempUnit.SYSTEM to "Auto", TempUnit.CELSIUS to "°C", TempUnit.FAHRENHEIT to "°F"), app.tempUnit, "unit") { u -> updateApp { it.copy(tempUnit = u) } }
+                choiceRow("Time", listOf(TimeFormat.SYSTEM to "Auto", TimeFormat.H12 to "12-hour", TimeFormat.H24 to "24-hour"), app.timeFormat, "time") { t -> updateApp { it.copy(timeFormat = t) } }
             }
-            Spacer(Modifier.height(32.dp).navigationBarsPadding())
+
+            SettingsGroup("Updates") {
+                customRow {
+                    Text("Refresh every")
+                    FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(30 to "30 min", 60 to "1 hr", 120 to "2 hr", 180 to "3 hr", 360 to "6 hr", 0 to "Manual").forEach { (m, label) ->
+                            FilterChip(
+                                selected = app.refreshMinutes == m,
+                                onClick = { scope.launch { store.updateApp { it.copy(refreshMinutes = m) }; RefreshWorker.scheduleNow(ctx) } },
+                                label = { Text(label) }, modifier = Modifier.testTag("interval_$m"),
+                            )
+                        }
+                    }
+                }
+                switchRow("Wi‑Fi only", app.unmeteredOnly, "Background updates wait for an unmetered network") { v ->
+                    scope.launch { store.updateApp { it.copy(unmeteredOnly = v) }; RefreshWorker.scheduleNow(ctx) }
+                }
+            }
+
+            SettingsGroup("Forecast source") {
+                choiceRow("Provider", listOf(ProviderPref.GOOGLE to "Google", ProviderPref.OPEN_METEO to "Open-Meteo"), app.provider, "provider") { p ->
+                    scope.launch { store.updateApp { it.copy(provider = p) }; refresh(true) }
+                }
+                if (app.provider == ProviderPref.GOOGLE) {
+                    customRow { ApiKeyField(app) { k -> scope.launch { store.updateApp { it.copy(googleApiKey = k) }; refresh(true) } } }
+                }
+            }
+
+            Text(
+                if (app.provider == ProviderPref.GOOGLE)
+                    "Google is the forecast Pixel Weather and At a Glance use. It needs a Google Maps Platform key with the Weather API enabled; without one, Open-Meteo is used. Updates are batched by Android, skipped on low battery and never use GPS."
+                else "Open-Meteo combines national weather services (ECMWF, DWD, NOAA). Data CC BY 4.0. Updates are batched by Android, skipped on low battery and never use GPS.",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp),
+            )
+            Spacer(Modifier.height(16.dp).navigationBarsPadding())
         }
     }
 }
@@ -285,23 +271,20 @@ private fun HomeScreen() {
 @Composable
 private fun ApiKeyField(app: AppSettings, onSave: (String) -> Unit) {
     var key by remember(app.googleApiKey) { mutableStateOf(app.googleApiKey) }
-    val builtIn = BuildConfig.GOOGLE_WEATHER_KEY.isNotBlank()
-    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-        OutlinedTextField(
-            value = key, onValueChange = { key = it.trim() },
-            label = { Text(if (builtIn) "API key (built-in key in use)" else "Google Maps Platform API key") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth().testTag("api_key"),
-        )
-        Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.End) {
-            val ctx = LocalContext.current
-            TextButton(onClick = {
-                ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://developers.google.com/maps/documentation/weather/get-api-key")))
-            }) { Text("Get a key") }
-            OutlinedButton(onClick = { onSave(key) }, enabled = key != app.googleApiKey, modifier = Modifier.testTag("api_key_save")) { Text("Save") }
-        }
+    val ctx = LocalContext.current
+    OutlinedTextField(
+        value = key, onValueChange = { key = it.trim() },
+        label = { Text(if (BuildConfig.GOOGLE_WEATHER_KEY.isNotBlank()) "API key (built-in key active)" else "Google Maps Platform API key") },
+        singleLine = true, visualTransformation = PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth().testTag("api_key"),
+    )
+    Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.End) {
+        TextButton(onClick = {
+            ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://developers.google.com/maps/documentation/weather/get-api-key")))
+        }) { Text("Get a key") }
+        TextButton(onClick = { onSave(key) }, enabled = key != app.googleApiKey, modifier = Modifier.testTag("api_key_save")) { Text("Save") }
     }
 }
 

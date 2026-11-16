@@ -34,7 +34,8 @@ enum class ForecastMode { HOURLY, DAILY, NONE }
 enum class Palette { DYNAMIC, BLUE, TEAL, GREEN, AMBER, ROSE, VIOLET, MONO }
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 enum class BgTone { SURFACE, PRIMARY, SECONDARY }
-enum class IconStyle { COLOR, THEMED }
+/** GOOGLE = Google's weather art (as in Pixel Weather); SYMBOLS = Material Symbols tinted with the accent. */
+enum class IconStyle { GOOGLE, SYMBOLS }
 enum class TapAction { PIXEL_WEATHER, APP, REFRESH, NONE }
 
 @Serializable
@@ -48,7 +49,7 @@ data class WidgetConfig(
     val bgTone: BgTone = BgTone.SURFACE,
     /** 0..100 in steps of 10. */
     val opacity: Int = 100,
-    val iconStyle: IconStyle = IconStyle.COLOR,
+    val iconStyle: IconStyle = IconStyle.GOOGLE,
     val showLocation: Boolean = true,
     val showHighLow: Boolean = true,
     val showCondition: Boolean = true,

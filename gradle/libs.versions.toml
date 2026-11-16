@@ -3,6 +3,8 @@ agp = "9.5.1"
 kotlin = "2.4.21"
 glance = "1.2.0"
 composeBom = "2026.09.00"
+# 1.5 brings the Material 3 Expressive components (segmented lists, expressive theme) used by Pixel apps.
+material3 = "1.5.0-rc01"
 work = "2.11.2"
 datastore = "1.2.1"
 playLocation = "21.4.0"
@@ -21,7 +23,7 @@ androidx-core = { module = "androidx.core:core-ktx", version.ref = "core" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
-compose-material3 = { module = "androidx.compose.material3:material3" }
+compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-icons = { module = "androidx.compose.material:material-icons-extended" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }

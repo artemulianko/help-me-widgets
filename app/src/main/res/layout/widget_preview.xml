@@ -15,14 +15,14 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="google-sans"
+            android:fontFamily="sans-serif"
             android:text="Mountain View"
             android:textColor="@color/nim_auto_on_surface"
             android:textSize="13sp" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="google-sans"
+            android:fontFamily="sans-serif"
             android:text="21°"
             android:textColor="@color/nim_auto_on_surface"
             android:textSize="44sp" />
@@ -37,5 +37,5 @@
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:importantForAccessibility="no"
-        android:src="@drawable/ic_w_partly_cloudy_day" />
+        android:src="@drawable/wx_partly_cloudy" />
 </LinearLayout>

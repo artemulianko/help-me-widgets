@@ -18,9 +18,6 @@ ROLES_TONAL = {  # API 31-33 approximations from the system tonal palettes
     "primary":                 ("system_accent1_600",  "system_accent1_200"),
     "tertiary":                ("system_accent3_600",  "system_accent3_200"),
     "outline_variant":         ("system_neutral2_200", "system_neutral2_700"),
-    "icon_cloud":              ("system_neutral2_100", "system_neutral2_100"),
-    "icon_shade":              ("system_neutral2_400", "system_neutral2_300"),
-    "icon_dark":               ("system_neutral2_600", "system_neutral2_500"),
 }
 EXACT_34 = ["surface_container", "primary_container", "on_primary_container", "secondary_container",
             "on_secondary_container", "on_surface", "on_surface_variant", "primary", "tertiary", "outline_variant"]

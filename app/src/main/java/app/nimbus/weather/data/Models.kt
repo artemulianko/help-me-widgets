@@ -2,11 +2,16 @@ package app.nimbus.weather.data
 
 import kotlinx.serialization.Serializable
 
-/** Normalised condition set shared by every provider. */
+/**
+ * Normalised condition set shared by every provider. Granularity mirrors Google's weather
+ * icon set, so a Google forecast renders with exactly the icon Pixel Weather shows.
+ */
 @Serializable
 enum class Condition {
-    CLEAR, MOSTLY_CLEAR, PARTLY_CLOUDY, MOSTLY_CLOUDY, CLOUDY, FOG,
-    DRIZZLE, RAIN, HEAVY_RAIN, SNOW, HEAVY_SNOW, SLEET, HAIL, THUNDERSTORM, WINDY,
+    CLEAR, MOSTLY_CLEAR, PARTLY_CLOUDY, MOSTLY_CLOUDY, CLOUDY, FOG, WINDY,
+    DRIZZLE, SCATTERED_SHOWERS, RAIN, HEAVY_RAIN,
+    FLURRIES, SNOW, SCATTERED_SNOW, HEAVY_SNOW, BLOWING_SNOW, WINTRY_MIX, HAIL,
+    THUNDERSTORM, SCATTERED_THUNDERSTORMS,
 }
 
 @Serializable

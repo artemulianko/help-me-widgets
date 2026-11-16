@@ -22,8 +22,13 @@
     <string name="c_heavy_rain">Heavy rain</string>
     <string name="c_snow">Snow</string>
     <string name="c_heavy_snow">Heavy snow</string>
-    <string name="c_sleet">Sleet</string>
     <string name="c_hail">Hail</string>
     <string name="c_thunderstorm">Thunderstorms</string>
     <string name="c_windy">Windy</string>
+    <string name="c_scattered_showers">Scattered showers</string>
+    <string name="c_flurries">Flurries</string>
+    <string name="c_scattered_snow">Snow showers</string>
+    <string name="c_blowing_snow">Blowing snow</string>
+    <string name="c_wintry_mix">Wintry mix</string>
+    <string name="c_scattered_thunderstorms">Scattered thunderstorms</string>
 </resources>
