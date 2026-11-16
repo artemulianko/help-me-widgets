@@ -20,7 +20,7 @@ object Http {
                 readTimeout = 15_000
                 setRequestProperty("Accept", "application/json")
                 setRequestProperty("Accept-Encoding", "gzip")
-                setRequestProperty("User-Agent", "NimbusWeather/1.0 (Android widget)")
+                setRequestProperty("User-Agent", "HelpMeWeather/0.1 (Android widget)")
                 headers.forEach { (k, v) -> setRequestProperty(k, v) }
             }
             try {

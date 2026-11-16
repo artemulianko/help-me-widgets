@@ -88,7 +88,7 @@ class ConfigActivity : ComponentActivity() {
         setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId))
         val store = Store(this)
         setContent {
-            NimbusTheme {
+            HelpMeWeatherTheme {
                 val app by store.app.collectAsState(AppSettings())
                 var loaded by remember { mutableStateOf<WidgetConfig?>(null) }
                 LaunchedEffect(Unit) { loaded = store.widgetNow(widgetId) }

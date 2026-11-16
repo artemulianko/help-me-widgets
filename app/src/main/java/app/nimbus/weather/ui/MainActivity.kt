@@ -91,7 +91,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         lifecycleScope.launch { publishPickerPreviews(this@MainActivity) }
-        setContent { NimbusTheme { HomeScreen() } }
+        setContent { HelpMeWeatherTheme { HomeScreen() } }
     }
 }
 
@@ -210,7 +210,7 @@ private fun HomeScreen() {
 
             SettingsGroup("Widgets") {
                 if (widgets.isEmpty()) {
-                    infoRow("No widgets yet", "Touch & hold the home screen, then Widgets → Nimbus Weather")
+                    infoRow("No widgets yet", "Touch & hold the home screen, then Widgets → Help Me Weather")
                 }
                 widgets.forEachIndexed { i, (id, c) ->
                     navRow("Widget ${i + 1}", c.location?.name ?: "Current location", tag = "widget_row_$i") {

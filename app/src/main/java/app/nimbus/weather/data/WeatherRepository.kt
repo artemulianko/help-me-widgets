@@ -5,7 +5,7 @@ import android.util.Log
 import app.nimbus.weather.widget.WidgetRenderer
 
 object WeatherRepository {
-    private const val TAG = "NimbusRepo"
+    private const val TAG = "HelpMeWeather"
 
     /** Package + signing-cert SHA-1 headers for Google API key app restrictions. */
     @Volatile private var appHeaders: Map<String, String>? = null

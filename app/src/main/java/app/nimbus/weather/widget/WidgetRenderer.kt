@@ -21,7 +21,7 @@ import kotlinx.coroutines.sync.withLock
  * AppWidgetManager: one short render, no job, no lingering wake lock.
  */
 object WidgetRenderer {
-    private const val TAG = "NimbusRender"
+    private const val TAG = "HelpMeWeatherRender"
     private val lock = Mutex() // compose() must not run concurrently for the same id
 
     fun ids(ctx: Context): IntArray =

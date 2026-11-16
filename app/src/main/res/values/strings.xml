@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Nimbus Weather</string>
+    <string name="app_name">Help Me Weather</string>
     <string name="widget_name">Weather</string>
     <string name="widget_description">Conditions and hourly forecast, in your colors</string>
     <string name="today">Today</string>

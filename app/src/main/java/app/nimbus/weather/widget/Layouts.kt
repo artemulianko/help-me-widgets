@@ -118,7 +118,7 @@ fun WidgetLayouts(s: WidgetState, c: WColors) {
         w == null -> if (s.refreshing) Loading(c) else Message(c, R.drawable.ms_refresh, context.getString(R.string.tap_to_load))
         else -> {
             val x = Scope(context, s, c, w, Fmt(context, s.app, w.zoneId), size.width.value, size.height.value)
-            if (app.nimbus.weather.BuildConfig.DEBUG) android.util.Log.d("NimbusWidget", "layout for ${x.width}x${x.height}dp")
+            if (app.nimbus.weather.BuildConfig.DEBUG) android.util.Log.d("HelpMeWeatherWidget", "layout for ${x.width}x${x.height}dp")
             // Breakpoints by grid span. Pixel cells are ~97dp wide and ~105dp tall, so
             // 1 row < 130dp, 2 rows < 280dp, 2 columns < 270dp.
             when {

@@ -27,7 +27,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:enableOnBackInvokedCallback="true"
-        android:theme="@style/Theme.Nimbus"
+        android:theme="@style/Theme.HelpMeWeather"
         tools:targetApi="37">
 
         <activity

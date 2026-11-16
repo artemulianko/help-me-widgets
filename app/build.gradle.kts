@@ -80,12 +80,12 @@ dependencies {
     androidTestImplementation(libs.work.testing)
 }
 
-// Every release build lands in <repo>/releases as nimbus-weather-<version>.apk (git-ignored;
+// Every release build lands in <repo>/releases as help-me-weather-<version>.apk (git-ignored;
 // publish it via GitHub Releases).
 val appVersion = android.defaultConfig.versionName
 val copyReleaseApk = tasks.register<Copy>("copyReleaseApk") {
     from(layout.buildDirectory.dir("outputs/apk/release")) { include("*.apk") }
     into(rootProject.layout.projectDirectory.dir("releases"))
-    rename(".*\\.apk", "nimbus-weather-$appVersion.apk")
+    rename(".*\\.apk", "help-me-weather-$appVersion.apk")
 }
 tasks.matching { it.name == "assembleRelease" }.configureEach { finalizedBy(copyReleaseApk) }

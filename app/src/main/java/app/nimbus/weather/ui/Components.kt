@@ -87,7 +87,7 @@ private fun Typography.withFamily(f: FontFamily?): Typography {
 }
 
 @Composable
-fun NimbusTheme(content: @Composable () -> Unit) {
+fun HelpMeWeatherTheme(content: @Composable () -> Unit) {
     val ctx = LocalContext.current
     val dark = isSystemInDarkTheme()
     val scheme = if (dark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)

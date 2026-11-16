@@ -1,24 +1,24 @@
-# Nimbus Weather
+# Help Me Weather
 
 **The weather widget Pixel should have shipped with.**
 
-The stock Pixel weather options are a one-line At a Glance and a widget you can barely customize. iOS and One UI have had proper weather widgets for years, with the temperature up front and a clean hourly row. Nimbus brings that layout to Pixel and builds it the Pixel way: Material 3, your wallpaper colors, Google's own weather icons, and Google's forecast, so the widget agrees with Pixel Weather and At a Glance.
+The stock Pixel weather options are a one-line At a Glance and a widget you can barely customize. iOS and One UI have had proper weather widgets for years, with the temperature up front and a clean hourly row. Help Me Weather brings that layout to Pixel and builds it the Pixel way: Material 3, your wallpaper colors, Google's own weather icons, and Google's forecast, so the widget agrees with Pixel Weather and At a Glance.
 
 <p align="center">
-  <img src="docs/screenshots/hero.png" alt="Nimbus Weather 4×2 widget in light and dark mode" width="900">
+  <img src="docs/screenshots/hero.png" alt="Help Me Weather 4×2 widget in light and dark mode" width="900">
 </p>
 
 > **It's just a widget.** No notifications (the permission is removed from the manifest), no ads, no analytics, no accounts. Location is optional.
 
 ## Download
 
-**[⬇ Download Nimbus Weather 0.1.0 (APK)](https://github.com/artemulianko/help-me-weather/releases/download/v0.1.0/nimbus-weather-0.1.0.apk)** · Android 12+ · 4.3 MB · [release notes](https://github.com/artemulianko/help-me-weather/releases/tag/v0.1.0)
+**[⬇ Download Help Me Weather 0.1.0 (APK)](https://github.com/artemulianko/help-me-weather/releases/download/v0.1.0/help-me-weather-0.1.0.apk)** · Android 12+ · 4.3 MB · [release notes](https://github.com/artemulianko/help-me-weather/releases/tag/v0.1.0)
 
-SHA-256 `c81bf47a1524fb563842c42effb92b9a2c1c4751e3847430398269cad3c2b875`
+SHA-256 `f1e96133955c3fff13683ba2250916a46a326f8fb15ebf6f3d49abdcac23f7ba`
 
 1. Download the APK on your phone and open it (allow "Install unknown apps" for your browser when asked).
-2. Open **Nimbus Weather** once and allow approximate location, or skip that and pick a city.
-3. Long-press the home screen → **Widgets** → **Nimbus Weather** → drag it out. Long-press the widget → **Customize** to change it.
+2. Open **Help Me Weather** once and allow approximate location, or skip that and pick a city.
+3. Long-press the home screen → **Widgets** → **Help Me Weather** → drag it out. Long-press the widget → **Customize** to change it.
 
 ## Why it fits a Pixel
 
@@ -75,7 +75,7 @@ Designed to be invisible in your battery stats. Measured on an Android 17 emulat
 How:
 
 - **WorkManager only.** Android batches refreshes with other apps' jobs, respects Doze and App Standby, waits for a network, and **skips background refreshes on low battery**. Manual refresh always works.
-- **No Glance sessions.** Jetpack Glance normally keeps a background job (and a wakelock) alive for about 45 s after every widget update. Nimbus renders straight to RemoteViews instead, so each update is a single short render.
+- **No Glance sessions.** Jetpack Glance normally keeps a background job (and a wakelock) alive for about 45 s after every widget update. Help Me Weather renders straight to RemoteViews instead, so each update is a single short render.
 - **Location without GPS.** Approximate (cell/Wi‑Fi) location only, reusing Android's cached fix when it's recent. No location listener ever stays registered.
 - **Fetches only what's shown.** One request set per location, cached and shared by every widget; nothing is downloaded while the data is still fresh.
 - **No notifications, no foreground service.** WorkManager's foreground-service path is stripped from the manifest.
@@ -95,10 +95,10 @@ Google only offers its weather data to other apps through the [Google Maps Platf
 3. Create a key in **APIs & Services → Credentials → Create credentials → API key**.
 4. **Restrict the key** (recommended), so it's useless if it ever leaks:
    - *API restrictions*: Weather API only.
-   - *Application restrictions → Android apps*: package `app.nimbus.weather`, SHA-1 `F1:85:1D:9D:C0:E3:01:FB:77:F9:81:66:11:B9:81:2D:21:59:9B:32` (the release signing certificate; Nimbus sends these on every request).
-5. In Nimbus, go to **Forecast source → Google**, paste the key, and tap **Save**.
+   - *Application restrictions → Android apps*: package `app.nimbus.weather`, SHA-1 `F1:85:1D:9D:C0:E3:01:FB:77:F9:81:66:11:B9:81:2D:21:59:9B:32` (the release signing certificate; the app sends these on every request).
+5. In Help Me Weather, go to **Forecast source → Google**, paste the key, and tap **Save**.
 
-The key is stored only on your phone. If Google is unreachable or the key is wrong, Nimbus falls back to Open-Meteo, so the widget never goes blank.
+The key is stored only on your phone. If Google is unreachable or the key is wrong, Help Me Weather falls back to Open-Meteo, so the widget never goes blank.
 
 ## Build from source
 
@@ -106,7 +106,7 @@ Requirements: JDK 21, Android SDK with platform 37, and an emulator or device ru
 
 ```bash
 ./gradlew assembleDebug                 # debug APK
-./gradlew assembleRelease               # minified release → releases/nimbus-weather-<version>.apk
+./gradlew assembleRelease               # minified release → releases/help-me-weather-<version>.apk
 ./gradlew testDebugUnitTest             # parsing and mapping unit tests
 ./gradlew connectedDebugAndroidTest     # on-device: live network, every widget size and config rendered, UI flow
 ```
