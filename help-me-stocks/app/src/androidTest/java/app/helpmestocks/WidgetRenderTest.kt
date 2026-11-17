@@ -106,6 +106,21 @@ class WidgetRenderTest {
         }
     }
 
+    /** A manual refresh re-renders with the spinner first; every layout must survive it. */
+    @Test fun refreshingStateRenders() {
+        val base = WidgetConfig()
+        val cfgs = mapOf(
+            "default" to base,
+            "single" to base.copy(content = Content.SINGLE, single = "GOOGL"),
+            "no_header_with_refresh" to base.copy(showHeader = false, showRefresh = true),
+            "dynamic" to base.copy(palette = Palette.DYNAMIC),
+            "transparent" to base.copy(opacity = 0),
+        )
+        cfgs.forEach { (cn, c) ->
+            sizes.forEach { (sn, s) -> render("refreshing_${cn}_$sn", SampleData.state(c).copy(refreshing = true), s) }
+        }
+    }
+
     @Test fun edgeStatesRender() {
         render("empty_watchlist", WidgetState(AppSettings(watchlist = emptyList()), WidgetConfig(), SampleData.quotes(emptyList()), false, 0), sizes.getValue("4x2"))
         render("no_quotes", WidgetState(AppSettings(), WidgetConfig(), app.helpmestocks.data.QuoteSet(), false, 0), sizes.getValue("4x2"))
