@@ -61,8 +61,6 @@ data class WidgetConfig(
     val showFeelsLike: Boolean = false,
     val showRefresh: Boolean = true,
     val showUpdated: Boolean = false,
-    /** Follow Pixel At a Glance's high-contrast style; overrides palette/theme/background/opacity. */
-    val matchGlance: Boolean = false,
     val tapAction: TapAction = TapAction.PIXEL_WEATHER,
 )
 

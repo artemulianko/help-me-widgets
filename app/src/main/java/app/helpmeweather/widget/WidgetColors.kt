@@ -1,9 +1,5 @@
 package app.helpmeweather.widget
 
-import android.app.WallpaperColors
-import android.app.WallpaperManager
-import android.content.Context
-import app.helpmeweather.data.IconTone
 import androidx.compose.ui.graphics.Color
 import androidx.glance.color.ColorProvider
 import androidx.glance.unit.ColorProvider
@@ -18,33 +14,7 @@ class WColors(
     val textVariant: ColorProvider,
     val accent: ColorProvider,
     val track: ColorProvider,
-    /** Forces light/dark icon art (At a Glance mode); null = derive from the theme setting. */
-    val iconTone: IconTone? = null,
 )
-
-/**
- * Pixel At a Glance "High contrast background": a translucent dark-grey backdrop with white
- * text, or, on light wallpapers, a light backdrop with dark text. Like the launcher, the choice
- * follows the wallpaper's "supports dark text" hint rather than the system dark theme.
- */
-fun glanceColors(ctx: Context): WColors {
-    val lightWallpaper = runCatching {
-        val hints = WallpaperManager.getInstance(ctx).getWallpaperColors(WallpaperManager.FLAG_SYSTEM)?.colorHints ?: 0
-        hints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT != 0
-    }.getOrDefault(false)
-    return if (lightWallpaper) {
-        val ink = Color(0xFF1F1F1F)
-        WColors(
-            bg = ColorProvider(Color(0xCCF8F9FA)), text = ColorProvider(ink), textVariant = ColorProvider(ink.copy(alpha = 0.72f)),
-            accent = ColorProvider(ink), track = ColorProvider(ink.copy(alpha = 0.18f)), iconTone = IconTone.LIGHT,
-        )
-    } else {
-        WColors(
-            bg = ColorProvider(Color(0x8C202124)), text = ColorProvider(Color.White), textVariant = ColorProvider(Color.White.copy(alpha = 0.78f)),
-            accent = ColorProvider(Color.White), track = ColorProvider(Color.White.copy(alpha = 0.25f)), iconTone = IconTone.DARK,
-        )
-    }
-}
 
 /** A static (non-wallpaper) scheme for one brightness. */
 data class StaticScheme(
@@ -82,8 +52,7 @@ object Palettes {
     }
 }
 
-fun widgetColors(ctx: Context, cfg: WidgetConfig): WColors {
-    if (cfg.matchGlance) return glanceColors(ctx)
+fun widgetColors(cfg: WidgetConfig): WColors {
     val theme = cfg.themeMode.ordinal               // 0 auto, 1 light, 2 dark
     val tone = cfg.bgTone.ordinal                   // 0 surface, 1 primary, 2 secondary
     val opacity = cfg.opacity.coerceIn(0, 100)

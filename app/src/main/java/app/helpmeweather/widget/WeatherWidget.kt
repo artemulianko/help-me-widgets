@@ -86,7 +86,7 @@ class WeatherWidget : GlanceAppWidget() {
 @Composable
 fun WeatherContent(s: WidgetState) {
     val ctx = androidx.glance.LocalContext.current
-    val colors = widgetColors(ctx, s.cfg)
+    val colors = widgetColors(s.cfg)
     val tap = tapAction(ctx, s)
     var mod = GlanceModifier.fillMaxSize()
         .appWidgetBackground()

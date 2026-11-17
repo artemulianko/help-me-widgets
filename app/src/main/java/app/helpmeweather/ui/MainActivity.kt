@@ -130,7 +130,7 @@ private fun HomeScreen() {
         hibernationExempt = ctx.packageManager.isAutoRevokeWhitelisted
         tick++
         refresh(false) // cheap no-op when fresh; refreshes location while we have foreground access
-        // Wallpaper changes don't notify widget apps; re-render so "Match At a Glance" picks it up.
+        // Cheap re-render on open so widgets reflect any setting or system change immediately.
         scope.launch { WidgetRenderer.renderAll(ctx) }
     }
     LaunchedEffect(tick) { widgets = WeatherRepository.widgetIds(ctx).map { it to store.widgetNow(it) } }

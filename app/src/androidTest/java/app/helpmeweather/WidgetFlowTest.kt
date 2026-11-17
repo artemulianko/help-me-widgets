@@ -19,6 +19,7 @@ import app.helpmeweather.ui.ConfigActivity
 import app.helpmeweather.ui.LogsActivity
 import app.helpmeweather.ui.MainActivity
 import app.helpmeweather.widget.WeatherWidgetReceiver
+import app.helpmeweather.widget.WidgetRenderer
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -106,6 +107,8 @@ class WidgetFlowTest {
     private fun findWidgetRefresh(): androidx.test.uiautomator.UiObject2? = device.findObject(By.desc("Refresh"))
 
     private fun tapWidgetRefresh() {
+        // Tests share the widget; make sure its refresh button is enabled and rendered.
+        runBlocking { ids().forEach { id -> Store(ctx).updateWidget(id) { it.copy(showRefresh = true) } }; WidgetRenderer.renderAll(ctx) }
         device.pressHome(); device.waitForIdle(); Thread.sleep(1_000)
         var btn = findWidgetRefresh()
         repeat(4) {
@@ -151,19 +154,19 @@ class WidgetFlowTest {
         assertTrue("refresh ran by itself once back online", fetch != null)
     }
 
-    @Test fun editorSavesMatchAtAGlance() {
+    @Test fun editorSavesRefreshButtonToggle() {
         val id = ensureWidget()
-        runBlocking { Store(ctx).updateWidget(id) { it.copy(matchGlance = false) } }
+        runBlocking { Store(ctx).updateWidget(id) { it.copy(showRefresh = true) } }
         ctx.startActivity(Intent(ctx, ConfigActivity::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
         assertTrue("editor open", device.wait(Until.hasObject(By.res("save")), 15_000))
         val scroller = device.findObject(By.scrollable(true))
-        val toggle = scroller.scrollUntil(androidx.test.uiautomator.Direction.DOWN, Until.findObject(By.res("sw_glance")))
+        val toggle = scroller.scrollUntil(androidx.test.uiautomator.Direction.DOWN, Until.findObject(By.res("sw_refresh")))
         assertTrue("toggle found", toggle != null)
         toggle.click()
         device.findObject(By.res("save")).click()
         device.wait(Until.gone(By.res("save")), 10_000)
-        assertTrue(runBlocking { Store(ctx).widgetNow(id).matchGlance })
-        runBlocking { Store(ctx).updateWidget(id) { it.copy(matchGlance = false) } }
+        assertTrue(!runBlocking { Store(ctx).widgetNow(id).showRefresh })
+        runBlocking { Store(ctx).updateWidget(id) { it.copy(showRefresh = true) }; WidgetRenderer.renderAll(ctx) }
     }
 
     @Test fun editorRejectsWidgetIdsThatAreNotOurs() {

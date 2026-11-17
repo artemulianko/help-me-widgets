@@ -93,7 +93,6 @@ class WidgetRenderTest {
             "symbols" to base.copy(iconStyle = IconStyle.SYMBOLS),
             "minimal" to base.copy(showLocation = false, showCondition = false, showHighLow = false, showRefresh = false),
             "everything" to base.copy(showFeelsLike = true, showUpdated = true),
-            "at_a_glance" to base.copy(matchGlance = true),
             "no_location_with_refresh" to base.copy(showLocation = false, showRefresh = true),
             "daily_bold" to base.copy(forecast = ForecastMode.DAILY, style = WidgetStyle.BOLD),
         )
