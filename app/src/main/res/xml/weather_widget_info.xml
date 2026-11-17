@@ -13,6 +13,6 @@
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/glance_default_loading_layout"
     android:previewLayout="@layout/widget_preview"
-    android:configure="app.nimbus.weather.ui.ConfigActivity"
+    android:configure="app.helpmeweather.ui.ConfigActivity"
     android:widgetFeatures="reconfigurable|configuration_optional"
     android:widgetCategory="home_screen|keyguard" />

@@ -70,7 +70,7 @@ Google only offers its weather data to other apps through the [Google Maps Platf
 3. Create a key in **APIs & Services → Credentials → Create credentials → API key**.
 4. **Restrict the key** (recommended), to limit what a leaked key could do:
    - *API restrictions*: Weather API only.
-   - *Application restrictions → Android apps*: package `app.nimbus.weather`, SHA-1 `F1:85:1D:9D:C0:E3:01:FB:77:F9:81:66:11:B9:81:2D:21:59:9B:32` (the release signing certificate; the app sends these on every request). This stops casual reuse, but these values are public, so a determined person who extracts your key could still send them; also set a daily quota on the key.
+   - *Application restrictions → Android apps*: package `app.helpmeweather`, SHA-1 `F1:85:1D:9D:C0:E3:01:FB:77:F9:81:66:11:B9:81:2D:21:59:9B:32` (the release signing certificate; the app sends these on every request). This stops casual reuse, but these values are public, so a determined person who extracts your key could still send them; also set a daily quota on the key.
 5. In Help Me Weather, go to **Forecast source → Google**, paste the key, and tap **Save**.
 
 The key is stored only on your phone and is excluded from backups and device transfers. If Google is unreachable or the key is wrong, Help Me Weather falls back to Open-Meteo (sending it the same rounded coordinates), so the widget never goes blank.
@@ -86,14 +86,14 @@ Requirements: JDK 21, Android SDK with platform 37, and an emulator or device ru
 ./gradlew connectedDebugAndroidTest     # on-device: live network, every widget size and config rendered, UI flow
 ```
 
-`WidgetRenderTest` renders the real widget at every size and in a matrix of configurations and saves PNGs to `/sdcard/Android/data/app.nimbus.weather/files/renders`.
+`WidgetRenderTest` renders the real widget at every size and in a matrix of configurations and saves PNGs to `/sdcard/Android/data/app.helpmeweather/files/renders`.
 
 To regenerate the icons (downloaded from Google and converted with Android's own SVG converter), run `python3 tools/import_icons.py`. To regenerate the dynamic color resources, run `python3 tools/gen_colors.py`.
 
 ### Project layout
 
 ```
-app/src/main/java/app/nimbus/weather/
+app/src/main/java/app/helpmeweather/
   data/     providers (Google, Open-Meteo), settings + cache (DataStore), location, formatting
   widget/   Glance layouts, colors, session-free renderer, receivers
   work/     WorkManager refresh scheduling

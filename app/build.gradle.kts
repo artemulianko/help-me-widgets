@@ -7,15 +7,15 @@ plugins {
 }
 
 android {
-    namespace = "app.nimbus.weather"
+    namespace = "app.helpmeweather"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "app.nimbus.weather"
+        applicationId = "app.helpmeweather"
         minSdk = 31
         targetSdk = 37
-        versionCode = 2
-        versionName = "0.1.1"
+        versionCode = 3
+        versionName = "0.1.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
     }
