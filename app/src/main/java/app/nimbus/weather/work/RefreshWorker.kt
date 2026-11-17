@@ -13,6 +13,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import app.nimbus.weather.data.AppLog
 import app.nimbus.weather.data.Store
 import app.nimbus.weather.data.WeatherRepository
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +29,8 @@ class RefreshWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ct
 
     override suspend fun doWork(): Result {
         val force = inputData.getBoolean(KEY_FORCE, false)
-        val r = WeatherRepository.refresh(applicationContext, force = force)
+        val reason = inputData.getString(KEY_REASON) ?: "scheduled"
+        val r = WeatherRepository.refresh(applicationContext, force = force, reason = reason)
         return when {
             r.isSuccess -> Result.success()
             runAttemptCount < 2 -> Result.retry()
@@ -40,6 +42,7 @@ class RefreshWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ct
         private const val PERIODIC = "nimbus-periodic"
         private const val NOW = "nimbus-now"
         private const val KEY_FORCE = "force"
+        private const val KEY_REASON = "reason"
 
         private suspend fun constraints(ctx: Context): Constraints {
             val app = Store(ctx).appNow()
@@ -56,8 +59,15 @@ class RefreshWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ct
         suspend fun scheduleNow(ctx: Context) {
             val wm = WorkManager.getInstance(ctx)
             val minutes = Store(ctx).appNow().refreshMinutes
+            val prefs = ctx.getSharedPreferences("meta", Context.MODE_PRIVATE)
+            fun logOnce(sig: String, msg: String) {
+                if (prefs.getString("sched", null) != sig) { prefs.edit().putString("sched", sig).apply(); AppLog.i(ctx, "Schedule", msg) }
+            }
             if (minutes <= 0 || WeatherRepository.widgetIds(ctx).isEmpty()) {
-                wm.cancelUniqueWork(PERIODIC); return
+                wm.cancelUniqueWork(PERIODIC)
+                if (minutes <= 0) logOnce("off", "Background refresh off (manual only)")
+                else logOnce("none", "No widgets: background refresh stopped")
+                return
             }
             val c = Constraints.Builder()
                 .setRequiredNetworkType(if (Store(ctx).appNow().unmeteredOnly) NetworkType.UNMETERED else NetworkType.CONNECTED)
@@ -71,14 +81,16 @@ class RefreshWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ct
                 .addTag(PERIODIC)
                 .build()
             wm.enqueueUniquePeriodicWork(PERIODIC, ExistingPeriodicWorkPolicy.UPDATE, req)
+            val wifi = Store(ctx).appNow().unmeteredOnly
+            logOnce("$interval/$wifi", "Background refresh every $interval min${if (wifi) " on Wi‑Fi" else ""}, skipped on low battery")
         }
 
-        fun refreshNow(ctx: Context, force: Boolean) {
+        fun refreshNow(ctx: Context, force: Boolean, reason: String = if (force) "manual" else "widget update") {
             CoroutineScope(Dispatchers.Default).launch {
                 val req = OneTimeWorkRequestBuilder<RefreshWorker>()
                     .setConstraints(constraints(ctx))
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                    .setInputData(workDataOf(KEY_FORCE to force))
+                    .setInputData(workDataOf(KEY_FORCE to force, KEY_REASON to reason))
                     .build()
                 // A forced refresh replaces a queued one; a passive one never piles up.
                 WorkManager.getInstance(ctx).enqueueUniqueWork(

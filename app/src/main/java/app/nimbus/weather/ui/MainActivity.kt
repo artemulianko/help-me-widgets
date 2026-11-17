@@ -119,7 +119,7 @@ private fun HomeScreen() {
     var tick by remember { mutableIntStateOf(0) }
 
     fun refresh(force: Boolean) = scope.launch {
-        WeatherRepository.refresh(ctx, force = force, foreground = true)
+        WeatherRepository.refresh(ctx, force = force, foreground = true, reason = if (force) "refresh in app" else "app opened")
         RefreshWorker.scheduleNow(ctx)
     }
     fun updateApp(f: (AppSettings) -> AppSettings) = scope.launch { store.updateApp(f); WidgetRenderer.renderAll(ctx) }
@@ -264,6 +264,12 @@ private fun HomeScreen() {
                 }
                 if (app.provider == ProviderPref.GOOGLE) {
                     customRow { ApiKeyField(app) { k -> scope.launch { store.updateApp { it.copy(googleApiKey = k) }; refresh(true) } } }
+                }
+            }
+
+            SettingsGroup("Diagnostics") {
+                navRow("Logs", "Refreshes, location updates and errors from the last 3 days", tag = "logs") {
+                    ctx.startActivity(Intent(ctx, LogsActivity::class.java))
                 }
             }
 

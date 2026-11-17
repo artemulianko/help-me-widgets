@@ -9,6 +9,7 @@ import android.os.Bundle
 import androidx.glance.GlanceId
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
+import app.nimbus.weather.data.AppLog
 import app.nimbus.weather.data.Store
 import app.nimbus.weather.work.RefreshWorker
 import kotlinx.coroutines.CoroutineScope
@@ -27,11 +28,12 @@ private fun BroadcastReceiver.async(block: suspend () -> Unit) {
 class WeatherWidgetReceiver : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) = async {
+        AppLog.i(context, "Widget", "System update for ${appWidgetIds.size} widget(s) (added, restored or rebooted)")
         appWidgetIds.forEach { WidgetRenderer.render(context, it) }
         // Added / restored / rebooted: ensure the schedule exists and data isn't stale.
         // Not forced, so it's a no-op when the cache is fresh.
         RefreshWorker.scheduleNow(context)
-        RefreshWorker.refreshNow(context, force = false)
+        RefreshWorker.refreshNow(context, force = false, reason = "widget update")
     }
 
     /** Resized: re-layout for the new size (no network). */
@@ -40,6 +42,7 @@ class WeatherWidgetReceiver : AppWidgetProvider() {
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) = async {
+        AppLog.i(context, "Widget", "Removed ${appWidgetIds.size} widget(s)")
         val store = Store(context)
         appWidgetIds.forEach { store.deleteWidget(it) }
     }
@@ -52,6 +55,7 @@ class WeatherWidgetReceiver : AppWidgetProvider() {
 /** Refresh button / tap-to-refresh: spinner right away, then an expedited fetch. */
 class RefreshAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        AppLog.i(context, "Widget", "Refresh tapped")
         // Only show the spinner when we're online; offline the job waits for a network and a
         // spinner would sit there indefinitely.
         val cm = context.getSystemService(android.net.ConnectivityManager::class.java)
@@ -59,7 +63,7 @@ class RefreshAction : ActionCallback {
             Store(context).setRefreshing(true)
             WidgetRenderer.renderAll(context)
         }
-        RefreshWorker.refreshNow(context, force = true)
+        RefreshWorker.refreshNow(context, force = true, reason = "refresh button")
     }
 }
 

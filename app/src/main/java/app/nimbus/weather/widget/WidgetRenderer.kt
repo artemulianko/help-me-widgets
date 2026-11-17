@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetProviderInfo
 import android.content.ComponentName
 import android.content.Context
 import android.os.Build
+import app.nimbus.weather.data.AppLog
 import android.util.Log
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.compose
@@ -27,7 +28,11 @@ object WidgetRenderer {
     fun ids(ctx: Context): IntArray =
         AppWidgetManager.getInstance(ctx).getAppWidgetIds(ComponentName(ctx, WeatherWidgetReceiver::class.java))
 
-    suspend fun renderAll(ctx: Context) = ids(ctx).forEach { render(ctx, it) }
+    suspend fun renderAll(ctx: Context) {
+        val ids = ids(ctx)
+        ids.forEach { render(ctx, it) }
+        if (ids.isNotEmpty()) AppLog.i(ctx, "Widget", "Rendered ${ids.size} widget(s)")
+    }
 
     suspend fun render(ctx: Context, appWidgetId: Int) = lock.withLock {
         runCatching {
@@ -39,7 +44,7 @@ object WidgetRenderer {
             // so the host can switch layouts without waking us.
             val views = WeatherWidget().compose(ctx, glanceId, options)
             mgr.updateAppWidget(appWidgetId, views)
-        }.onFailure { Log.w(TAG, "render $appWidgetId failed", it) }
+        }.onFailure { AppLog.e(ctx, "Widget", "Render of widget $appWidgetId failed", it) }
     }
 
     /** Generated widget-picker previews (Android 15+), from sample data. */

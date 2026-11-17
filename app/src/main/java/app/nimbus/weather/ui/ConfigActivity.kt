@@ -63,6 +63,8 @@ import app.nimbus.weather.data.Locations
 import app.nimbus.weather.data.Place
 import app.nimbus.weather.data.Store
 import app.nimbus.weather.data.TapAction
+import app.nimbus.weather.data.TempUnit
+import app.nimbus.weather.data.TimeFormat
 import app.nimbus.weather.data.ThemeMode
 import app.nimbus.weather.data.WeatherData
 import app.nimbus.weather.data.WeatherRepository
@@ -116,6 +118,7 @@ fun WidgetEditor(initial: WidgetConfig, app: AppSettings, store: Store, onClose:
     var cfg by remember { mutableStateOf(initial) }
     var sizeIdx by remember { mutableIntStateOf(2) }
     val ctx = LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     val place: Place? = cfg.location ?: app.deviceLocation
     val cached by remember(place?.key) { store.weather(place) }.collectAsState(null)
     var fetched by remember { mutableStateOf<WeatherData?>(null) }
@@ -212,8 +215,17 @@ fun WidgetEditor(initial: WidgetConfig, app: AppSettings, store: Store, onClose:
                     ) { cfg = cfg.copy(tapAction = it) }
                 }
 
+                SettingsGroup("Units · all widgets") {
+                    choiceRow("Temperature", listOf(TempUnit.SYSTEM to "Auto", TempUnit.CELSIUS to "°C", TempUnit.FAHRENHEIT to "°F"), app.tempUnit, "e_unit") { u ->
+                        scope.launch { store.updateApp { it.copy(tempUnit = u) }; WidgetRenderer.renderAll(ctx) }
+                    }
+                    choiceRow("Time", listOf(TimeFormat.SYSTEM to "Auto", TimeFormat.H12 to "12-hour", TimeFormat.H24 to "24-hour"), app.timeFormat, "e_time") { t ->
+                        scope.launch { store.updateApp { it.copy(timeFormat = t) }; WidgetRenderer.renderAll(ctx) }
+                    }
+                }
+
                 SettingsGroup {
-                    navRow("Units, data source and updates", "Shared by all widgets", R.drawable.ms_refresh) {
+                    navRow("Data source and updates", "Shared by all widgets", R.drawable.ms_refresh) {
                         ctx.startActivity(Intent(ctx, MainActivity::class.java))
                     }
                 }

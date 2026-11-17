@@ -20,6 +20,8 @@ object WeatherRepository {
         }.getOrDefault(emptyMap())
     }
 
+    private fun providerName(s: WeatherSource) = if (s is GoogleWeatherSource) "Google" else "Open-Meteo"
+
     fun sourceFor(app: AppSettings): Pair<WeatherSource, WeatherSource?> {
         val key = app.googleApiKey
         return if (app.provider == ProviderPref.GOOGLE && key.isNotBlank()) {
@@ -36,8 +38,9 @@ object WeatherRepository {
      * when its cache is older than ~75% of the refresh interval, unless [force] is set, so
      * overlapping triggers never cost extra network or battery.
      */
-    suspend fun refresh(ctx: Context, force: Boolean, foreground: Boolean = false): Result<Unit> {
+    suspend fun refresh(ctx: Context, force: Boolean, foreground: Boolean = false, reason: String = "scheduled"): Result<Unit> {
         init(ctx)
+        val started = System.currentTimeMillis()
         val store = Store(ctx)
         // Spinner only for user-initiated refreshes; background refreshes cost a single render.
         if (force) {
@@ -48,6 +51,7 @@ object WeatherRepository {
         try {
             var app = store.appNow()
             val configs = widgetIds(ctx).map { store.widgetNow(it) }
+            AppLog.i(ctx, "Refresh", "Started ($reason${if (force) ", forced" else ""}) · ${configs.size} widget(s)")
             val needsDevice = configs.isEmpty() || configs.any { it.location == null }
 
             // Location: only when something uses it, and only when the OS lets us (bg permission
@@ -58,10 +62,19 @@ object WeatherRepository {
             ) {
                 // Known location → wait at most a few seconds for a better fix, so a manual refresh stays snappy.
                 val timeout = if (app.deviceLocation != null) 5_000L else 25_000L
-                runCatching { Locations.devicePlace(ctx, timeout) }.getOrNull()?.let { p ->
+                val p = runCatching { Locations.devicePlace(ctx, timeout) }.getOrNull()
+                if (p != null) {
                     store.updateApp { it.copy(deviceLocation = p, deviceLocationAt = System.currentTimeMillis()) }
                     app = store.appNow()
+                    AppLog.i(ctx, "Location", "Updated to ${p.name}")
+                } else {
+                    AppLog.w(ctx, "Location", "No fix available; using ${app.deviceLocation?.name ?: "nothing yet"}")
                 }
+            } else if (needsDevice && app.deviceLocation != null && locStale && !foreground && !Locations.hasBackground(ctx)) {
+                AppLog.i(ctx, "Location", "Kept ${app.deviceLocation?.name} (no background location permission)")
+            }
+            if (needsDevice && app.deviceLocation == null && configs.all { it.location == null }) {
+                AppLog.w(ctx, "Location", "No location yet: open the app to allow location or pick a city")
             }
 
             val places = buildList {
@@ -75,23 +88,33 @@ object WeatherRepository {
             for (place in places) {
                 val cached = store.weatherNow(place)
                 val fresh = cached != null && System.currentTimeMillis() - cached.fetchedAt < maxAge
-                if (fresh && !force && cached.place.name == place.name) continue
+                if (fresh && !force && cached.place.name == place.name) {
+                    AppLog.i(ctx, "Fetch", "${place.name}: cache still fresh, skipped")
+                    continue
+                }
+                val t0 = System.currentTimeMillis()
                 val data = runCatching { primary.fetch(place) }.recoverCatching { e ->
-                    Log.w(TAG, "primary source failed for ${place.name}", e)
+                    AppLog.w(ctx, "Fetch", "${place.name}: ${providerName(primary)} failed, falling back to Open-Meteo", e)
                     error = e.message
                     fallback?.fetch(place) ?: throw e
                 }.onFailure { e ->
-                    Log.w(TAG, "all sources failed for ${place.name}", e)
+                    AppLog.e(ctx, "Fetch", "${place.name}: all sources failed", e)
                     error = e.message ?: e.javaClass.simpleName
                 }.getOrNull() ?: continue
                 store.putWeather(data.copy(place = place))
                 changed = true
+                AppLog.i(
+                    ctx, "Fetch",
+                    "${place.name}: ${if (data.source == Provider.GOOGLE) "Google" else "Open-Meteo"} · " +
+                        "${"%.1f".format(data.current.tempC)}°C ${data.current.condition.name.lowercase().replace('_', ' ')} · ${System.currentTimeMillis() - t0} ms",
+                )
             }
             store.pruneWeather(places.map { it.key }.toSet() + listOfNotNull(app.deviceLocation?.key))
             store.setError(error)
+            AppLog.i(ctx, "Refresh", "Done in ${System.currentTimeMillis() - started} ms${if (error != null) " (with errors)" else ""}")
             return if (error == null || places.isNotEmpty()) Result.success(Unit) else Result.failure(Exception(error))
         } catch (e: Exception) {
-            Log.e(TAG, "refresh failed", e)
+            AppLog.e(ctx, "Refresh", "Failed", e)
             store.setError(e.message)
             return Result.failure(e)
         } finally {
