@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Help Me Weather</string>
+    <string name="widget_name">Weather</string>
+    <string name="widget_description">Conditions and hourly forecast, in your colors</string>
+    <string name="today">Today</string>
+    <string name="now">Now</string>
+    <string name="hi_lo">H:%1$s L:%2$s</string>
+    <string name="feels_like">Feels %1$s</string>
+    <string name="refresh">Refresh</string>
+    <string name="offline">Offline</string>
+    <string name="tap_to_set_location">Tap to set location</string>
+    <string name="tap_to_load">Tap to load weather</string>
+    <string name="c_clear">Clear</string>
+    <string name="c_mostly_clear">Mostly clear</string>
+    <string name="c_partly_cloudy">Partly cloudy</string>
+    <string name="c_mostly_cloudy">Mostly cloudy</string>
+    <string name="c_cloudy">Cloudy</string>
+    <string name="c_fog">Fog</string>
+    <string name="c_drizzle">Light rain</string>
+    <string name="c_rain">Rain</string>
+    <string name="c_heavy_rain">Heavy rain</string>
+    <string name="c_snow">Snow</string>
+    <string name="c_heavy_snow">Heavy snow</string>
+    <string name="c_hail">Hail</string>
+    <string name="c_thunderstorm">Thunderstorms</string>
+    <string name="c_windy">Windy</string>
+    <string name="c_scattered_showers">Scattered showers</string>
+    <string name="c_flurries">Flurries</string>
+    <string name="c_scattered_snow">Snow showers</string>
+    <string name="c_blowing_snow">Blowing snow</string>
+    <string name="c_wintry_mix">Wintry mix</string>
+    <string name="c_scattered_thunderstorms">Scattered thunderstorms</string>
+</resources>
