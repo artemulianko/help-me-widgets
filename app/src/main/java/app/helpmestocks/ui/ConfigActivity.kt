@@ -206,13 +206,14 @@ fun WidgetEditor(initial: WidgetConfig, app: AppSettings, store: Store, onClose:
                 }
 
                 SettingsGroup("On tap") {
-                    choiceRow(
-                        "Open",
-                        listOf(TapAction.YAHOO to "Yahoo", TapAction.GOOGLE to "Google", TapAction.APP to "This app", TapAction.REFRESH to "Refresh", TapAction.NONE to "Nothing"),
-                        cfg.tapAction, "tap",
-                    ) { cfg = cfg.copy(tapAction = it) }
-                    if (cfg.tapAction == TapAction.YAHOO || cfg.tapAction == TapAction.GOOGLE) {
-                        infoRow("Tapping a stock opens its page", if (cfg.tapAction == TapAction.YAHOO) "In the Yahoo Finance app when installed, else the browser" else "Google's finance card in the Google app or browser")
+                    listOf(
+                        Triple(TapAction.YAHOO, "Yahoo Finance", "Opens the stock in Yahoo Finance, app or web"),
+                        Triple(TapAction.GOOGLE, "Google", "Opens the stock in Google Finance"),
+                        Triple(TapAction.APP, "Help Me Stocks", "Opens this app"),
+                        Triple(TapAction.REFRESH, "Refresh", "Updates the quotes"),
+                        Triple(TapAction.NONE, "Nothing", null),
+                    ).forEachIndexed { i, (action, title, summary) ->
+                        radioRow(title, cfg.tapAction == action, summary, tag = "tap_$i") { cfg = cfg.copy(tapAction = action) }
                     }
                 }
 

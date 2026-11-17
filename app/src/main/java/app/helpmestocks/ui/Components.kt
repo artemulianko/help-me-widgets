@@ -236,6 +236,16 @@ fun <T> GroupScope.choiceRow(title: String, options: List<Pair<T, String>>, sele
     }
 }
 
+/** One choice of a list too long for segmented buttons: a full-width row with a radio button. */
+fun GroupScope.radioRow(title: String, selected: Boolean, summary: String? = null, tag: String? = null, onClick: () -> Unit) = item { shapes ->
+    SegmentedListItem(
+        onClick = onClick, shapes = shapes,
+        modifier = if (tag != null) Modifier.testTag(tag) else Modifier,
+        supportingContent = summary?.let { { Text(it) } },
+        trailingContent = { androidx.compose.material3.RadioButton(selected = selected, onClick = null) },
+    ) { Text(title) }
+}
+
 fun GroupScope.customRow(content: @Composable ColumnScope.() -> Unit) = item { shapes ->
     SegmentedListItem(shapes = shapes, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)) {
         Column(content = content)
