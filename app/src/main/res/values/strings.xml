@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Help Me Stocks</string>
+    <string name="widget_name">Stocks</string>
+    <string name="widget_description">Your watchlist with the day\'s charts, in your colors</string>
+    <string name="refresh">Refresh</string>
+    <string name="tap_to_add">Tap to add stocks</string>
+    <string name="tap_to_load">Tap to load quotes</string>
+    <string name="market_open_at">Market open · %1$s</string>
+    <string name="markets_some_open_at">Some markets open · %1$s</string>
+    <string name="market_closed_at">Market closed · %1$s</string>
+    <string name="updated_at">Updated %1$s</string>
+    <string name="up">up</string>
+    <string name="down">down</string>
+    <string name="unchanged">unchanged</string>
+    <string name="stat_open">Open</string>
+    <string name="stat_high">High</string>
+    <string name="stat_low">Low</string>
+    <string name="stat_prev">Prev close</string>
+</resources>

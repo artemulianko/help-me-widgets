@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Static picker preview (pin dialog / launchers without generated previews). Mirrors the 4x2 layout. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_preview_bg"
+    android:orientation="vertical"
+    android:padding="16dp">
+    <TextView android:layout_width="wrap_content" android:layout_height="24dp" android:gravity="center_vertical"
+        android:text="Market open · 1:42 PM" android:textColor="@color/nim_auto_on_surface_variant" android:textSize="12sp" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:gravity="center_vertical" android:orientation="horizontal">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="S&amp;P 500"
+                android:textColor="@color/nim_auto_on_surface" android:textSize="16sp" android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="end" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="6,812.40"
+                android:textColor="@color/nim_auto_on_surface" android:textSize="16sp" android:fontFamily="sans-serif-medium" />
+            <TextView android:layout_width="68dp" android:layout_height="23dp" android:layout_marginTop="2dp" android:background="@drawable/preview_chip_up"
+                android:gravity="center_vertical|end" android:paddingHorizontal="8dp" android:text="+0.42%"
+                android:textColor="#FF0D652D" android:textSize="12sp" android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:gravity="center_vertical" android:orientation="horizontal">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GOOGL"
+                android:textColor="@color/nim_auto_on_surface" android:textSize="16sp" android:fontFamily="sans-serif-medium" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Alphabet Inc."
+                android:textColor="@color/nim_auto_on_surface_variant" android:textSize="12sp" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="end" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="312.75"
+                android:textColor="@color/nim_auto_on_surface" android:textSize="16sp" android:fontFamily="sans-serif-medium" />
+            <TextView android:layout_width="68dp" android:layout_height="23dp" android:layout_marginTop="2dp" android:background="@drawable/preview_chip_up"
+                android:gravity="center_vertical|end" android:paddingHorizontal="8dp" android:text="+1.36%"
+                android:textColor="#FF0D652D" android:textSize="12sp" android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:gravity="center_vertical" android:orientation="horizontal">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="AAPL"
+                android:textColor="@color/nim_auto_on_surface" android:textSize="16sp" android:fontFamily="sans-serif-medium" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Apple Inc."
+                android:textColor="@color/nim_auto_on_surface_variant" android:textSize="12sp" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="end" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="354.17"
+                android:textColor="@color/nim_auto_on_surface" android:textSize="16sp" android:fontFamily="sans-serif-medium" />
+            <TextView android:layout_width="68dp" android:layout_height="23dp" android:layout_marginTop="2dp" android:background="@drawable/preview_chip_down"
+                android:gravity="center_vertical|end" android:paddingHorizontal="8dp" android:text="−0.62%"
+                android:textColor="#FFA50E0E" android:textSize="12sp" android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
