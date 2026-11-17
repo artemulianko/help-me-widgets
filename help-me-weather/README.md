@@ -2,6 +2,8 @@
 
 **The weather widget Pixel should have shipped with.**
 
+*Part of [Help Me Widgets](../README.md), together with [Help Me Stocks](../help-me-stocks/).*
+
 The stock Pixel weather options are a one-line At a Glance and a widget you can barely customize. iOS and One UI have had proper weather widgets for years, with the temperature up front and a clean hourly row. Help Me Weather brings that layout to Pixel and builds it the Pixel way: Material 3, your wallpaper colors, Google's own weather icons, and Google's forecast, so the widget agrees with Pixel Weather and At a Glance.
 
 <p align="center">
@@ -12,7 +14,7 @@ The stock Pixel weather options are a one-line At a Glance and a widget you can 
 
 ## Download
 
-**[⬇ Download Help Me Weather 0.1.3 (APK)](https://github.com/artemulianko/help-me-weather/releases/download/v0.1.3/help-me-weather-0.1.3.apk)** · Android 12+ · 4.4 MB · [release notes](https://github.com/artemulianko/help-me-weather/releases/tag/v0.1.3)
+**[⬇ Download Help Me Weather 0.1.3 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v0.1.3/help-me-weather-0.1.3.apk)** · Android 12+ · 4.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/weather-v0.1.3) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
 SHA-256 `d97491873a7236af6fdc03deb209460360cf3d5e3a92f1974aa985b94f397208`
 

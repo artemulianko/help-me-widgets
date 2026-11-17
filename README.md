@@ -1,0 +1,71 @@
+# Help Me Widgets
+
+**The home screen widgets Pixel should have shipped with.**
+
+<p align="center">
+  <img src="docs/screenshots/home-screen.png" alt="Help Me Stocks and Help Me Weather together on a Pixel home screen, light and dark" width="900">
+</p>
+
+## Why this exists
+
+Android invented home screen widgets, yet a stock Pixel still has very few good-looking ones. You get a one-line At a Glance, a weather widget you can barely customize, and no stocks widget at all. iPhone and Samsung's One UI have had calm, well-designed widgets for years, with the big number up front, a clean row of detail below, and a layout that looks deliberate at every size.
+
+So we built the widgets we wanted on our own Pixel. They take the layouts people like on iOS and One UI and build them the Pixel way: Material 3, your wallpaper colors, Google Sans, the system corner radius, light and dark mode. Each widget has its own small app, and that app exists only to set the widget up.
+
+This whole repository is vibe-coded: designed, built, tested and reviewed in conversations with AI coding agents, against the strict rules in [AGENTS.md](AGENTS.md). The rules are the product. They're why the widgets stay small, fast, private and consistent.
+
+## The widgets
+
+| | Widget | What it shows | Download |
+|---|---|---|---|
+| ☀️ | [**Help Me Weather**](help-me-weather/) | Temperature up front and a clean hourly or daily row, with Google's forecast and Google's weather icons, so it agrees with Pixel Weather and At a Glance. | **[⬇ APK 0.1.3](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v0.1.3/help-me-weather-0.1.3.apk)** · 4.2 MB |
+| 📈 | [**Help Me Stocks**](help-me-stocks/) | Your watchlist with the day's chart, price and change at a glance, like the iPhone Stocks widget. Market-hours aware. | **[⬇ APK 0.1.2](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v0.1.2/help-me-stocks-0.1.2.apk)** · 3.7 MB |
+
+They need Android 12 or later and are tuned on a Pixel 11 Pro running Android 17. Open the APK on your phone (allow "Install unknown apps" when asked), open the app once, then long-press the home screen → **Widgets**. Each widget's README has install details, SHA-256 checksums and release notes. All versions are on the [Releases](https://github.com/artemulianko/help-me-widgets/releases) page.
+
+## Philosophy
+
+- **Widget first.** These aren't apps that happen to have a widget. Each widget's app is a settings screen: a live preview, an editor and in-app logs. That's all.
+- **No ads, no tracking, no accounts.** No analytics, no crash reporting, no notifications (the permission is removed from the manifest). Your settings never leave the phone and are excluded from backups.
+- **Minimal functionality.** Each widget does one job well. Every feature has to earn its place on a home screen, and when something is in doubt we remove it.
+- **Clean design.** Material 3 by the guidelines, with layouts inspired by iOS and One UI. Nothing scrolls inside a widget, every size from 1×1 to 4×4 has its own layout, and nothing should look generic or AI-generated.
+- **Invisible in battery stats.** No alarms, services, wakelocks or listeners. A refresh is one short WorkManager job, and the widget is drawn once per update with no Glance session left running.
+- **One family.** Every widget has the same editor, the same color, theme and opacity controls, and the same logs, so they look like they belong together on one home screen.
+
+## Repository layout
+
+Each widget is a **standalone Android project** with its own Gradle wrapper, version, signing, releases and license. They share rules and conventions, not code.
+
+```
+help-me-widgets/
+  AGENTS.md            rules for every contributor (human or AI): philosophy, design, tests, release
+  CLAUDE.md            Claude Code entry point (imports AGENTS.md)
+  .claude/             skills, agents and scoped rules for AI coding sessions
+  docs/                design system, testing guide, shared screenshots
+  help-me-weather/     Help Me Weather (see its README)
+  help-me-stocks/      Help Me Stocks (see its README)
+```
+
+## Build
+
+Requirements: JDK 21, the Android SDK with platform 37, and an Android 12+ device or emulator.
+
+```bash
+cd help-me-weather && ./gradlew assembleDebug testDebugUnitTest
+```
+
+```bash
+cd help-me-stocks && ./gradlew assembleDebug testDebugUnitTest
+```
+
+On-device tests, release builds and the end-to-end flow are covered in [docs/testing.md](docs/testing.md).
+
+## Contributing
+
+Read [AGENTS.md](AGENTS.md) first. It's short, it's strict, and it applies to people and AI agents alike. The design rules are in [docs/design.md](docs/design.md).
+
+## License
+
+Code is [MIT](help-me-weather/LICENSE). Third-party assets (Google weather icons, Material Symbols, data providers) are under their own terms; see each widget's README.
+
+Not affiliated with Google, Apple, Samsung or Yahoo. Pixel and Google are trademarks of Google LLC.

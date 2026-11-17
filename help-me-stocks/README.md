@@ -2,7 +2,9 @@
 
 **The stocks widget Pixel should have shipped with.**
 
-iPhone has had a clean Stocks widget for years: your watchlist, the day's chart, price and a green or red change at a glance. Pixel has nothing like it. Help Me Stocks brings that layout to Pixel and builds it the Pixel way: Material 3, your wallpaper colors, and the same design and customization as its sibling, [Help Me Weather](https://github.com/artemulianko/help-me-weather), so the two widgets sit together on one home screen.
+*Part of [Help Me Widgets](../README.md), together with [Help Me Weather](../help-me-weather/).*
+
+iPhone has had a clean Stocks widget for years: your watchlist, the day's chart, price and a green or red change at a glance. Pixel has nothing like it. Help Me Stocks brings that layout to Pixel and builds it the Pixel way: Material 3, your wallpaper colors, and the same design and customization as its sibling, [Help Me Weather](../help-me-weather/), so the two widgets sit together on one home screen.
 
 <p align="center">
   <img src="docs/screenshots/hero.png" alt="Help Me Stocks 4×2 widget in light and dark mode" width="900">
@@ -10,9 +12,11 @@ iPhone has had a clean Stocks widget for years: your watchlist, the day's chart,
 
 > **It's just a widget.** Not a trading or finance app: no accounts, no ads, no analytics, no notifications (the permission is removed from the manifest), no location. Tapping a stock opens it in Yahoo Finance (as Apple's widget does) or Google.
 
-## Install
+## Download
 
-Releases are published on the [Releases page](https://github.com/artemulianko/help-me-stocks/releases) · Android 12+.
+**[⬇ Download Help Me Stocks 0.1.2 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v0.1.2/help-me-stocks-0.1.2.apk)** · Android 12+ · 3.7 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/stocks-v0.1.2) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+
+SHA-256 `dc0516482ae120beae384c18dca57238af85cd5fbc4362558da6f0413db52a89`
 
 1. Download the APK on your phone and open it (allow "Install unknown apps" for your browser when asked).
 2. Open **Help Me Stocks** once, and add or reorder stocks in **Watchlist**.
