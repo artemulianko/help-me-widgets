@@ -311,7 +311,8 @@ private fun ApiKeyField(app: AppSettings, onSave: (String) -> Unit) {
 
 private fun requestPin(ctx: Context) {
     val mgr = AppWidgetManager.getInstance(ctx)
-    if (mgr.isRequestPinAppWidgetSupported) {
+    // Android refuses (throws) unless we're in the foreground, e.g. a tap landing mid-transition.
+    if (mgr.isRequestPinAppWidgetSupported) runCatching {
         mgr.requestPinAppWidget(ComponentName(ctx, WeatherWidgetReceiver::class.java), null, null)
-    }
+    }.onFailure { app.helpmeweather.data.AppLog.w(ctx, "Widget", "Couldn't show the add-widget dialog", it) }
 }
