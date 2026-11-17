@@ -57,7 +57,7 @@ object Http {
     }.getOrNull()?.trim()?.take(200) ?: raw.replace(Regex("\\s+"), " ").take(200)
 
     /** Reads at most [limit] bytes *after* decompression, so gzip bombs can't exhaust memory. */
-    private fun readBounded(input: InputStream, limit: Long, failOnOverflow: Boolean): String {
+    internal fun readBounded(input: InputStream, limit: Long, failOnOverflow: Boolean): String {
         val out = ByteArrayOutputStream()
         val buf = ByteArray(8192)
         var total = 0L

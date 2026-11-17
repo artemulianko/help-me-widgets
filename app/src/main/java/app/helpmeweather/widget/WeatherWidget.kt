@@ -51,8 +51,10 @@ class WeatherWidget : GlanceAppWidget() {
     // Exact: we lay out continuously from the real size (column counts, bar widths, row counts).
     override val sizeMode: SizeMode = SizeMode.Exact
 
+    // Generated picker previews at real Pixel spans (~97dp per column, ~105dp per row), so the
+    // launcher shows the layout the widget will actually have at each size.
     override val previewSizeMode = SizeMode.Responsive(
-        setOf(DpSize(110.dp, 110.dp), DpSize(250.dp, 110.dp), DpSize(250.dp, 250.dp)),
+        setOf(DpSize(190.dp, 210.dp), DpSize(387.dp, 105.dp), DpSize(387.dp, 212.dp), DpSize(387.dp, 316.dp)),
     )
 
     /** Called by [WidgetRenderer] via compose(): read state once, render once. */

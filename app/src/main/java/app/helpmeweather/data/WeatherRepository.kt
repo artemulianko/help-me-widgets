@@ -23,6 +23,12 @@ object WeatherRepository {
         }.getOrDefault(emptyMap())
     }
 
+    private fun isAppVisible(): Boolean = runCatching {
+        val info = android.app.ActivityManager.RunningAppProcessInfo()
+        android.app.ActivityManager.getMyMemoryState(info)
+        info.importance <= android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE
+    }.getOrDefault(false)
+
     private fun providerName(s: WeatherSource) = if (s is GoogleWeatherSource) "Google" else "Open-Meteo"
 
     fun sourceFor(app: AppSettings): Pair<WeatherSource, WeatherSource?> {
@@ -60,8 +66,11 @@ object WeatherRepository {
             // Location: only when something uses it, and only when the OS lets us (bg permission
             // or the app is in the foreground). Reuses the fused cached fix to avoid GPS.
             val locStale = System.currentTimeMillis() - app.deviceLocationAt > 20 * 60_000L
+            // "While in use" location also works for background jobs while one of our screens is
+            // visible (e.g. a refresh triggered by adding a widget from the app).
+            val visible = foreground || isAppVisible()
             if (needsDevice && (force || locStale || app.deviceLocation == null) &&
-                (foreground || Locations.hasBackground(ctx))
+                (visible || Locations.hasBackground(ctx))
             ) {
                 // Known location → wait at most a few seconds for a better fix, so a manual refresh stays snappy.
                 val timeout = if (app.deviceLocation != null) 5_000L else 25_000L
@@ -73,7 +82,7 @@ object WeatherRepository {
                 } else {
                     AppLog.w(ctx, "Location", "No fix available; using ${app.deviceLocation?.name ?: "nothing yet"}")
                 }
-            } else if (needsDevice && app.deviceLocation != null && locStale && !foreground && !Locations.hasBackground(ctx)) {
+            } else if (needsDevice && app.deviceLocation != null && locStale && !visible && !Locations.hasBackground(ctx)) {
                 AppLog.i(ctx, "Location", "Kept ${app.deviceLocation?.name} (no background location permission)")
             }
             if (needsDevice && app.deviceLocation == null && configs.all { it.location == null }) {

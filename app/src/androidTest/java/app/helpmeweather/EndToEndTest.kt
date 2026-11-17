@@ -57,9 +57,19 @@ class EndToEndTest {
 
         // Switch to °F from the Units group and confirm the preview's numbers change.
         val before = device.findObjects(By.textEndsWith("°")).map { it.text }
-        device.findObject(By.scrollable(true))?.scrollUntil(androidx.test.uiautomator.Direction.DOWN, Until.findObject(By.res("unit_2")))
-        device.findObject(By.res("unit_2"))?.click()
+        var unitF = device.findObject(By.res("unit_2"))
+        repeat(10) {
+            if (unitF == null || unitF!!.visibleBounds.bottom > device.displayHeight - 300) {
+                device.swipe(device.displayWidth / 2, device.displayHeight * 3 / 4, device.displayWidth / 2, device.displayHeight / 2, 15)
+                unitF = device.findObject(By.res("unit_2"))
+            }
+        }
+        assertTrue("°F button found", unitF != null)
+        unitF!!.click()
         device.waitForIdle()
+        // The setting is saved asynchronously; poll briefly.
+        val savedBy = System.currentTimeMillis() + 5_000
+        while (runBlocking { Store(ctx).appNow().tempUnit } != TempUnit.FAHRENHEIT && System.currentTimeMillis() < savedBy) Thread.sleep(200)
         assertEquals(TempUnit.FAHRENHEIT, runBlocking { Store(ctx).appNow().tempUnit })
         // Reopen at the top and read the preview again.
         ctx.startActivity(Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))

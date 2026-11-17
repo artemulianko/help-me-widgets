@@ -94,10 +94,13 @@ class WidgetRenderTest {
             "minimal" to base.copy(showLocation = false, showCondition = false, showHighLow = false, showRefresh = false),
             "everything" to base.copy(showFeelsLike = true, showUpdated = true),
             "at_a_glance" to base.copy(matchGlance = true),
+            "no_location_with_refresh" to base.copy(showLocation = false, showRefresh = true),
+            "daily_bold" to base.copy(forecast = ForecastMode.DAILY, style = WidgetStyle.BOLD),
         )
         variants.forEach { (n, c) ->
             render("cfg_${n}_4x2", c, sizes.getValue("4x2"))
             render("cfg_${n}_2x2", c, sizes.getValue("2x2"))
+            render("cfg_${n}_4x3", c, sizes.getValue("4x3"))
         }
     }
 }

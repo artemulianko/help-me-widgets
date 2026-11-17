@@ -231,8 +231,8 @@ private fun TempBlock(x: Scope, modifier: GlanceModifier, heroSize: Float, trail
 private class Cell(val label: String, val cond: Condition, val isDay: Boolean, val top: String, val bottom: String?, val pop: Int?, val now: Boolean)
 
 @Composable
-private fun RowScope.ForecastCell(x: Scope, cell: Cell, iconSize: Dp, showPop: Boolean, labelSize: Float, tempSize: Float) {
-    Column(modifier = GlanceModifier.defaultWeight(), horizontalAlignment = Alignment.CenterHorizontally) {
+private fun ForecastCell(x: Scope, cell: Cell, modifier: GlanceModifier, iconSize: Dp, showPop: Boolean, labelSize: Float, tempSize: Float) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             cell.label,
             style = style(if (cell.now) x.c.text else x.c.textVariant, labelSize, if (cell.now) FontWeight.Medium else FontWeight.Normal, align = TextAlign.Center),
@@ -279,8 +279,30 @@ private fun ForecastRow(x: Scope, width: Float, mode: ForecastMode, modifier: Gl
     val n = floor(width / minCell).toInt().coerceIn(2, 7)
     val list = cells(x, mode, n)
     val showPop = allowPop && mode == ForecastMode.HOURLY && list.any { (it.pop ?: 0) >= 20 }
+    // Edge-aligned, evenly spaced (like iOS / One UI): the first and last items sit flush with
+    // the content edges above, and item centres are equally spaced. Glance only supports equal
+    // weights, so the column widths are computed from the real width instead.
+    val content = max(iconSize.value + 8f, if (mode == ForecastMode.DAILY) 56f else 44f)
+    if (list.size < 2 || width < content * list.size) {
+        Row(modifier = modifier, verticalAlignment = Alignment.Bottom) {
+            list.forEach { ForecastCell(x, it, GlanceModifier.defaultWeight(), iconSize, showPop, labelSize, tempSize) }
+        }
+        return
+    }
+    val step = (width - content) / (list.size - 1)   // distance between item centres
+    val edge = step / 2 + content / 2                 // first/last column width
     Row(modifier = modifier, verticalAlignment = Alignment.Bottom) {
-        list.forEach { ForecastCell(x, it, iconSize, showPop, labelSize, tempSize) }
+        list.forEachIndexed { i, cell ->
+            when (i) {
+                0 -> Box(GlanceModifier.width(edge.dp), contentAlignment = Alignment.BottomStart) {
+                    ForecastCell(x, cell, GlanceModifier.width(content.dp), iconSize, showPop, labelSize, tempSize)
+                }
+                list.lastIndex -> Box(GlanceModifier.width(edge.dp), contentAlignment = Alignment.BottomEnd) {
+                    ForecastCell(x, cell, GlanceModifier.width(content.dp), iconSize, showPop, labelSize, tempSize)
+                }
+                else -> ForecastCell(x, cell, GlanceModifier.width(step.dp), iconSize, showPop, labelSize, tempSize)
+            }
+        }
     }
 }
 
@@ -472,8 +494,13 @@ private fun Stacked(x: Scope, modifier: GlanceModifier, mode: ForecastMode, inne
     val iconSize = if (roomy) 30f else 26f
     val heroSize = if (roomy) 54f else 46f
     Column(modifier = modifier) {
-        // Header: location, leaving room for the corner refresh button.
-        Row(modifier = GlanceModifier.fillMaxWidth().padding(end = if (x.cfg.showRefresh) 32.dp else 0.dp), verticalAlignment = Alignment.CenterVertically) {
+        // Header: location, leaving room for the corner refresh button. With the location hidden,
+        // the row still keeps its height while the refresh button shows, so nothing slides under it.
+        val headerMod = GlanceModifier.fillMaxWidth().padding(end = if (x.cfg.showRefresh) 32.dp else 0.dp)
+        Row(
+            modifier = if (!x.cfg.showLocation && x.cfg.showRefresh) headerMod.height(22.dp) else headerMod,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             LocationLabel(x, modifier = GlanceModifier.defaultWeight())
             if (!x.cfg.showLocation) Spacer(GlanceModifier.defaultWeight())
             UpdatedLabel(x)
@@ -498,7 +525,9 @@ private fun Stacked(x: Scope, modifier: GlanceModifier, mode: ForecastMode, inne
             }
         }
         Spacer(GlanceModifier.defaultWeight())
-        val pop = innerH - 20f - heroSize * 1.25f - forecastHeight(daily, iconSize, true) >= 0f
+        // Header (22) + hero line (font box ≈ 1.3× size) + forecast; drop the rain-chance row first
+        // when space is tight so nothing gets clipped.
+        val pop = innerH - 22f - heroSize * 1.3f - forecastHeight(daily, iconSize, true) >= 0f
         ForecastRow(x, innerW, mode, GlanceModifier.fillMaxWidth(), iconSize.dp, allowPop = pop, minCell = 52f)
     }
 }
@@ -543,7 +572,7 @@ private fun MediumBody(x: Scope, modifier: GlanceModifier, mode: ForecastMode, i
 private fun Large(x: Scope) {
     val innerW = x.width - 32f
     val hasHourly = x.cfg.forecast != ForecastMode.NONE
-    val topH = if (hasHourly) 176f else 96f
+    val topH = if (hasHourly) 184f else 96f
     Box(modifier = GlanceModifier.fillMaxSize()) {
         Column(modifier = GlanceModifier.fillMaxSize().padding(PAD)) {
             if (hasHourly) {
