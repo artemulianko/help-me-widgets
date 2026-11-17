@@ -54,6 +54,7 @@ class WidgetRenderTest {
         "4x1" to DpSize(387.dp, 105.dp),
         "4x2" to DpSize(387.dp, 212.dp),
         "4x2_short" to DpSize(340.dp, 170.dp),
+        "4x2_pixel_short" to DpSize(387.dp, 150.dp),
         "2x3" to DpSize(190.dp, 316.dp),
         "4x3" to DpSize(387.dp, 316.dp),
         "4x4" to DpSize(387.dp, 420.dp),

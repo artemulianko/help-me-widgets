@@ -55,6 +55,7 @@ private val PAD = 16.dp            // widget edge → content
 private val GAP = 12.dp            // between larger blocks
 private val TOUCH = 48.dp          // minimum touch target
 private const val MAX_ROWS = 9     // Glance: max 10 children per container (header + 9 rows)
+private const val COMPACT_ROW = 30f // smallest row height: one line of text and a chip
 
 /** System font families, resolved once: Google Sans Flex / Google Sans on Pixel, else Roboto. */
 private object Fonts {
@@ -214,9 +215,9 @@ private fun Label(x: Scope, t: Ticker, size: Float = 15f) =
     Text(t.label, style = style(x.c.text, size, FontWeight.Medium), maxLines = 1)
 
 @Composable
-private fun Name(x: Scope, t: Ticker, size: Float = 12f) {
+private fun Name(x: Scope, t: Ticker, size: Float = 12f, show: Boolean = x.cfg.showName) {
     // Indices often have a name that just repeats the label ("S&P 500"); mixed markets lead with the exchange.
-    if (x.cfg.showName) x.subtitle(t)?.let { Text(it, style = style(x.c.textVariant, size), maxLines = 1) }
+    if (show) x.subtitle(t)?.let { Text(it, style = style(x.c.textVariant, size), maxLines = 1) }
 }
 
 private fun GlanceModifier.tap(a: Action?) = if (a != null) clickable(a) else this
@@ -315,6 +316,8 @@ private fun Strip(x: Scope) {
 /**
  * 2x2 and up: the watchlist as rows, laid out like Apple's Stocks widget: symbol and name,
  * the day's chart when there's room, then price over a change chip. Rows fill the height.
+ * Wide widgets always fit at least three rows: on short grids (a 4x2 can be ~170dp tall) rows
+ * go compact, with the name dropped and the chip beside the price, as on Apple's medium widget.
  */
 @Composable
 private fun Watchlist(x: Scope) {
@@ -325,11 +328,19 @@ private fun Watchlist(x: Scope) {
     val rowMin = if (x.cfg.showName) (if (wide) 48f else 46f) else 38f
     val avail = innerH - headerH
     // Glance renders at most 10 children per container: the header plus up to 9 rows.
-    val n = floor(avail / rowMin).toInt().coerceIn(1, max(1, min(MAX_ROWS, x.s.tickers.size)))
+    val fit = floor(avail / rowMin).toInt()
+    val want = min(3, x.s.tickers.size)
+    val n = (if (wide && fit < want && avail / want >= COMPACT_ROW) want else fit)
+        .coerceIn(1, max(1, min(MAX_ROWS, x.s.tickers.size)))
     val tickers = x.s.tickers.take(n)
     val rowH = avail / n
-    val chartW = if (x.cfg.showChart && wide) (innerW * 0.27f).coerceIn(64f, 150f) else 0f
-    val chartH = (rowH - 14f).coerceIn(20f, 36f)
+    // Price stacked over the chip needs ~46dp; below that the chip moves beside the price.
+    val inline = wide && rowH < 46f
+    val showSub = x.cfg.showName && rowH >= 42f
+    val chartW = if (!x.cfg.showChart || !wide) 0f
+        else if (inline) (innerW * 0.2f).coerceIn(48f, 110f)   // the chip sits on this row too
+        else (innerW * 0.27f).coerceIn(64f, 150f)
+    val chartH = (rowH - 14f).coerceIn(if (inline) 16f else 20f, 36f)
     val chipW = x.chipWidth(tickers)
     Box(modifier = GlanceModifier.fillMaxSize()) {
         Column(modifier = GlanceModifier.fillMaxSize().padding(PAD)) {
@@ -343,17 +354,23 @@ private fun Watchlist(x: Scope) {
                 ) {
                     Column(modifier = GlanceModifier.defaultWeight()) {
                         Label(x, t, if (wide) 16f else 15f)
-                        Name(x, t)
+                        Name(x, t, show = showSub)
                     }
                     Spacer(GlanceModifier.width(8.dp))
                     if (chartW > 0f) {
                         Chart(x, q, chartW, chartH, fill = false)
                         Spacer(GlanceModifier.width(GAP))
                     }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(x.priceText(t, q), style = style(x.c.text, if (wide) 16f else 15f, FontWeight.Medium, align = TextAlign.End), maxLines = 1)
-                        Spacer(GlanceModifier.height(2.dp))
+                    if (inline) {
+                        Text(x.priceText(t, q), style = style(x.c.text, 16f, FontWeight.Medium, align = TextAlign.End), maxLines = 1)
+                        Spacer(GlanceModifier.width(8.dp))
                         ChangeChip(x, q, chipW, size = 12f)
+                    } else {
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(x.priceText(t, q), style = style(x.c.text, if (wide) 16f else 15f, FontWeight.Medium, align = TextAlign.End), maxLines = 1)
+                            Spacer(GlanceModifier.height(2.dp))
+                            ChangeChip(x, q, chipW, size = 12f)
+                        }
                     }
                 }
             }
