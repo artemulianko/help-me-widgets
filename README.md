@@ -12,9 +12,11 @@ The stock Pixel weather options are a one-line At a Glance and a widget you can 
 
 ## Download
 
-**[⬇ Download Help Me Weather 0.1.1 (APK)](https://github.com/artemulianko/help-me-weather/releases/download/v0.1.1/help-me-weather-0.1.1.apk)** · Android 12+ · 4.4 MB · [release notes](https://github.com/artemulianko/help-me-weather/releases/tag/v0.1.1)
+**[⬇ Download Help Me Weather 0.1.2 (APK)](https://github.com/artemulianko/help-me-weather/releases/download/v0.1.2/help-me-weather-0.1.2.apk)** · Android 12+ · 4.4 MB · [release notes](https://github.com/artemulianko/help-me-weather/releases/tag/v0.1.2)
 
-SHA-256 `5d22f3de75b3a66e409e520c3a578b7716ec3ff186028039f77833f48e8747d1`
+SHA-256 `dd4d550db51b68d5695f2f2d3497af5e62afa7495d20968519f2bb0bcf17cfb7`
+
+> Upgrading from 0.1.0/0.1.1: 0.1.2 has a new package name (`app.helpmeweather`), so uninstall the old version first and update your key restriction. Later updates install over it normally.
 
 1. Download the APK on your phone and open it (allow "Install unknown apps" for your browser when asked).
 2. Open **Help Me Weather** once and allow approximate location, or skip that and pick a city.
