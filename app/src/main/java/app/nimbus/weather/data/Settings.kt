@@ -11,6 +11,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 
 enum class TempUnit { SYSTEM, CELSIUS, FAHRENHEIT }
+/**
+ * Forecast hour labels. SYSTEM follows the phone's 12/24-hour setting ("3 PM" or "15:00");
+ * H12 is always "3 PM" (AM/PM, no minutes). H24 is legacy (no longer offered) and behaves as SYSTEM.
+ */
 enum class TimeFormat { SYSTEM, H12, H24 }
 enum class ProviderPref { GOOGLE, OPEN_METEO }
 

@@ -226,7 +226,7 @@ private fun HomeScreen() {
 
             SettingsGroup("Units") {
                 choiceRow("Temperature", listOf(TempUnit.SYSTEM to "Auto", TempUnit.CELSIUS to "°C", TempUnit.FAHRENHEIT to "°F"), app.tempUnit, "unit") { u -> updateApp { it.copy(tempUnit = u) } }
-                choiceRow("Time", listOf(TimeFormat.SYSTEM to "Auto", TimeFormat.H12 to "12-hour", TimeFormat.H24 to "24-hour"), app.timeFormat, "time") { t -> updateApp { it.copy(timeFormat = t) } }
+                choiceRow("Time", listOf(TimeFormat.SYSTEM to "Match system", TimeFormat.H12 to "3 PM"), if (app.timeFormat == TimeFormat.H12) TimeFormat.H12 else TimeFormat.SYSTEM, "time") { t -> updateApp { it.copy(timeFormat = t) } }
             }
 
             SettingsGroup("Updates") {

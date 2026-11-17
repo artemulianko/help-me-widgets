@@ -219,7 +219,7 @@ fun WidgetEditor(initial: WidgetConfig, app: AppSettings, store: Store, onClose:
                     choiceRow("Temperature", listOf(TempUnit.SYSTEM to "Auto", TempUnit.CELSIUS to "°C", TempUnit.FAHRENHEIT to "°F"), app.tempUnit, "e_unit") { u ->
                         scope.launch { store.updateApp { it.copy(tempUnit = u) }; WidgetRenderer.renderAll(ctx) }
                     }
-                    choiceRow("Time", listOf(TimeFormat.SYSTEM to "Auto", TimeFormat.H12 to "12-hour", TimeFormat.H24 to "24-hour"), app.timeFormat, "e_time") { t ->
+                    choiceRow("Time", listOf(TimeFormat.SYSTEM to "Match system", TimeFormat.H12 to "3 PM"), if (app.timeFormat == TimeFormat.H12) TimeFormat.H12 else TimeFormat.SYSTEM, "e_time") { t ->
                         scope.launch { store.updateApp { it.copy(timeFormat = t) }; WidgetRenderer.renderAll(ctx) }
                     }
                 }

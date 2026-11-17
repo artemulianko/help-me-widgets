@@ -78,8 +78,12 @@ private fun LogsScreen(onBack: () -> Unit) {
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { reload() }
 
     val text = remember(entries) {
-        val fmt = DateTimeFormatter.ofPattern("MM-dd HH:mm:ss").withZone(ZoneId.systemDefault())
-        entries.asReversed().joinToString("\n") { e -> "${fmt.format(Instant.ofEpochMilli(e.time))} ${e.level} ${e.tag}: ${e.message}" }
+        val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault())
+        // [datetime] [LEVEL] Area: message
+        entries.asReversed().joinToString("\n") { e ->
+            val level = when (e.level) { AppLog.Level.I -> "INFO"; AppLog.Level.W -> "WARN"; AppLog.Level.E -> "ERROR" }
+            "[${fmt.format(Instant.ofEpochMilli(e.time))}] [$level] ${e.tag}: ${e.message}"
+        }
     }
     val scroll = rememberScrollState()
     LaunchedEffect(text) { scroll.scrollTo(scroll.maxValue) } // open at the newest line

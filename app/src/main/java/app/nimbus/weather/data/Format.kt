@@ -21,8 +21,7 @@ class Fmt(private val ctx: Context, app: AppSettings, zone: String?) {
     }
     val is24h = when (app.timeFormat) {
         TimeFormat.H12 -> false
-        TimeFormat.H24 -> true
-        TimeFormat.SYSTEM -> DateFormat.is24HourFormat(ctx)
+        TimeFormat.SYSTEM, TimeFormat.H24 -> DateFormat.is24HourFormat(ctx)
     }
     val zoneId: ZoneId = zone?.let { runCatching { ZoneId.of(it) }.getOrNull() } ?: ZoneId.systemDefault()
     private val locale: Locale = Locale.getDefault()
