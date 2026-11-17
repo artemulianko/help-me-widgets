@@ -45,13 +45,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Applies [f] to the stored watchlist (not a snapshot, so quick taps never undo each other),
- * re-renders widgets, and fetches only if a new symbol has no quote yet.
+ * Applies [f] to the stored watchlist (not a snapshot, so quick taps never undo each other)
+ * and re-renders widgets. Reordering or removing needs no network; a background fetch is
+ * queued only when a stock on the list has no quote yet.
  */
 private suspend fun saveWatchlist(ctx: Context, store: Store, f: (List<Ticker>) -> List<Ticker>) {
     store.updateApp { it.copy(watchlist = f(it.watchlist).distinctBy { t -> t.symbol }.take(MAX_WATCHLIST)) }
     WidgetRenderer.renderAll(ctx)
-    RefreshWorker.refreshNow(ctx, force = false, reason = "watchlist changed")
+    val quotes = store.quotesNow()
+    if (store.appNow().watchlist.any { quotes[it.symbol] == null }) {
+        RefreshWorker.refreshNow(ctx, force = false, reason = "stock added")
+    }
 }
 
 /**
@@ -78,10 +82,16 @@ fun WatchlistGroup(app: AppSettings, title: String = "Watchlist") {
         if (query.isBlank()) { results = emptyList(); loading = false; return@LaunchedEffect }
         delay(300)
         loading = true
-        results = runCatching { YahooFinance.search(query) }
-            .onFailure { failed = true; AppLog.w(ctx, "Search", "Search failed", it) }
-            .getOrDefault(emptyList())
-        loading = false
+        try {
+            results = YahooFinance.search(query)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e // the query changed (or a result was picked): not a failure
+        } catch (e: Exception) {
+            failed = true; results = emptyList()
+            AppLog.w(ctx, "Search", "Search failed", e)
+        } finally {
+            loading = false
+        }
     }
 
     fun update(f: (List<Ticker>) -> List<Ticker>) = scope.launch { saveWatchlist(ctx, store, f) }
