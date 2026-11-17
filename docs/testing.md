@@ -57,7 +57,7 @@ adb shell am instrument -w -e class app.helpmestocks.WidgetRenderTest app.helpme
 ./gradlew connectedDebugAndroidTest
 ```
 
-Weather's `WidgetFlowTest` is the reference pattern. Every widget should have the same flows:
+Both widgets have a `WidgetFlowTest` (`app.helpmeweather.WidgetFlowTest`, `app.helpmestocks.WidgetFlowTest`) with the same flows:
 
 1. **Pin → tap refresh → data arrives.** Open the app, tap `add_widget`, confirm in the **launcher's** pin dialog, find the widget's Refresh button on the home screen (swipe pages if needed), tap it, then assert `AppLog` gets "Refresh tapped" and a successful `Fetch` line with no `[ERROR]`, and that the widget shows a value.
 2. **Offline → waits → recovers.** `svc wifi disable; svc data disable`, tap refresh, assert "No network", re-enable, assert the refresh ran on its own.
@@ -71,8 +71,7 @@ Hard-won tricks:
 - Re-render with `showRefresh = true` before tapping, since tests share one widget.
 - Wait **61 s** before a forced refresh: the quota guard reuses data younger than a minute.
 - Restore wifi, data, night mode and standby bucket in `@After`.
-
-> Gap: Help Me Stocks has render and live-market tests but no `WidgetFlowTest` yet. Port weather's flows when you next touch stocks.
+- Stocks: a forced refresh fetches whatever the market hours, so its flow tests also pass on nights and weekends.
 
 ## 4. Manual end-to-end with adb (what agents do interactively)
 
