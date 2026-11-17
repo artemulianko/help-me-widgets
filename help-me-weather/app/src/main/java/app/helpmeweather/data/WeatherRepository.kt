@@ -1,7 +1,11 @@
 package app.helpmeweather.data
 
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 import android.content.Context
 import android.util.Log
@@ -47,7 +51,13 @@ object WeatherRepository {
      * when its cache is older than ~75% of the refresh interval, unless [force] is set, so
      * overlapping triggers never cost extra network or battery.
      */
-    suspend fun refresh(ctx: Context, force: Boolean, foreground: Boolean = false, reason: String = "scheduled"): Result<Unit> {
+    /** Widget-tap, worker and in-app refreshes run one at a time, never interleaved. */
+    private val lock = Mutex()
+
+    suspend fun refresh(ctx: Context, force: Boolean, foreground: Boolean = false, reason: String = "scheduled"): Result<Unit> =
+        lock.withLock { refreshLocked(ctx, force, foreground, reason) }
+
+    private suspend fun refreshLocked(ctx: Context, force: Boolean, foreground: Boolean, reason: String): Result<Unit> {
         init(ctx)
         val started = System.currentTimeMillis()
         val store = Store(ctx)
@@ -140,10 +150,12 @@ object WeatherRepository {
             store.setError(e.message)
             return Result.failure(e)
         } finally {
-            if (force) store.setRefreshing(false)
-            // Running Glance sessions already recompose from the DataStore flows; this
-            // re-renders widgets whose session has ended. Skipped when nothing changed.
-            if (force || changed) WidgetRenderer.renderAll(ctx)
+            // Must run even when cancelled (a widget tap's time budget ran out, or the job was
+            // stopped), or the spinner would outlive the refresh. Skipped when nothing changed.
+            withContext(NonCancellable) {
+                if (force) store.setRefreshing(false)
+                if (force || changed) WidgetRenderer.renderAll(ctx)
+            }
         }
     }
 }

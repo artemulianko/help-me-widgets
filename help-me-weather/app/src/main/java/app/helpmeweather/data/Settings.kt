@@ -64,6 +64,8 @@ data class WidgetConfig(
     val tapAction: TapAction = TapAction.PIXEL_WEATHER,
 )
 
+private const val REFRESH_SPINNER_MS = 90_000L
+
 private val Context.prefsStore by preferencesDataStore("settings")
 private val Context.cacheStore by preferencesDataStore("weather_cache")
 
@@ -84,7 +86,13 @@ class Store(private val context: Context) {
 
     val app: Flow<AppSettings> = context.prefsStore.data.map { it.app() }
     fun widget(id: Int): Flow<WidgetConfig> = context.prefsStore.data.map { it.widget(id) }
-    val refreshing: Flow<Boolean> = context.prefsStore.data.map { it[refreshingKey] == "1" }
+    /**
+     * Spinner state, stored as the time it started so it can never stick: a refresh that was
+     * killed (process death, cancellation) stops showing after [REFRESH_SPINNER_MS].
+     */
+    val refreshing: Flow<Boolean> = context.prefsStore.data.map { p ->
+        p[refreshingKey]?.toLongOrNull()?.let { System.currentTimeMillis() - it in 0..REFRESH_SPINNER_MS } == true
+    }
     val lastError: Flow<String?> = context.prefsStore.data.map { it[errorKey] }
 
     suspend fun appNow() = app.first()
@@ -103,7 +111,7 @@ class Store(private val context: Context) {
     }
 
     suspend fun setRefreshing(on: Boolean) {
-        context.prefsStore.edit { if (on) it[refreshingKey] = "1" else it.remove(refreshingKey) }
+        context.prefsStore.edit { if (on) it[refreshingKey] = System.currentTimeMillis().toString() else it.remove(refreshingKey) }
     }
 
     suspend fun setError(msg: String?) {
