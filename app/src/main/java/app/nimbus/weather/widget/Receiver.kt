@@ -62,6 +62,8 @@ class RefreshAction : ActionCallback {
         if (cm?.activeNetwork != null) {
             Store(context).setRefreshing(true)
             WidgetRenderer.renderAll(context)
+        } else {
+            AppLog.w(context, "Widget", "No network: refresh will run automatically when you're back online")
         }
         RefreshWorker.refreshNow(context, force = true, reason = "refresh button")
     }
@@ -73,4 +75,32 @@ class RefreshAction : ActionCallback {
  */
 class TimeChangeReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) = async { WidgetRenderer.renderAll(context) }
+}
+
+/** Logs phone reboots and app updates, and re-renders widgets so they're current right away. */
+class SystemEventsReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) = async {
+        when (intent.action) {
+            Intent.ACTION_BOOT_COMPLETED -> {
+                // Android also re-sends BOOT_COMPLETED to an app leaving the force-stopped state;
+                // the global boot counter tells a real reboot apart.
+                val boots = android.provider.Settings.Global.getInt(context.contentResolver, android.provider.Settings.Global.BOOT_COUNT, -1)
+                val prefs = context.getSharedPreferences("meta", Context.MODE_PRIVATE)
+                // Real reboot: the boot counter moved, or (first run, no stored count) the phone
+                // has only been up a few minutes.
+                val stored = prefs.getInt("boot_count", -2)
+                val realBoot = if (stored == -2) android.os.SystemClock.elapsedRealtime() < 15 * 60_000L else boots != stored
+                if (realBoot) {
+                    prefs.edit().putInt("boot_count", boots).apply()
+                    AppLog.i(context, "System", "Phone restarted; background refresh resumes automatically")
+                } else {
+                    prefs.edit().putInt("boot_count", boots).apply()
+                    AppLog.i(context, "System", "App restarted after being stopped (install, update or force stop)")
+                }
+            }
+            Intent.ACTION_MY_PACKAGE_REPLACED -> AppLog.i(context, "System", "App updated to v${app.nimbus.weather.BuildConfig.VERSION_NAME}")
+        }
+        WidgetRenderer.renderAll(context)
+        RefreshWorker.scheduleNow(context)
+    }
 }

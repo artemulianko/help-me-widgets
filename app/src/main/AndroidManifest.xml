@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- Optional: lets "Current location" widgets follow you while the app is closed. -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <!-- Log reboots and re-render widgets right after boot (WorkManager also uses it). -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- No notifications, ever: WorkManager's foreground-service path (the only thing that could
          post one) is removed. Refreshes run as plain/expedited jobs, which need no notification. -->
@@ -20,7 +22,8 @@
     </queries>
 
     <application
-        android:allowBackup="true"
+        android:name=".HelpMeWeatherApp"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
@@ -30,9 +33,11 @@
         android:theme="@style/Theme.HelpMeWeather"
         tools:targetApi="37">
 
+        <!-- singleTask: one instance only, however it's reached (launcher, widget tap, editor). -->
         <activity
             android:name=".ui.MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -53,9 +58,11 @@
             </intent-filter>
         </activity>
 
+        <!-- Not exported: only the system (AppWidgetService) can deliver widget broadcasts, so
+             other apps can't forge APPWIDGET_DISABLED/DELETED to cancel refreshes or wipe configs. -->
         <receiver
             android:name=".widget.WeatherWidgetReceiver"
-            android:exported="true"
+            android:exported="false"
             android:label="@string/widget_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -63,6 +70,15 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/weather_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.SystemEventsReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
         </receiver>
 
         <receiver

@@ -70,6 +70,18 @@ data class WeatherData(
     val daily: List<Day>,
 ) {
     val today: Day? get() = daily.firstOrNull()
+
+    /**
+     * Drops entries with implausible timestamps (outside ~2 days back to ~3 weeks ahead) so a
+     * bad provider response can't poison the cache and break rendering.
+     */
+    fun sanitized(nowSec: Long = System.currentTimeMillis() / 1000): WeatherData {
+        val range = (nowSec - 2 * 86_400)..(nowSec + 21 * 86_400)
+        return copy(
+            hourly = hourly.filter { it.epochSec in range && it.tempC.isFinite() },
+            daily = daily.filter { it.epochSec in range && it.highC.isFinite() && it.lowC.isFinite() },
+        )
+    }
 }
 
 @Serializable

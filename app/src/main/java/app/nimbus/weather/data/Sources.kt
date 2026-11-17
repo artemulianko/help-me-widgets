@@ -75,7 +75,7 @@ class GoogleWeatherSource(
                 uvIndex = c["uvIndex"].i,
             )
             val hourly = h["forecastHours"].arr.mapNotNull { e ->
-                val t = e["interval"]["startTime"].s?.let { Instant.parse(it).epochSecond } ?: return@mapNotNull null
+                val t = e["interval"]["startTime"].s?.let { runCatching { Instant.parse(it).epochSecond }.getOrNull() } ?: return@mapNotNull null
                 Hour(
                     epochSec = t,
                     tempC = e["temperature"]["degrees"].d ?: return@mapNotNull null,
@@ -99,7 +99,7 @@ class GoogleWeatherSource(
                     sunset = e["sunEvents"]["sunsetTime"].s?.let { runCatching { Instant.parse(it).epochSecond }.getOrNull() },
                 )
             }
-            return WeatherData(place, zid.id, System.currentTimeMillis(), Provider.GOOGLE, current, hourly, daily)
+            return WeatherData(place, zid.id, System.currentTimeMillis(), Provider.GOOGLE, current, hourly, daily).sanitized()
         }
 
         /** Google WeatherCondition.Type → our set (per Google's condition→icon table). */
@@ -176,7 +176,7 @@ class OpenMeteoSource : WeatherSource {
                 uvIndex = c["uv_index"].d?.toInt(),
                 precipProb = hourly.lastOrNull { it.epochSec <= nowEpoch }?.precipProb,
             )
-            return WeatherData(place, zone, System.currentTimeMillis(), Provider.OPEN_METEO, current, hourly, daily)
+            return WeatherData(place, zone, System.currentTimeMillis(), Provider.OPEN_METEO, current, hourly, daily).sanitized()
         }
 
         /** WMO weather interpretation codes → our set, matching Google's buckets. */

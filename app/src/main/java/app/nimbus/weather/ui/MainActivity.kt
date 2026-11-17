@@ -219,14 +219,18 @@ private fun HomeScreen() {
                 }
                 widgets.forEachIndexed { i, (id, c) ->
                     navRow("Widget ${i + 1}", c.location?.name ?: "Current location", tag = "widget_row_$i") {
-                        ctx.startActivity(Intent(ctx, ConfigActivity::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id))
+                        // Replace any editor already open instead of stacking another.
+                        ctx.startActivity(
+                            Intent(ctx, ConfigActivity::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                        )
                     }
                 }
             }
 
             SettingsGroup("Units") {
                 choiceRow("Temperature", listOf(TempUnit.SYSTEM to "Auto", TempUnit.CELSIUS to "°C", TempUnit.FAHRENHEIT to "°F"), app.tempUnit, "unit") { u -> updateApp { it.copy(tempUnit = u) } }
-                choiceRow("Time", listOf(TimeFormat.SYSTEM to "Match system", TimeFormat.H12 to "3 PM"), if (app.timeFormat == TimeFormat.H12) TimeFormat.H12 else TimeFormat.SYSTEM, "time") { t -> updateApp { it.copy(timeFormat = t) } }
+                choiceRow("Time", listOf(TimeFormat.SYSTEM to "System", TimeFormat.H12 to "AM/PM", TimeFormat.HOUR_ONLY to "Hour only"), if (app.timeFormat == TimeFormat.H24) TimeFormat.SYSTEM else app.timeFormat, "time") { t -> updateApp { it.copy(timeFormat = t) } }
             }
 
             SettingsGroup("Updates") {

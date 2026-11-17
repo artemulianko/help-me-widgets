@@ -38,7 +38,11 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+            // Never silently ship a debug-signed "release". Local test builds without the key:
+            // ./gradlew assembleRelease -PallowDebugSigning=true
+            signingConfig = signingConfigs.findByName("release")
+                ?: if (providers.gradleProperty("allowDebugSigning").orNull == "true") signingConfigs.getByName("debug")
+                else throw GradleException("Release signing key missing (keystore/keystore.properties). Pass -PallowDebugSigning=true for a local test build.")
         }
     }
     compileOptions {

@@ -14,6 +14,8 @@ import org.junit.Test
 
 class ParsingTest {
     private val place = Place("Test", 37.42, -122.08)
+    /** Fixtures are relative to now: parsing drops implausible (stale/far-future) timestamps. */
+    private val base = System.currentTimeMillis() / 1000 / 3600 * 3600
 
     @Test fun googleResponseParses() {
         val cur = Http.json.parseToJsonElement(
@@ -55,12 +57,12 @@ class ParsingTest {
 
     @Test fun openMeteoResponseParses() {
         val j = Http.json.parseToJsonElement(
-            """{"timezone":"Europe/Kyiv","current":{"time":1700000000,"temperature_2m":-2.5,"apparent_temperature":-6,
+            """{"timezone":"Europe/Kyiv","current":{"time":${base + 600},"temperature_2m":-2.5,"apparent_temperature":-6,
               "relative_humidity_2m":90,"is_day":0,"weather_code":73,"wind_speed_10m":12.2,"uv_index":0},
-              "hourly":{"time":[1699999200,1700002800],"temperature_2m":[-2.4,-3.0],"weather_code":[73,null],
+              "hourly":{"time":[$base,${base + 3600}],"temperature_2m":[-2.4,-3.0],"weather_code":[73,null],
                         "precipitation_probability":[70,null],"is_day":[0,0]},
-              "daily":{"time":[1699999200],"weather_code":[75],"temperature_2m_max":[-1.0],"temperature_2m_min":[-7.5],
-                       "precipitation_probability_max":[85],"sunrise":[1700025000],"sunset":[1700057000]}}""",
+              "daily":{"time":[$base],"weather_code":[75],"temperature_2m_max":[-1.0],"temperature_2m_min":[-7.5],
+                       "precipitation_probability_max":[85],"sunrise":[${base + 20000}],"sunset":[${base + 50000}]}}""",
         )
         val w = OpenMeteoSource.parse(place, j)
         assertEquals(Provider.OPEN_METEO, w.source)
@@ -93,13 +95,25 @@ class ParsingTest {
     @Test fun upcomingHoursDropsPastHours() {
         val j = Http.json.parseToJsonElement(
             """{"timezone":"UTC","current":{"temperature_2m":1,"weather_code":0,"is_day":1},
-              "hourly":{"time":[0,3600,7200,10800],"temperature_2m":[1,2,3,4],"weather_code":[0,0,0,0],"is_day":[1,1,1,1]},
+              "hourly":{"time":[$base,${base + 3600},${base + 7200},${base + 10800}],"temperature_2m":[1,2,3,4],"weather_code":[0,0,0,0],"is_day":[1,1,1,1]},
               "daily":{"time":[],"weather_code":[],"temperature_2m_max":[],"temperature_2m_min":[]}}""",
         )
         val w = OpenMeteoSource.parse(place, j)
-        val up = w.upcomingHours(nowSec = 7300)
-        assertEquals(7200L, up.first().epochSec) // current hour stays as "now"
+        val up = w.upcomingHours(nowSec = base + 7300)
+        assertEquals(base + 7200, up.first().epochSec) // current hour stays as "now"
         assertEquals(2, up.size)
+    }
+
+    @Test fun poisonedTimestampsAreDropped() {
+        // A far-future epoch used to survive parsing and then crash every widget render.
+        val j = Http.json.parseToJsonElement(
+            """{"timezone":"UTC","current":{"temperature_2m":1,"weather_code":0,"is_day":1},
+              "hourly":{"time":[$base,1000000000000000000],"temperature_2m":[1,2],"weather_code":[0,0],"is_day":[1,1]},
+              "daily":{"time":[-5000000000,$base],"weather_code":[0,0],"temperature_2m_max":[3,4],"temperature_2m_min":[1,2]}}""",
+        )
+        val w = OpenMeteoSource.parse(place, j)
+        assertEquals(listOf(base), w.hourly.map { it.epochSec })
+        assertEquals(listOf(base), w.daily.map { it.epochSec })
     }
 
     @Test fun placeKeyIgnoresGpsJitter() {

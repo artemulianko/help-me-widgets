@@ -66,8 +66,11 @@ object Locations {
     /** Resolve the device location to a named Place, or null if unavailable. */
     suspend fun devicePlace(ctx: Context, timeoutMs: Long = 25_000): Place? {
         val loc = device(ctx, timeoutMs = timeoutMs) ?: return null
-        val (name, region) = nameFor(ctx, loc.latitude, loc.longitude)
-        return Place(name, loc.latitude, loc.longitude, region)
+        // Round to ~1 km before geocoding or saving: nothing finer is ever kept or shared.
+        val lat = Math.round(loc.latitude * 100) / 100.0
+        val lon = Math.round(loc.longitude * 100) / 100.0
+        val (name, region) = nameFor(ctx, lat, lon)
+        return Place(name, lat, lon, region)
     }
 
     /** City search via the free Open-Meteo geocoding API. */

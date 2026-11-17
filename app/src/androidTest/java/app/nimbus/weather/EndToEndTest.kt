@@ -59,9 +59,12 @@ class EndToEndTest {
         val before = device.findObjects(By.textEndsWith("°")).map { it.text }
         device.findObject(By.scrollable(true))?.scrollUntil(androidx.test.uiautomator.Direction.DOWN, Until.findObject(By.res("unit_2")))
         device.findObject(By.res("unit_2"))?.click()
-        device.findObject(By.scrollable(true))?.scrollUntil(androidx.test.uiautomator.Direction.UP, Until.findObject(By.res("widget_preview")))
         device.waitForIdle()
-        Thread.sleep(800)
+        assertEquals(TempUnit.FAHRENHEIT, runBlocking { Store(ctx).appNow().tempUnit })
+        // Reopen at the top and read the preview again.
+        ctx.startActivity(Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+        assertTrue(device.wait(Until.hasObject(By.res("widget_preview")), 15_000))
+        Thread.sleep(1500) // preview renders after a short debounce
         val after = device.findObjects(By.textEndsWith("°")).map { it.text }
         assertTrue("before=$before after=$after", before != after && after.isNotEmpty())
         runBlocking { Store(ctx).updateApp { it.copy(tempUnit = TempUnit.SYSTEM) } }

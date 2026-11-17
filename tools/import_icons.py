@@ -8,6 +8,7 @@
 
 Conversion uses Android's own Svg2Vector (tools/svg2vector), the converter behind Android
 Studio's Vector Asset tool.  Run from repo root:  python3 tools/import_icons.py
+Upstream assets can change: review the generated drawables (git diff) before committing.
 """
 import os, re, shutil, subprocess, tempfile, urllib.request
 
@@ -20,9 +21,19 @@ SYMBOLS = ["sunny", "clear_night", "partly_cloudy_day", "partly_cloudy_night", "
            "weather_hail", "thunderstorm", "refresh", "near_me", "location_on"]
 RES = "app/src/main/res"
 
+MAX_SVG = 256 * 1024
+
 def fetch(url, path):
-    with urllib.request.urlopen(url) as r, open(path, "wb") as f:
-        f.write(r.read())
+    """Bounded, timed download; rejects anything that isn't a plain SVG (no DOCTYPE/entities)."""
+    with urllib.request.urlopen(url, timeout=20) as r:
+        data = r.read(MAX_SVG + 1)
+    if len(data) > MAX_SVG:
+        raise SystemExit(f"refusing oversized download: {url}")
+    text = data.decode("utf-8")
+    if "<!DOCTYPE" in text or "<!ENTITY" in text or "<svg" not in text:
+        raise SystemExit(f"unexpected content from {url}")
+    with open(path, "w") as f:
+        f.write(text)
 
 def mask_to_clip(path):
     """Svg2Vector can't do alpha masks; these icons only use opaque masks as clips."""

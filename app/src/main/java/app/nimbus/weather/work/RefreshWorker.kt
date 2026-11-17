@@ -28,14 +28,41 @@ import java.util.concurrent.TimeUnit
 class RefreshWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
 
     override suspend fun doWork(): Result {
+        val ctx = applicationContext
         val force = inputData.getBoolean(KEY_FORCE, false)
         val reason = inputData.getString(KEY_REASON) ?: "scheduled"
-        val r = WeatherRepository.refresh(applicationContext, force = force, reason = reason)
-        return when {
-            r.isSuccess -> Result.success()
-            runAttemptCount < 2 -> Result.retry()
-            else -> Result.failure()
+        val attempt = runAttemptCount + 1
+        AppLog.i(ctx, "Job", "Started: $reason${if (attempt > 1) " (attempt $attempt)" else ""}")
+        try {
+            val r = WeatherRepository.refresh(ctx, force = force, reason = reason)
+            return when {
+                r.isSuccess -> Result.success()
+                runAttemptCount < 2 -> {
+                    AppLog.w(ctx, "Job", "Failed, Android will retry with backoff (attempt $attempt of 3)")
+                    Result.retry()
+                }
+                else -> {
+                    AppLog.e(ctx, "Job", "Failed after 3 attempts; next try at the next scheduled refresh")
+                    Result.failure()
+                }
+            }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            if (isStopped) AppLog.w(ctx, "Job", "Stopped early by Android (${stopReasonName()}); it will run again later")
+            throw e
         }
+    }
+
+    private fun stopReasonName(): String = when (if (android.os.Build.VERSION.SDK_INT >= 31) stopReason else -1) {
+        android.app.job.JobParameters.STOP_REASON_CONSTRAINT_CONNECTIVITY -> "network lost"
+        android.app.job.JobParameters.STOP_REASON_CONSTRAINT_BATTERY_NOT_LOW -> "battery low"
+        android.app.job.JobParameters.STOP_REASON_TIMEOUT -> "ran too long"
+        android.app.job.JobParameters.STOP_REASON_DEVICE_STATE -> "device state (Doze)"
+        android.app.job.JobParameters.STOP_REASON_APP_STANDBY -> "app standby"
+        android.app.job.JobParameters.STOP_REASON_QUOTA -> "background quota"
+        android.app.job.JobParameters.STOP_REASON_SYSTEM_PROCESSING -> "system busy"
+        android.app.job.JobParameters.STOP_REASON_CANCELLED_BY_APP -> "replaced by a newer refresh"
+        android.app.job.JobParameters.STOP_REASON_USER -> "stopped by you"
+        else -> "reason ${if (android.os.Build.VERSION.SDK_INT >= 31) stopReason else "unknown"}"
     }
 
     companion object {
@@ -87,6 +114,15 @@ class RefreshWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ct
 
         fun refreshNow(ctx: Context, force: Boolean, reason: String = if (force) "manual" else "widget update") {
             CoroutineScope(Dispatchers.Default).launch {
+                // A refresh already downloading wins: extra taps would only cancel it and spend quota.
+                val running = runCatching {
+                    WorkManager.getInstance(ctx).getWorkInfosForUniqueWork(NOW).get()
+                        .any { it.state == androidx.work.WorkInfo.State.RUNNING }
+                }.getOrDefault(false)
+                if (running) {
+                    if (force) AppLog.i(ctx, "Job", "Refresh already in progress; ignoring extra tap")
+                    return@launch
+                }
                 val req = OneTimeWorkRequestBuilder<RefreshWorker>()
                     .setConstraints(constraints(ctx))
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)

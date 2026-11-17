@@ -29,13 +29,11 @@ object WidgetRenderer {
         AppWidgetManager.getInstance(ctx).getAppWidgetIds(ComponentName(ctx, WeatherWidgetReceiver::class.java))
 
     suspend fun renderAll(ctx: Context) {
-        val ids = ids(ctx)
-        ids.forEach { render(ctx, it) }
-        if (ids.isNotEmpty()) AppLog.i(ctx, "Widget", "Rendered ${ids.size} widget(s)")
+        ids(ctx).forEach { render(ctx, it) } // only failures are logged; renders are routine
     }
 
     suspend fun render(ctx: Context, appWidgetId: Int) = lock.withLock {
-        runCatching {
+        try {
             val mgr = AppWidgetManager.getInstance(ctx)
             val options = mgr.getAppWidgetOptions(appWidgetId)
             val glanceId = GlanceAppWidgetManager(ctx).getGlanceIdBy(appWidgetId)
@@ -44,7 +42,11 @@ object WidgetRenderer {
             // so the host can switch layouts without waking us.
             val views = WeatherWidget().compose(ctx, glanceId, options)
             mgr.updateAppWidget(appWidgetId, views)
-        }.onFailure { AppLog.e(ctx, "Widget", "Render of widget $appWidgetId failed", it) }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e // a newer refresh replaced this one; not a failure
+        } catch (e: Exception) {
+            AppLog.e(ctx, "Widget", "Render of widget $appWidgetId failed", e)
+        }
     }
 
     /** Generated widget-picker previews (Android 15+), from sample data. */

@@ -10,7 +10,7 @@ import java.io.File
  * - Plain text file in app-private storage; one line per event: `epochMs|L|tag|message`.
  * - Keeps the last 3 days (pruned on read and at most hourly on write) and caps the file size.
  * - Never stores secrets: anything that looks like an API key or `key=` parameter is redacted.
- * - Also mirrored to logcat.
+ * - Mirrored to logcat in debug builds only (release logcat never sees place names).
  */
 object AppLog {
     enum class Level { I, W, E }
@@ -41,7 +41,7 @@ object AppLog {
     private fun write(ctx: Context, level: Level, tag: String, msg: String, t: Throwable?) {
         val text = redact(if (t != null) "$msg: ${t.javaClass.simpleName}${t.message?.let { " – $it" } ?: ""}" else msg)
             .replace('\n', ' ').take(500)
-        when (level) {
+        if (app.nimbus.weather.BuildConfig.DEBUG) when (level) {
             Level.I -> Log.i("HelpMeWeather", "[$tag] $text")
             Level.W -> Log.w("HelpMeWeather", "[$tag] $text")
             Level.E -> Log.e("HelpMeWeather", "[$tag] $text")

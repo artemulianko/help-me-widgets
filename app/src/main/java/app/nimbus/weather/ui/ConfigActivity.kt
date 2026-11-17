@@ -85,7 +85,13 @@ class ConfigActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         widgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) { finish(); return }
+        // Only edit widgets that really are ours (the activity is exported for the launcher).
+        val info = runCatching { AppWidgetManager.getInstance(this).getAppWidgetInfo(widgetId) }.getOrNull()
+        if (widgetId <= 0 || info?.provider?.className != app.nimbus.weather.widget.WeatherWidgetReceiver::class.java.name ||
+            info.provider.packageName != packageName
+        ) {
+            setResult(RESULT_CANCELED); finish(); return
+        }
         // configuration_optional: backing out keeps the widget with defaults, so OK either way.
         setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId))
         val store = Store(this)
@@ -219,14 +225,14 @@ fun WidgetEditor(initial: WidgetConfig, app: AppSettings, store: Store, onClose:
                     choiceRow("Temperature", listOf(TempUnit.SYSTEM to "Auto", TempUnit.CELSIUS to "°C", TempUnit.FAHRENHEIT to "°F"), app.tempUnit, "e_unit") { u ->
                         scope.launch { store.updateApp { it.copy(tempUnit = u) }; WidgetRenderer.renderAll(ctx) }
                     }
-                    choiceRow("Time", listOf(TimeFormat.SYSTEM to "Match system", TimeFormat.H12 to "3 PM"), if (app.timeFormat == TimeFormat.H12) TimeFormat.H12 else TimeFormat.SYSTEM, "e_time") { t ->
+                    choiceRow("Time", listOf(TimeFormat.SYSTEM to "System", TimeFormat.H12 to "AM/PM", TimeFormat.HOUR_ONLY to "Hour only"), if (app.timeFormat == TimeFormat.H24) TimeFormat.SYSTEM else app.timeFormat, "e_time") { t ->
                         scope.launch { store.updateApp { it.copy(timeFormat = t) }; WidgetRenderer.renderAll(ctx) }
                     }
                 }
 
                 SettingsGroup {
                     navRow("Data source and updates", "Shared by all widgets", R.drawable.ms_refresh) {
-                        ctx.startActivity(Intent(ctx, MainActivity::class.java))
+                        ctx.startActivity(Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                     }
                 }
                 Spacer(Modifier.height(24.dp).navigationBarsPadding())

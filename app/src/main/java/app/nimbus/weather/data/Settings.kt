@@ -12,10 +12,11 @@ import kotlinx.serialization.Serializable
 
 enum class TempUnit { SYSTEM, CELSIUS, FAHRENHEIT }
 /**
- * Forecast hour labels. SYSTEM follows the phone's 12/24-hour setting ("3 PM" or "15:00");
- * H12 is always "3 PM" (AM/PM, no minutes). H24 is legacy (no longer offered) and behaves as SYSTEM.
+ * Forecast hour labels. SYSTEM matches the phone ("3 PM" or "16:00"); H12 is always "3 PM";
+ * HOUR_ONLY strips it to the two-digit hour in the phone's 12/24-hour style ("03" or "16").
+ * H24 is a legacy value from 0.1.0 and behaves as SYSTEM.
  */
-enum class TimeFormat { SYSTEM, H12, H24 }
+enum class TimeFormat { SYSTEM, H12, H24, HOUR_ONLY }
 enum class ProviderPref { GOOGLE, OPEN_METEO }
 
 @Serializable
@@ -108,14 +109,14 @@ class Store(private val context: Context) {
     }
 
     suspend fun setError(msg: String?) {
-        context.prefsStore.edit { if (msg == null) it.remove(errorKey) else it[errorKey] = msg }
+        context.prefsStore.edit { if (msg == null) it.remove(errorKey) else it[errorKey] = AppLog.redact(msg).take(300) }
     }
 
     // ---- forecast cache (one entry per ~1km grid cell) ----
     private fun cacheKey(k: String) = stringPreferencesKey(k)
 
     fun weather(place: Place?): Flow<WeatherData?> = context.cacheStore.data.map { p ->
-        place?.let { p[cacheKey(it.key)] }?.let { runCatching { json.decodeFromString<WeatherData>(it) }.getOrNull() }
+        place?.let { p[cacheKey(it.key)] }?.let { runCatching { json.decodeFromString<WeatherData>(it).sanitized() }.getOrNull() }
     }
 
     suspend fun weatherNow(place: Place?) = weather(place).first()

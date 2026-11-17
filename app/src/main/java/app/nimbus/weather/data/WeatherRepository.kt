@@ -1,5 +1,8 @@
 package app.nimbus.weather.data
 
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+
 import android.content.Context
 import android.util.Log
 import app.nimbus.weather.widget.WidgetRenderer
@@ -92,14 +95,22 @@ object WeatherRepository {
                     AppLog.i(ctx, "Fetch", "${place.name}: cache still fresh, skipped")
                     continue
                 }
+                // Protect API quota: even a manual refresh reuses a forecast fetched <1 min ago.
+                if (force && cached != null && cached.place.name == place.name && System.currentTimeMillis() - cached.fetchedAt < 60_000L) {
+                    AppLog.i(ctx, "Fetch", "${place.name}: fetched under a minute ago, reusing it (saves API quota)")
+                    continue
+                }
                 val t0 = System.currentTimeMillis()
+                AppLog.i(ctx, "Fetch", "Requesting ${providerName(primary)} for ${place.name}")
                 val data = runCatching { primary.fetch(place) }.recoverCatching { e ->
-                    AppLog.w(ctx, "Fetch", "${place.name}: ${providerName(primary)} failed, falling back to Open-Meteo", e)
-                    error = e.message
-                    fallback?.fetch(place) ?: throw e
+                    if (fallback == null) throw e
+                    AppLog.w(ctx, "Fetch", "${place.name}: ${providerName(primary)} failed after ${System.currentTimeMillis() - t0} ms, trying Open-Meteo", e)
+                    error = "${providerName(primary)}: ${(e as? HttpException)?.detail ?: e.message ?: e.javaClass.simpleName} Showing Open-Meteo instead."
+                    fallback.fetch(place)
                 }.onFailure { e ->
-                    AppLog.e(ctx, "Fetch", "${place.name}: all sources failed", e)
-                    error = e.message ?: e.javaClass.simpleName
+                    currentCoroutineContext().ensureActive() // cancelled (replaced/stopped): not a failure
+                    AppLog.e(ctx, "Fetch", "${place.name}: no data (${providerName(primary)}${if (fallback != null) " and Open-Meteo" else ""} failed); keeping last forecast", e)
+                    error = "Couldn't update: ${(e as? HttpException)?.detail ?: e.message ?: e.javaClass.simpleName}. Showing the last forecast."
                 }.getOrNull() ?: continue
                 store.putWeather(data.copy(place = place))
                 changed = true
@@ -113,6 +124,8 @@ object WeatherRepository {
             store.setError(error)
             AppLog.i(ctx, "Refresh", "Done in ${System.currentTimeMillis() - started} ms${if (error != null) " (with errors)" else ""}")
             return if (error == null || places.isNotEmpty()) Result.success(Unit) else Result.failure(Exception(error))
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e // the worker logs why Android stopped it
         } catch (e: Exception) {
             AppLog.e(ctx, "Refresh", "Failed", e)
             store.setError(e.message)

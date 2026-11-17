@@ -21,7 +21,7 @@ class Fmt(private val ctx: Context, app: AppSettings, zone: String?) {
     }
     val is24h = when (app.timeFormat) {
         TimeFormat.H12 -> false
-        TimeFormat.SYSTEM, TimeFormat.H24 -> DateFormat.is24HourFormat(ctx)
+        else -> DateFormat.is24HourFormat(ctx)
     }
     val zoneId: ZoneId = zone?.let { runCatching { ZoneId.of(it) }.getOrNull() } ?: ZoneId.systemDefault()
     private val locale: Locale = Locale.getDefault()
@@ -29,10 +29,18 @@ class Fmt(private val ctx: Context, app: AppSettings, zone: String?) {
     fun temp(c: Double): String = "${deg(c)}°"
     fun deg(c: Double): Int = (if (fahrenheit) c * 9 / 5 + 32 else c).roundToInt()
 
-    private val hourFmt = DateTimeFormatter.ofPattern(if (is24h) "HH:mm" else "h a", locale)
+    private val hourOnly = app.timeFormat == TimeFormat.HOUR_ONLY
+    private val hourFmt = DateTimeFormatter.ofPattern(
+        when {
+            hourOnly -> if (is24h) "HH" else "hh"   // "16" / "03"
+            is24h -> "HH:mm"                        // "16:00"
+            else -> "h a"                           // "3 PM"
+        },
+        locale,
+    )
     private val clockFmt = DateTimeFormatter.ofPattern(if (is24h) "HH:mm" else "h:mm a", locale)
 
-    fun hour(epochSec: Long): String = hourFmt.format(Instant.ofEpochSecond(epochSec).atZone(zoneId))
+    fun hour(epochSec: Long): String = runCatching { hourFmt.format(Instant.ofEpochSecond(epochSec).atZone(zoneId)) }.getOrDefault("–")
     fun clock(epochMs: Long): String = clockFmt.format(Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()))
 
     fun day(epochSec: Long, index: Int): String =

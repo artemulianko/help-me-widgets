@@ -56,9 +56,10 @@ How:
 
 ## Privacy
 
-- Location is optional and approximate. Coordinates are **rounded to about 1 km** before being sent to the weather provider.
-- No analytics, crash reporting, ads or accounts. Settings stay on the device.
-- Network requests go only to the weather provider you choose (Google or Open-Meteo) and to Open-Meteo's geocoding when you search for a city.
+- Location is optional and approximate. Coordinates are **rounded to about 1 km** before they're stored, turned into a city name, or sent to a weather provider.
+- No analytics, crash reporting, ads or accounts. Settings (including your API key) stay on the device and are excluded from backups and device transfers.
+- Network requests go to the weather provider you choose (Google or Open-Meteo), to Open-Meteo as an automatic fallback when Google fails, and to Open-Meteo's geocoding when you search for a city. The city name for your location comes from Android's system geocoder, which may use Google's servers.
+- The in-app **Logs** (last 3 days) stay on the phone; API keys are redacted from them.
 
 ## Use Google's forecast (same as Pixel Weather)
 
@@ -67,12 +68,12 @@ Google only offers its weather data to other apps through the [Google Maps Platf
 1. Open the [Google Cloud Console](https://console.cloud.google.com/) and create a project (a billing account is required, even for free usage).
 2. Enable the **Weather API** in **APIs & Services → Library**.
 3. Create a key in **APIs & Services → Credentials → Create credentials → API key**.
-4. **Restrict the key** (recommended), so it's useless if it ever leaks:
+4. **Restrict the key** (recommended), to limit what a leaked key could do:
    - *API restrictions*: Weather API only.
-   - *Application restrictions → Android apps*: package `app.nimbus.weather`, SHA-1 `F1:85:1D:9D:C0:E3:01:FB:77:F9:81:66:11:B9:81:2D:21:59:9B:32` (the release signing certificate; the app sends these on every request).
+   - *Application restrictions → Android apps*: package `app.nimbus.weather`, SHA-1 `F1:85:1D:9D:C0:E3:01:FB:77:F9:81:66:11:B9:81:2D:21:59:9B:32` (the release signing certificate; the app sends these on every request). This stops casual reuse, but these values are public, so a determined person who extracts your key could still send them; also set a daily quota on the key.
 5. In Help Me Weather, go to **Forecast source → Google**, paste the key, and tap **Save**.
 
-The key is stored only on your phone. If Google is unreachable or the key is wrong, Help Me Weather falls back to Open-Meteo, so the widget never goes blank.
+The key is stored only on your phone and is excluded from backups and device transfers. If Google is unreachable or the key is wrong, Help Me Weather falls back to Open-Meteo (sending it the same rounded coordinates), so the widget never goes blank.
 
 ## Build from source
 
@@ -80,7 +81,7 @@ Requirements: JDK 21, Android SDK with platform 37, and an emulator or device ru
 
 ```bash
 ./gradlew assembleDebug                 # debug APK
-./gradlew assembleRelease               # minified release → releases/help-me-weather-<version>.apk
+./gradlew assembleRelease               # minified release → releases/help-me-weather-<version>.apk (needs keystore/; add -PallowDebugSigning=true for a local test build)
 ./gradlew testDebugUnitTest             # parsing and mapping unit tests
 ./gradlew connectedDebugAndroidTest     # on-device: live network, every widget size and config rendered, UI flow
 ```

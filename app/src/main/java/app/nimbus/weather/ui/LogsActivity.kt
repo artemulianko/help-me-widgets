@@ -101,6 +101,16 @@ private fun LogsScreen(onBack: () -> Unit) {
                 },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
                 actions = {
+                    TextButton(
+                        onClick = {
+                            val header = "Help Me Weather v${app.nimbus.weather.BuildConfig.VERSION_NAME} · Android ${android.os.Build.VERSION.RELEASE} · ${android.os.Build.MODEL}\n"
+                            val cm = ctx.getSystemService(android.content.ClipboardManager::class.java)
+                            cm?.setPrimaryClip(android.content.ClipData.newPlainText("Help Me Weather logs", header + text))
+                            // Android 13+ shows its own "Copied" confirmation.
+                            if (android.os.Build.VERSION.SDK_INT < 33) android.widget.Toast.makeText(ctx, "Logs copied", android.widget.Toast.LENGTH_SHORT).show()
+                        },
+                        enabled = entries.isNotEmpty(), modifier = Modifier.testTag("logs_copy"),
+                    ) { Text("Copy") }
                     TextButton(onClick = { confirmClear = true }, enabled = entries.isNotEmpty(), modifier = Modifier.testTag("logs_clear")) { Text("Clear") }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = bg),
