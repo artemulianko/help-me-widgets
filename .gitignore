@@ -1,0 +1,22 @@
+# Build output
+.gradle/
+build/
+.kotlin/
+captures/
+local.properties
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
+
+# Release signing (never commit)
+keystore/
+*.jks
+
+# Secrets (never commit) — e.g. GOOGLE_WEATHER_KEY lives in help-me-weather/.env
+.env
+
+# APKs ship through GitHub Releases, never the repo
+releases/
+*.apk
