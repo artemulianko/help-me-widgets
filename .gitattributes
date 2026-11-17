@@ -1,0 +1,12 @@
+# Line endings: LF everywhere except Windows scripts.
+* text=auto eol=lf
+*.bat text eol=crlf
+gradlew text eol=lf
+
+# Binaries
+*.png binary
+*.jpg binary
+*.webp binary
+*.jar binary
+*.jks binary
+*.apk binary
