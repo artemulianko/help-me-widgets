@@ -29,7 +29,8 @@ bounds() { dump | tr '>' '\n' | grep "resource-id=\"$1\"" | head -1 | grep -oE '
 find_scroll() {
   local b w h; read -r w h < <("$ADB" shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr 'x' ' ')
   for _ in 1 2 3 4 5 6 7 8; do
-    b="$(bounds "$1")"; [ -n "$b" ] && { echo "$b"; return; }
+    # Only when fully on screen (a row at the bottom edge reads as found but taps miss it).
+    b="$(bounds "$1")"; if [ -n "$b" ]; then read -r _ _ _ y2 <<< "$b"; [ "$y2" -lt $((h - 250)) ] && { echo "$b"; return; }; fi
     "$ADB" shell input swipe $((w / 2)) $((h * 4 / 5)) $((w / 2)) $((h * 2 / 5)) 300; sleep 1
   done
 }
