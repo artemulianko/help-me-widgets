@@ -14,10 +14,13 @@ At a Glance gives you the date and sometimes the weather, but your next alarm on
 
 ## Download
 
-Not released yet. Build it from source (below) until the first GitHub Release.
+**[⬇ Download Help Me Clock 0.1.0 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/clock-v0.1.0/help-me-clock-0.1.0.apk)** · Android 12+ · 3.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/clock-v0.1.0) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-1. Install the APK and open **Help Me Clock** once.
-2. Tap **Add to home screen** (it lands as a 4×1 row), or long-press the home screen → **Widgets** → **Help Me Clock**. Long-press the widget → **Customize** to change it.
+SHA-256 `f900a5846f718deccf3edf8e5e5691a998eb929815fbbbb538b8ca231d4e7a58`
+
+1. Download the APK on your phone and open it (allow "Install unknown apps" for your browser when asked).
+2. Open **Help Me Clock** once.
+3. Tap **Add to home screen** (it lands as a 4×1 row), or long-press the home screen → **Widgets** → **Help Me Clock**. Long-press the widget → **Customize** to change it.
 
 ## Why it fits a Pixel
 

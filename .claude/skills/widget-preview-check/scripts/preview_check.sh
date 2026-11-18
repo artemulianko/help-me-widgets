@@ -67,10 +67,11 @@ from PIL import Image, ImageChops
 out, b = sys.argv[1], list(map(int, sys.argv[2].split()))
 a = Image.open(f"{out}/editor_before.png").convert("RGB").crop(b)
 c = Image.open(f"{out}/editor_after.png").convert("RGB").crop(b)
+# 1.5%: a transparent widget only recolors its text (~3%); a minute tick changes <1%.
 diff = ImageChops.difference(a, c).convert("L").point(lambda v: 255 if v > 40 else 0)
 changed = sum(diff.histogram()[255:]) / (diff.width * diff.height)
-print(f"  {'✓' if changed > 0.05 else '✗'} preview updated after Theme → Dark ({changed:.0%} of pixels changed)")
-sys.exit(0 if changed > 0.05 else 1)
+print(f"  {'✓' if changed > 0.015 else '✗'} preview updated after Theme → Dark ({changed:.0%} of pixels changed)")
+sys.exit(0 if changed > 0.015 else 1)
 PY
     auto="$(bounds theme_0)"; [ -n "$auto" ] && center_tap "$auto"; sleep 1
   else

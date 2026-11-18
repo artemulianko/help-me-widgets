@@ -124,7 +124,7 @@ Rules:
 2. Run unit tests and the device tests, then build the release:
    `./gradlew testDebugUnitTest assembleRelease`
    The APK is copied to `releases/help-me-<widget>-<version>.apk` (git-ignored).
-3. Signing: weather uses `keystore/release.jks` (git-ignored; never commit, never print passwords). Stocks has **no release key yet**: its builds so far are debug-signed, so they need `-PallowDebugSigning=true` to install over earlier versions. Changing the key forces users to uninstall first, so it needs the owner's decision.
+3. Signing: weather uses `keystore/release.jks` (git-ignored; never commit, never print passwords). Stocks and Clock have **no release key yet**: their builds are debug-signed, so they need `-PallowDebugSigning=true` to install over earlier versions. Changing the key forces users to uninstall first, so it needs the owner's decision.
 4. Install the release APK on the emulator, then tap through the widget (pin, refresh, editor, logs).
 5. Write `releases/RELEASE_NOTES-<version>.md`: what's new or fixed in plain words, upgrade notes, and the SHA-256 (`shasum -a 256 <apk>`).
 6. Publish only when asked: a GitHub Release in this repo tagged `<widget>-v<version>` (e.g. `stocks-v0.1.2`, `weather-v0.1.4`), with the APK attached and the notes as the body. Update the download link and SHA-256 in that widget's README.
