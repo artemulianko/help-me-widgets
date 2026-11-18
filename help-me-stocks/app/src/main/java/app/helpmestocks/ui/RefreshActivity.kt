@@ -30,6 +30,9 @@ class RefreshActivity : Activity() {
         super.onCreate(savedInstanceState)
         // Invisible and click-through: touches go to the home screen underneath.
         window.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        // 1x1 px in a corner: floating, so it never repaints the system bars.
+        window.setLayout(1, 1)
+        window.setGravity(android.view.Gravity.TOP or android.view.Gravity.START)
         noAnimation()
         if (savedInstanceState != null) { finish(); return } // recreated: the refresh already ran
         val app = applicationContext

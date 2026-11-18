@@ -14,9 +14,9 @@ The stock Pixel weather options are a one-line At a Glance and a widget you can 
 
 ## Download
 
-**[⬇ Download Help Me Weather 0.1.6 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v0.1.6/help-me-weather-0.1.6.apk)** · Android 12+ · 4.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/weather-v0.1.6) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+**[⬇ Download Help Me Weather 0.1.7 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v0.1.7/help-me-weather-0.1.7.apk)** · Android 12+ · 4.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/weather-v0.1.7) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-SHA-256 `34fb2ae88478fe554775ae92fa32e5633102ede9e46790c4751b9085208be754`
+SHA-256 `caa716f1db0de40b19e63c116a67517accc43f33ff88887afa686ae9fb86afad`
 
 > Upgrading from 0.1.0/0.1.1: since 0.1.2 the app has a new package name (`app.helpmeweather`), so uninstall the old version first and update your key restriction. Later updates install over it normally.
 
