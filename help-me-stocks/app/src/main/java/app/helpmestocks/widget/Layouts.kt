@@ -65,8 +65,16 @@ private object Fonts {
     val text: FontFamily by lazy { pick("google-sans-flex", "google-sans-text", "google-sans") }
 }
 
+/**
+ * Sizes here are fitted to the cell in dp. Drawn in sp, a larger system font size (or display
+ * size) scaled the text past what the layout planned for, clipping and truncating it. So text
+ * is drawn at the computed size × min(font scale, 1): unchanged at the default font size,
+ * smaller fonts still honored, larger ones capped so nothing overflows.
+ */
+private val fontScale: Float get() = android.content.res.Resources.getSystem().configuration.fontScale.coerceAtLeast(0.5f)
+
 private fun style(c: ColorProvider, size: Float, weight: FontWeight = FontWeight.Normal, display: Boolean = false, align: TextAlign? = null) =
-    TextStyle(color = c, fontSize = size.sp, fontWeight = weight, fontFamily = if (display) Fonts.display else Fonts.text, textAlign = align)
+    TextStyle(color = c, fontSize = (size * minOf(fontScale, 1f) / fontScale).sp, fontWeight = weight, fontFamily = if (display) Fonts.display else Fonts.text, textAlign = align)
 
 /** Everything a layout needs, resolved once per composition. */
 private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val f: Fmt, val width: Float, val height: Float) {
@@ -143,6 +151,8 @@ fun WidgetLayouts(s: WidgetState, c: WColors) {
                     x.width < 270 -> Compact(x)
                     else -> if (s.cfg.content == Content.SINGLE) Compact(x) else Strip(x)
                 }
+                // One column, two or more rows (launcher grids reflow widgets to this).
+                x.width < 150 -> Narrow(x)
                 s.cfg.content == Content.SINGLE -> if (x.width < 270) DetailNarrow(x) else DetailWide(x)
                 else -> Watchlist(x)
             }
@@ -253,6 +263,51 @@ private fun Tiny(x: Scope) {
 }
 
 /** 2x1 / 3x1 (and single-stock 4x1): one symbol in a row. */
+/**
+ * 1 column × 2+ rows (~97-130 dp wide). One stock: symbol, name, a price fitted to the width
+ * and its change. Watchlist: symbol over a price coloured by direction, as many rows as fit,
+ * so nothing is cut to "…".
+ */
+@Composable
+private fun Narrow(x: Scope) {
+    val pad = 12f
+    val inner = x.width - 2 * pad
+    fun fit(text: String, max: Float) = minOf(max, inner / (text.length * 0.58f))
+    Box(modifier = GlanceModifier.fillMaxSize()) {
+        if (x.cfg.content == Content.SINGLE) {
+            val t = x.s.tickers.first()
+            val q = x.quote(t)
+            val price = x.priceText(t, q)
+            Column(modifier = GlanceModifier.fillMaxSize().padding(pad.dp).semantics { contentDescription = x.describe(t, q) }.tap(rowTap(x.ctx, x.s, t))) {
+                Row(modifier = GlanceModifier.fillMaxWidth().padding(end = if (x.cfg.showRefresh) 28.dp else 0.dp)) { Label(x, t, 13f) }
+                Name(x, t, 12f)
+                Spacer(GlanceModifier.defaultWeight())
+                Text(price, style = style(x.c.text, fit(price, 24f), FontWeight.Normal, display = true), maxLines = 1)
+                Spacer(GlanceModifier.height(4.dp))
+                ChangeChip(x, q, size = 12f)
+            }
+        } else {
+            val rows = ((x.height - 2 * pad) / 40f).toInt().coerceIn(1, 4)
+            Column(modifier = GlanceModifier.fillMaxSize().padding(pad.dp)) {
+                x.s.tickers.take(rows).forEachIndexed { i, t ->
+                    val q = x.quote(t)
+                    val price = x.priceText(t, q)
+                    Column(
+                        modifier = GlanceModifier.fillMaxWidth().defaultWeight()
+                            .semantics { contentDescription = x.describe(t, q) }.tap(rowTap(x.ctx, x.s, t)),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        // Only the first label makes room for the refresh button; prices get the full width.
+                        Row(modifier = GlanceModifier.fillMaxWidth().padding(end = if (i == 0 && x.cfg.showRefresh) 28.dp else 0.dp)) { Label(x, t, 12f) }
+                        Text(price, style = style(x.c.change.line(x.dir(q)), fit(price, 15f), FontWeight.Medium, display = true), maxLines = 1)
+                    }
+                }
+            }
+        }
+        if (x.cfg.showRefresh) CornerRefresh(x)
+    }
+}
+
 @Composable
 private fun Compact(x: Scope) {
     val t = x.s.tickers.first()
