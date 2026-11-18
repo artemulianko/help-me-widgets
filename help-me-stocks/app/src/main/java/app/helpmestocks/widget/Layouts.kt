@@ -212,9 +212,9 @@ private fun Chart(x: Scope, q: Quote?, w: Float, h: Float, fill: Boolean) {
     Box(modifier = GlanceModifier.width(w.dp).height(h.dp)) {
         if (bmp != null) {
             bmp.baseline?.let {
-                Image(ImageProvider(it), null, GlanceModifier.width(w.dp).height(h.dp), contentScale = ContentScale.FillBounds, colorFilter = ColorFilter.tint(x.c.textVariant))
+                Image(ImageProvider(Sparkline.icon(it)), null, GlanceModifier.width(w.dp).height(h.dp), contentScale = ContentScale.FillBounds, colorFilter = ColorFilter.tint(x.c.textVariant))
             }
-            Image(ImageProvider(bmp.line), null, GlanceModifier.width(w.dp).height(h.dp), contentScale = ContentScale.FillBounds, colorFilter = ColorFilter.tint(x.c.change.line(x.dir(q))))
+            Image(ImageProvider(Sparkline.icon(bmp.line)), null, GlanceModifier.width(w.dp).height(h.dp), contentScale = ContentScale.FillBounds, colorFilter = ColorFilter.tint(x.c.change.line(x.dir(q))))
         }
     }
 }

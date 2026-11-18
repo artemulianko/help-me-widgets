@@ -19,14 +19,29 @@ import kotlin.math.roundToInt
  * mid-day stops part-way across, and a dotted line marks the previous close.
  */
 object Sparkline {
+    /**
+     * The chart as a compressed PNG [android.graphics.drawable.Icon] (lossless, a few KB): a
+     * Bitmap in RemoteViews ships every raw pixel to the launcher for every size, which was ~7 MB
+     * per update. Falls back to the raw bitmap if encoding fails.
+     */
+    fun icon(b: Bitmap): android.graphics.drawable.Icon {
+        val out = java.io.ByteArrayOutputStream()
+        val ok = runCatching { b.compress(Bitmap.CompressFormat.PNG, 100, out) }.getOrDefault(false)
+        if (app.helpmestocks.BuildConfig.DEBUG) android.util.Log.d("HelpMeStocksWidget", "chart ${b.width}x${b.height} ${b.config} -> png ${if (ok) out.size() else -1} B (raw ${b.byteCount} B)")
+        return if (ok && out.size() > 0) android.graphics.drawable.Icon.createWithData(out.toByteArray(), 0, out.size())
+        else android.graphics.drawable.Icon.createWithBitmap(b)
+    }
+
     private const val MAX_DENSITY = 2.75f
-    private const val MAX_PIXELS = 200_000f // ~800 KB per ARGB bitmap
+    private const val MAX_PIXELS = 200_000f // drawn locally; only the compressed PNG is sent
 
     class Bitmaps(val line: Bitmap, val baseline: Bitmap?)
 
     fun draw(q: Quote, widthDp: Float, heightDp: Float, density: Float, fill: Boolean): Bitmaps? {
         if (q.times.size < 2 || widthDp < 8f || heightDp < 8f) return null
-        // Widget bitmaps share a budget (about 1.5× the screen for all of a widget's layouts), so
+        // White masks, tinted at render time, sent as PNG (see [icon]): raw bitmaps sent ~4.5 MB to
+        // the launcher per update, and a Pixel 11 Pro launcher sometimes blanked the widget while
+        // taking it in. Widget bitmaps also share a budget (about 1.5× the screen for all of a widget's layouts), so
         // each chart is capped: plenty sharp at row and 4×2 sizes, softer only on huge resizes.
         var d = density.coerceIn(1f, MAX_DENSITY)
         val area = widthDp * heightDp * d * d
