@@ -20,3 +20,6 @@ keystore/
 # APKs ship through GitHub Releases, never the repo
 releases/
 *.apk
+
+# r8-analyzer skill output
+tmp/
