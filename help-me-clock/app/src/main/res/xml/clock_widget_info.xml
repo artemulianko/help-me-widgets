@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 4×1 by default (an At a Glance replacement). updatePeriodMillis = 0: the launcher ticks the TextClocks, so the app is
+     only woken when the next alarm, time zone, 12/24 h or language changes. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_description"
+    android:minWidth="250dp"
+    android:minHeight="40dp"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
+    android:maxResizeWidth="900dp"
+    android:maxResizeHeight="800dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="1"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/widget_initial"
+    android:previewLayout="@layout/widget_preview"
+    android:configure="app.helpmeclock.ui.ConfigActivity"
+    android:widgetFeatures="reconfigurable|configuration_optional"
+    android:widgetCategory="home_screen|keyguard" />

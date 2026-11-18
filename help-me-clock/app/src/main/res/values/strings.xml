@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Help Me Clock</string>
+    <string name="widget_name">Clock</string>
+    <string name="widget_description">The time, the date and your next alarm, in your colors</string>
+    <string name="next_alarm">Next alarm %1$s</string>
+</resources>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Static picker preview (pin dialog / launchers without generated previews). Mirrors the 4×1
+     default: date over the time at the start, the next alarm at the end. The TextClocks show the
+     real date and time. RemoteViews-safe views only. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_preview_bg"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:orientation="vertical">
+        <TextClock android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:format12Hour="EEE, d MMM" android:format24Hour="EEE, d MMM" android:fontFamily="google-sans-flex"
+            android:textColor="@color/nim_auto_on_surface" android:textSize="16sp" android:maxLines="1" />
+        <TextClock android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:format12Hour="h:mm" android:format24Hour="HH:mm"
+            android:fontFamily="google-sans-flex" android:fontFeatureSettings="tnum" android:includeFontPadding="false"
+            android:maxLines="1" android:textColor="@color/nim_auto_on_surface" android:textSize="40sp" />
+    </LinearLayout>
+    <ImageView android:layout_width="16dp" android:layout_height="16dp" android:layout_marginEnd="4dp"
+        android:src="@drawable/ms_alarm" android:tint="@color/nim_auto_on_surface_variant" android:importantForAccessibility="no" />
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="7:30 AM"
+        android:fontFamily="google-sans-flex" android:textColor="@color/nim_auto_on_surface_variant" android:textSize="16sp" />
+</LinearLayout>

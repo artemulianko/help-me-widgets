@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Time + AM/PM as one native row (weight 400): AM/PM hugs the digits and sits on their
+     baseline whatever the hour's width ("1:00 AM" vs "12:58 PM"). In 24-hour mode the
+     AM/PM clock is empty and takes no space. Sizes and colours are set from code. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:baselineAligned="true"
+    android:orientation="horizontal">
+    <TextClock
+        android:id="@+id/clock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="google-sans-flex"
+        android:textFontWeight="400"
+        android:fontFeatureSettings="tnum"
+        android:includeFontPadding="false"
+        android:letterSpacing="-0.02"
+        android:maxLines="1"
+        android:singleLine="true" />
+    <TextClock
+        android:id="@+id/ampm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="google-sans-flex"
+        android:textFontWeight="400"
+        android:format12Hour=" a"
+        android:format24Hour=""
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:singleLine="true" />
+</LinearLayout>

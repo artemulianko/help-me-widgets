@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shown by the launcher before the app's first render (just added, after an update, after a
+     force stop). Not a spinner: TextClock ticks on its own, so it's already a working clock.
+     RemoteViews-safe views only. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_initial_bg"
+    android:gravity="center_vertical|start"
+    android:orientation="vertical"
+    android:padding="16dp">
+    <TextClock android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:format12Hour="EEE, d MMM" android:format24Hour="EEE, d MMM" android:fontFamily="google-sans-flex"
+        android:textColor="@color/nim_auto_on_surface" android:textSize="16sp" android:maxLines="1" />
+    <TextClock android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:format12Hour="h:mm" android:format24Hour="HH:mm" android:fontFamily="google-sans-flex"
+        android:fontFeatureSettings="tnum" android:includeFontPadding="false" android:maxLines="1"
+        android:textColor="@color/nim_auto_on_surface" android:textSize="40sp" android:layout_marginTop="4dp" />
+</LinearLayout>

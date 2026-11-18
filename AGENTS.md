@@ -17,6 +17,7 @@ A family of **home screen widgets for Android**, built for Pixel and tuned on a 
 |---|---|---|---|
 | `help-me-weather/` | Weather: temperature, condition, hourly or daily row | `app.helpmeweather` | Google Maps Platform Weather API (user's own key), Open-Meteo fallback |
 | `help-me-stocks/` | Stocks watchlist with intraday charts | `app.helpmestocks` | Yahoo Finance public chart endpoints |
+| `help-me-clock/` | Digital clock: time, date and the next alarm (or date + alarm with the time off) | `app.helpmeclock` | None: `TextClock` + `AlarmManager.getNextAlarmClock()`, no internet permission |
 
 The projects share **no code and no Gradle build**. They share these rules, the design system and the same architecture. A fix to a shared pattern (rendering, refresh, logs, editor, security) must be considered for **every** widget, not only the one you're in.
 
