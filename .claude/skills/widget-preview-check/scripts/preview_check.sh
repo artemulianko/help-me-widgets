@@ -25,9 +25,21 @@ dump() {
 }
 # bounds of the node with resource-id $1, as "x1 y1 x2 y2"
 bounds() { dump | tr '>' '\n' | grep "resource-id=\"$1\"" | head -1 | grep -oE 'bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' | grep -oE '[0-9]+' | tr '\n' ' '; }
+# Like bounds, but scrolls the screen down until the node appears (lists below the fold).
+find_scroll() {
+  local b w h; read -r w h < <("$ADB" shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr 'x' ' ')
+  for _ in 1 2 3 4 5 6 7 8; do
+    b="$(bounds "$1")"; [ -n "$b" ] && { echo "$b"; return; }
+    "$ADB" shell input swipe $((w / 2)) $((h * 4 / 5)) $((w / 2)) $((h * 2 / 5)) 300; sleep 1
+  done
+}
 center_tap() { read -r a b c d <<< "$1"; "$ADB" shell input tap $(((a + c) / 2)) $(((b + d) / 2)); }
 shot() { "$ADB" exec-out screencap -p > "$OUT/$1.png"; }
-top_pkg() { "$ADB" shell dumpsys activity activities | grep -m1 topResumedActivity | grep -oE 'u0 [a-z0-9_.]+' | cut -d' ' -f2; }
+top_pkg() { # retried: it reads empty while an activity transition is running
+  local t; for _ in 1 2 3 4 5; do
+    t="$("$ADB" shell dumpsys activity activities | grep -m1 topResumedActivity | grep -oE 'u0 [a-z0-9_.]+' | cut -d' ' -f2)"
+    [ -n "$t" ] && { echo "$t"; return; }; sleep 1
+  done; }
 
 "$ADB" logcat -c
 echo "== App home (cold start)"
@@ -37,14 +49,16 @@ home_b="$(bounds widget_preview)"; shot home
 [ -n "$home_b" ] && echo "  ✓ preview present at [$home_b]" || { echo "  ✗ no widget_preview on the home screen"; fail=1; }
 
 echo "== Editor"
-row="$(bounds widget_row_0)"
+row="$(find_scroll widget_row_0)"
 if [ -z "$row" ]; then
   echo "  - no pinned widget: editor checks skipped (pin one, see e2e-test)"
 else
   center_tap "$row"; sleep 5
   ed_b="$(bounds widget_preview)"; shot editor_before
   [ -n "$ed_b" ] && echo "  ✓ editor preview present" || { echo "  ✗ no editor preview"; fail=1; }
-  dark="$(bounds theme_2)"
+  dark="$(find_scroll theme_2)"
+  # Scrolling moved the preview? It's pinned above the list in every editor; re-read it.
+  sleep 2; ed_b="$(bounds widget_preview)"; [ -n "$dark" ] && shot editor_before
   if [ -n "$dark" ]; then
     center_tap "$dark"; sleep 3; shot editor_after
     python3 - "$OUT" "$ed_b" <<'PY' || fail=1
