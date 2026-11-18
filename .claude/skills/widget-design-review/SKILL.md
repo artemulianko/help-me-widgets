@@ -37,6 +37,20 @@ Spec: `docs/design.md`. Review **rendered output**, not code alone.
 **States**
 - [ ] Empty setup, loading, refreshing (spinner), no network, error, and stale data all look intentional.
 
+**Scale, grids and fit (each of these broke a widget once)**: run `widget-fit-matrix` for the real-launcher matrix and `widget-preview-check` for the previews; these items are what to look for in their sheets.
+- [ ] Nothing is truncated or clipped at **display size** small / default / large (`adb shell wm density 420|480|540`) and **font size** 0.85 / 1.0 / 1.3 / 2.0 (`settings put system font_scale …`). Restore with `wm density reset` and `font_scale 1.0`. Default scale must look exactly as before any fix.
+- [ ] Every **launcher grid** works (Wallpaper & style → Layout: Small / Medium / Large / XL). Grid changes reflow and shrink widgets, and taller rows must not flip a 1-row widget into a 2-row layout: choose layouts by shape, not by height alone.
+- [ ] Text that changes without a re-render (dates rolling over at midnight, any `TextClock`) is measured for its **widest possible value** (every weekday and month), not today's.
+- [ ] Measured text is drawn at the size it was measured at: if the layout caps font scaling, the text must be capped the same way (sp text in a dp-measured box overflows).
+- [ ] Glance: a wrap_content `AndroidRemoteViews` can be measured short or as zero (next to a weighted `Spacer`). Give live views explicit sizes and place parts with aligned `Box` overlays.
+- [ ] Optical alignment: side-by-side blocks share one center line (digits have no descenders), and attached labels hug their text (AM/PM right after "1:00", no fixed-width gap).
+- [ ] Time-only / date-only modes use a calmer size than "fill the widget".
+
+**App previews**
+- [ ] The in-app preview renders on app start and **updates live** on every setting change, in the **minified release build**, not only debug.
+- [ ] Previews swallow taps: their RemoteViews actions are live.
+- [ ] The widget picker shows a correct preview. Generated previews (`setWidgetPreview`) must be checked in the real picker; if they can't be trusted, use the static `previewLayout` and remove published ones.
+
 ## Output
 
 A short list of what passed, and for each failure the screenshot or render name, what's wrong, and the concrete fix. Fix what you can, re-render, and re-check.

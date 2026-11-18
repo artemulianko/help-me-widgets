@@ -49,6 +49,13 @@ Confirm with `adb shell dumpsys appwidget | grep -A3 <pkg>.widget`. The launcher
 
 `am kill <pkg>` then tap · `am force-stop <pkg>` then tap · `am set-standby-bucket <pkg> restricted` (restore: `active`) · `svc wifi disable; svc data disable` (restore!) · `cmd uimode night yes|no` · resize via long-press · `adb reboot`.
 
+## 5b. Performance and battery (any widget that re-renders on broadcasts)
+
+- No jobs, alarms, services or wakelocks unless the design needs them: `dumpsys jobscheduler | grep <pkg>`, `dumpsys alarm | grep <pkg>`, `dumpsys power | grep <pkg>`.
+- CPU per update: read `/proc/<pid>/stat` (utime+stime) before and after the trigger, with the process alive, cached, **frozen** (wait until `dumpsys activity processes` shows `isFrozen=true`) and dead. A render should cost tens of ms.
+- Idle: `dumpsys battery unplug; dumpsys batterystats --reset`, wait a few minutes on the home screen, read `dumpsys batterystats --charged <pkg>`, then `dumpsys battery reset`.
+- Monkey ANRs on an `adb install`ed APK can come from uncompiled code on a loaded emulator. Compare cold starts with a sibling app (`am start -W`), then `cmd package compile -m speed -f <pkg>` and re-run the same seed before blaming app code. Still move rendering off the main thread and cache measurements.
+
 ## 6. Report
 
 What build, which conditions, the screenshots you looked at, the log lines that prove it, and **what the emulator couldn't reproduce** (e.g. real App Standby deferral on the owner's Pixel 11 Pro). Restore the emulator state (wifi, data, night mode, standby bucket) before finishing.

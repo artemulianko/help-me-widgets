@@ -16,6 +16,8 @@ grep -rnE "AIza[0-9A-Za-z_-]{35}|storePassword=.|keyPassword=." "$EXPORT" && ech
 
 ## 2. Run the reviewer
 
+**Codex is no longer available (the owner's subscription ended, Nov 2026).** Use Claude's `security-reviewer` agent on the same clean export instead. The Codex steps below are kept only for when it returns:
+
 With Codex CLI (close stdin or it hangs):
 
 ```bash

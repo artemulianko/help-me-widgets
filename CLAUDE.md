@@ -7,7 +7,10 @@
   - `release-widget`: version bump → tests → release build → on-device check → notes + SHA-256 → GitHub Release (only when asked).
   - `new-widget`: scaffold a new `help-me-<name>/` sibling that follows every rule here.
   - `widget-design-review`: the design checklist to run on any widget or editor UI change.
-  - `security-review`: a Codex/second-model review of a clean export, never including secrets.
+  - `widget-fit-matrix`: screenshots the pinned widget at every display size × font size on the real home screen and builds a contact sheet (script, restores settings).
+  - `widget-perf-check`: proves battery/CPU cost: no jobs/alarms/wakelocks, CPU per update alive/frozen/dead, idle drain from batterystats (script).
+  - `widget-preview-check`: release-build check that the in-app and editor previews draw, update live and ignore taps, plus the picker preview (script).
+  - `security-review`: an independent review of a clean export, never including secrets (Claude's `security-reviewer` agent; Codex is no longer available).
 - **Agents** (`.claude/agents/`): `widget-design-reviewer`, `e2e-tester`, `security-reviewer`. Use them for independent review after significant changes.
 - **Scoped rules** (`.claude/rules/`) load automatically for the files they cover: widget code, data/refresh code, build and manifest files, and tests.
 - Long commands (Gradle device tests, monkey runs, emulator boot) go in the background. Don't poll the emulator in tight loops.
