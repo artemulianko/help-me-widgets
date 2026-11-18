@@ -55,6 +55,11 @@ class WidgetRenderTest {
         "4x3" to DpSize(387.dp, 316.dp),
         "4x4" to DpSize(387.dp, 420.dp),
         "4x2_landscape" to DpSize(836.dp, 105.dp),
+        // 1-column and other launcher grids (Layout: Large/XL reflows widgets to one column).
+        "1x2" to DpSize(97.dp, 212.dp),
+        "grid3_1x2" to DpSize(117.dp, 171.dp),
+        "grid5_4x1" to DpSize(310.dp, 100.dp),
+        "grid4x4_4x2" to DpSize(387.dp, 300.dp),
     )
 
     private fun render(name: String, cfg: WidgetConfig, size: DpSize) = runBlocking {

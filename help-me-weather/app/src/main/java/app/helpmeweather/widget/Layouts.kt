@@ -68,8 +68,16 @@ private object Fonts {
     val text: FontFamily by lazy { pick("google-sans-flex", "google-sans-text", "google-sans") }
 }
 
+/**
+ * Sizes here are fitted to the cell in dp. Drawn in sp, a larger system font size (or display
+ * size) scaled the text past what the layout planned for, clipping and truncating it. So text
+ * is drawn at the computed size × min(font scale, 1): unchanged at the default font size,
+ * smaller fonts still honored, larger ones capped so nothing overflows.
+ */
+private val fontScale: Float get() = android.content.res.Resources.getSystem().configuration.fontScale.coerceAtLeast(0.5f)
+
 private fun style(c: ColorProvider, size: Float, weight: FontWeight = FontWeight.Normal, display: Boolean = false, align: TextAlign? = null) =
-    TextStyle(color = c, fontSize = size.sp, fontWeight = weight, fontFamily = if (display) Fonts.display else Fonts.text, textAlign = align)
+    TextStyle(color = c, fontSize = (size * minOf(fontScale, 1f) / fontScale).sp, fontWeight = weight, fontFamily = if (display) Fonts.display else Fonts.text, textAlign = align)
 
 /** Everything a layout needs, resolved once per composition. */
 private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val w: WeatherData, val f: Fmt, val width: Float, val height: Float) {
@@ -127,6 +135,8 @@ fun WidgetLayouts(s: WidgetState, c: WColors) {
                     x.width < 270 -> Compact(x)
                     else -> Strip(x)
                 }
+                // One column, two or more rows (launcher grids reflow widgets to this).
+                x.width < 150 -> Narrow(x)
                 x.height < 280 -> if (x.width < 270) Small(x) else Medium(x)
                 else -> if (x.width < 270) Tall(x) else Large(x)
             }
@@ -413,6 +423,35 @@ private fun Strip(x: Scope) {
 }
 
 /** 2x2 — iOS-style small. */
+/**
+ * 1 column × 2+ rows (~97-130 dp wide): location, a temperature fitted to the width, the
+ * condition on up to two lines, and the icon only when there's height for it.
+ */
+@Composable
+private fun Narrow(x: Scope) {
+    val pad = 12f
+    val inner = x.width - 2 * pad
+    // Display digits are ~0.6 em wide; fit the actual reading ("-12°", "104°") to the width.
+    val hero = minOf(52f, inner / (x.temp.length * 0.62f))
+    val withIcon = x.height >= 190
+    Box(modifier = GlanceModifier.fillMaxSize()) {
+        Column(modifier = GlanceModifier.fillMaxSize().padding(pad.dp)) {
+            Row(modifier = GlanceModifier.fillMaxWidth().padding(end = if (x.cfg.showRefresh) 28.dp else 0.dp)) {
+                LocationLabel(x, size = 12f)
+            }
+            Hero(x, hero)
+            Spacer(GlanceModifier.defaultWeight())
+            if (withIcon) {
+                x.NowIcon(28.dp)
+                Spacer(GlanceModifier.height(TEXT_GAP))
+            }
+            if (x.cfg.showCondition) Text(x.conditionText, style = style(x.c.text, 13f, FontWeight.Medium), maxLines = 2)
+            x.subLine?.let { Text(it, style = style(x.c.textVariant, 12f), maxLines = 1) }
+        }
+        CornerRefresh(x)
+    }
+}
+
 @Composable
 private fun Small(x: Scope) {
     Box(modifier = GlanceModifier.fillMaxSize()) {
