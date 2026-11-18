@@ -90,6 +90,8 @@ The projects share **no code and no Gradle build**. They share these rules, the 
 - **Quota guard.** A manual refresh reuses data fetched under 1 minute ago. Extra taps while a refresh is running are ignored.
 - **Fetch only when something can change.** Stocks: market-hours aware, with no network on nights and weekends. Weather: cached and shared by every widget for the same location.
 - One request set per refresh, shared by all widgets.
+- **No one-time WorkManager work from `onUpdate`.** When it finishes, WorkManager toggles its RescheduleReceiver, Android broadcasts `PACKAGE_CHANGED` and the launcher calls `onUpdate` again (Google's `glance-appwidget-updates-and-memory` skill). `onUpdate` renders and ensures the periodic schedule, nothing more.
+- **No widget composition on the main thread.** Renders, in-app/editor previews and picker previews (`setWidgetPreview`) all run on `Dispatchers.Default`. Picker previews on the main thread held the app on its splash for seconds after every update.
 
 **Logs.** `AppLog` writes `filesDir/events.log` with 3-day retention and redaction. The format is exactly `[yyyy-MM-dd HH:mm:ss] [LEVEL] Tag: message`. `LogsActivity` shows it as plain text with **Copy** and **Clear**, and the copied text starts with `<App name> v<version> · Android <n> · <device>`. Log what a user needs to understand: process start and the previous exit reason (`ApplicationExitInfo`), crashes, refresh start/skip/done with the source and timing, job start/retry/stop reasons, schedule changes, reboot vs. force-stop. Don't log routine renders, and never log secrets.
 

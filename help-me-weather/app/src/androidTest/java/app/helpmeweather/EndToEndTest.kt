@@ -56,6 +56,8 @@ class EndToEndTest {
         assertTrue(device.wait(Until.hasObject(By.text("Mountain View").pkg(ctx.packageName)), 10_000) || device.hasObject(By.textContains("°")))
 
         // Switch to °F from the Units group and confirm the preview's numbers change.
+        // The preview is drawn off the main thread, a moment after the screen: wait for it.
+        device.wait(Until.hasObject(By.textEndsWith("°").pkg(ctx.packageName)), 15_000)
         val before = device.findObjects(By.textEndsWith("°")).map { it.text }
         var unitF = device.findObject(By.res("unit_2"))
         repeat(10) {
@@ -74,7 +76,9 @@ class EndToEndTest {
         // Reopen at the top and read the preview again.
         ctx.startActivity(Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
         assertTrue(device.wait(Until.hasObject(By.res("widget_preview")), 15_000))
-        Thread.sleep(1500) // preview renders after a short debounce
+        // Wait until the redrawn preview shows °F numbers (drawn off the main thread).
+        val by = System.currentTimeMillis() + 15_000
+        while (System.currentTimeMillis() < by && device.findObjects(By.textEndsWith("°")).map { it.text }.let { it.isEmpty() || it == before }) Thread.sleep(300)
         val after = device.findObjects(By.textEndsWith("°")).map { it.text }
         assertTrue("before=$before after=$after", before != after && after.isNotEmpty())
         runBlocking { Store(ctx).updateApp { it.copy(tempUnit = TempUnit.SYSTEM) } }

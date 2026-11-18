@@ -96,7 +96,7 @@ class ConfigActivity : ComponentActivity() {
                 var loaded by remember { mutableStateOf<WidgetConfig?>(null) }
                 LaunchedEffect(Unit) { loaded = store.widgetNow(widgetId) }
                 loaded?.let { initial ->
-                    WidgetEditor(initial, app, store, onClose = { finish() }, onSave = { save(store, it) })
+                    WidgetEditor(initial, app, store, onClose = { finish() }, onSave = { save(store, it) }, sizes = editorPreviewSizes(this@ConfigActivity, widgetId))
                 }
             }
         }
@@ -114,9 +114,9 @@ class ConfigActivity : ComponentActivity() {
 }
 
 @Composable
-fun WidgetEditor(initial: WidgetConfig, app: AppSettings, store: Store, onClose: () -> Unit, onSave: (WidgetConfig) -> Unit) {
+fun WidgetEditor(initial: WidgetConfig, app: AppSettings, store: Store, onClose: () -> Unit, onSave: (WidgetConfig) -> Unit, sizes: List<Pair<String, androidx.compose.ui.unit.DpSize>> = previewSizes) {
     var cfg by remember { mutableStateOf(initial) }
-    var sizeIdx by remember { mutableIntStateOf(2) }
+    var sizeIdx by remember { mutableIntStateOf(0) } // 0 = this widget's real size
     val ctx = LocalContext.current
     val cached by store.quotes.collectAsState(QuoteSet())
     // Real quotes where we have them; sample ones fill in for anything not fetched yet.
@@ -137,12 +137,12 @@ fun WidgetEditor(initial: WidgetConfig, app: AppSettings, store: Store, onClose:
         Column(Modifier.fillMaxSize().padding(pad).imePadding()) {
             // Pinned live preview — the real widget, re-rendered on every change.
             Column(Modifier.padding(horizontal = 16.dp)) {
-                WidgetPreview(state, previewSizes[sizeIdx].second)
+                WidgetPreview(state, sizes[sizeIdx].second)
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(top = 12.dp)) {
-                    previewSizes.forEachIndexed { i, (label, _) ->
+                    sizes.forEachIndexed { i, (label, _) ->
                         SegmentedButton(
                             selected = i == sizeIdx, onClick = { sizeIdx = i },
-                            shape = SegmentedButtonDefaults.itemShape(i, previewSizes.size),
+                            shape = SegmentedButtonDefaults.itemShape(i, sizes.size),
                             modifier = Modifier.testTag("size_$i"),
                             label = { Text(label) },
                         )

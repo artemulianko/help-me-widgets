@@ -31,10 +31,11 @@ class StocksWidgetReceiver : AppWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) = async {
         AppLog.i(context, "Widget", "System update for ${appWidgetIds.size} widget(s) (added, restored or rebooted)")
         appWidgetIds.forEach { WidgetRenderer.render(context, it) }
-        // Added / restored / rebooted: ensure the schedule exists and data isn't stale.
-        // Not forced, so it's a no-op when the cache is fresh.
+        // Added / restored / rebooted: make sure the periodic schedule exists. No one-time work
+        // here: when it finishes, WorkManager toggles its RescheduleReceiver, Android broadcasts
+        // PACKAGE_CHANGED and the launcher calls onUpdate again (a loop, per Google's widget
+        // skill). Fresh data comes from the periodic job, opening the app, or the refresh button.
         RefreshWorker.scheduleNow(context)
-        RefreshWorker.refreshNow(context, force = false, reason = "widget update")
     }
 
     /** Resized: re-layout for the new size (no network). */

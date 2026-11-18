@@ -18,7 +18,7 @@ class HelpMeClockApp : Application() {
         logPreviousExit()
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
-            runCatching { AppLog.e(this, "Crash", "Uncaught on ${thread.name}", error) }
+            runCatching { AppLog.crash(this, "Crash", "Uncaught on ${thread.name}", error) }
             previous?.uncaughtException(thread, error)
         }
     }

@@ -2,6 +2,8 @@
 
 package app.helpmeweather.ui
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import android.app.WallpaperManager
 import android.content.Context
 import android.graphics.Typeface
@@ -48,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -115,7 +118,9 @@ fun WidgetPreview(state: WidgetState, size: DpSize, modifier: Modifier = Modifie
     val ctx = LocalContext.current
     val rv by produceState<RemoteViews?>(null, state, size) {
         delay(50) // coalesce rapid slider changes
-        value = runCatching { PreviewWidget(state).compose(ctx, size = size) }.getOrNull()
+        value = runCatching { withContext(Dispatchers.Default) { PreviewWidget(state).compose(ctx, size = size) } }
+            .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; app.helpmeweather.data.AppLog.w(ctx, "Preview", "Couldn't draw the preview", it) }
+            .getOrNull()
     }
     Box(
         modifier = modifier
@@ -134,6 +139,11 @@ fun WidgetPreview(state: WidgetState, size: DpSize, modifier: Modifier = Modifie
             },
             modifier = Modifier.padding(vertical = 20.dp).size(size),
         )
+        // The preview is a picture: its tap actions (refresh, open a forecast or a quote) are live
+        // RemoteViews, so swallow touches instead of launching things from the editor.
+        Box(Modifier.matchParentSize().pointerInput(Unit) {
+            awaitPointerEventScope { while (true) awaitPointerEvent().changes.forEach { it.consume() } }
+        })
     }
 }
 
@@ -167,6 +177,29 @@ val previewSizes = listOf(
     "4×2" to DpSize(380.dp, 210.dp),
     "4×3" to DpSize(380.dp, 316.dp),
 )
+
+/**
+ * The editor's preview sizes: this widget's real size on your home screen first (selected, so the
+ * preview matches what you see after resizing it), labelled by its grid span, then the standard
+ * sizes. Portrait is the narrower of the sizes the launcher reports.
+ */
+fun editorPreviewSizes(ctx: android.content.Context, appWidgetId: Int): List<Pair<String, DpSize>> {
+    val o = runCatching { android.appwidget.AppWidgetManager.getInstance(ctx).getAppWidgetOptions(appWidgetId) }.getOrNull()
+        ?: return previewSizes
+    val reported = if (android.os.Build.VERSION.SDK_INT >= 31) {
+        o.getParcelableArrayList(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_SIZES, android.util.SizeF::class.java)
+            ?.filter { it.width > 0f && it.height > 0f }?.minByOrNull { it.width }?.let { DpSize(it.width.dp, it.height.dp) }
+    } else null
+    val real = reported ?: run {
+        val w = o.getInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
+        val h = o.getInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)
+        if (w > 0 && h > 0) DpSize(w.dp, h.dp) else null
+    } ?: return previewSizes
+    val cols = kotlin.math.max(1, kotlin.math.round(real.width.value / 97f).toInt())
+    val rows = kotlin.math.max(1, kotlin.math.round(real.height.value / 105f).toInt())
+    val label = "${cols}×${rows}"
+    return listOf(label to real) + previewSizes.filter { it.first != label }
+}
 
 // ---- grouped settings (Android 16 style segmented lists) -----------------------------------
 

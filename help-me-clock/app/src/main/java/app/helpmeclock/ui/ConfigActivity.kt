@@ -85,7 +85,7 @@ class ConfigActivity : ComponentActivity() {
                 var loaded by remember { mutableStateOf<WidgetConfig?>(null) }
                 LaunchedEffect(Unit) { loaded = store.widgetNow(widgetId) }
                 loaded?.let { initial ->
-                    WidgetEditor(initial, onClose = { finish() }, onSave = { save(store, it) })
+                    WidgetEditor(initial, onClose = { finish() }, onSave = { save(store, it) }, sizes = editorPreviewSizes(this@ConfigActivity, widgetId))
                 }
             }
         }
@@ -101,9 +101,9 @@ class ConfigActivity : ComponentActivity() {
 }
 
 @Composable
-fun WidgetEditor(initial: WidgetConfig, onClose: () -> Unit, onSave: (WidgetConfig) -> Unit) {
+fun WidgetEditor(initial: WidgetConfig, onClose: () -> Unit, onSave: (WidgetConfig) -> Unit, sizes: List<Pair<String, androidx.compose.ui.unit.DpSize>> = previewSizes) {
     var cfg by remember { mutableStateOf(initial) }
-    var sizeIdx by remember { mutableIntStateOf(previewSizes.indexOfFirst { it.first == "4×1" }) }
+    var sizeIdx by remember { mutableIntStateOf(0) } // 0 = this widget's real size
     val ctx = LocalContext.current
     // Your real next alarm; a sample one when none is set, so you can see where it goes.
     val alarm = remember { Alarms.next(ctx) ?: SampleData.alarm() }
@@ -126,12 +126,12 @@ fun WidgetEditor(initial: WidgetConfig, onClose: () -> Unit, onSave: (WidgetConf
         Column(Modifier.fillMaxSize().padding(pad)) {
             // Pinned live preview: the real widget, re-rendered on every change.
             Column(Modifier.padding(horizontal = 16.dp)) {
-                WidgetPreview(state, previewSizes[sizeIdx].second)
+                WidgetPreview(state, sizes[sizeIdx].second)
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(top = 12.dp)) {
-                    previewSizes.forEachIndexed { i, (label, _) ->
+                    sizes.forEachIndexed { i, (label, _) ->
                         SegmentedButton(
                             selected = i == sizeIdx, onClick = { sizeIdx = i },
-                            shape = SegmentedButtonDefaults.itemShape(i, previewSizes.size),
+                            shape = SegmentedButtonDefaults.itemShape(i, sizes.size),
                             modifier = Modifier.testTag("size_$i"),
                             label = { Text(label, maxLines = 1) },
                         )

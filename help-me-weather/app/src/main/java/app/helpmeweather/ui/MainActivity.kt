@@ -90,7 +90,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        lifecycleScope.launch { publishPickerPreviews(this@MainActivity) }
+        // Off the main thread: 8 widget renders (4 sizes x home + lock screen) once per version kept
+        // the first screen on the splash for seconds after every update.
+        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.Default) { publishPickerPreviews(this@MainActivity) }
         setContent { HelpMeWeatherTheme { HomeScreen() } }
     }
 }

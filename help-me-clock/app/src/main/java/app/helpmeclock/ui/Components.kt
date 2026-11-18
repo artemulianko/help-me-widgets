@@ -2,6 +2,8 @@
 
 package app.helpmeclock.ui
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import android.app.WallpaperManager
 import android.content.Context
 import android.graphics.Typeface
@@ -120,7 +122,7 @@ fun WidgetPreview(state: WidgetState, size: DpSize, modifier: Modifier = Modifie
         // Pixel). Text measurements are cached, so composing stays cheap. A failure is logged
         // instead of silently leaving an empty preview.
         value = try {
-            PreviewWidget(state).compose(ctx, size = size)
+            withContext(Dispatchers.Default) { PreviewWidget(state).compose(ctx, size = size) }
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -186,6 +188,29 @@ val previewSizes = listOf(
     "4×1" to DpSize(370.dp, 105.dp),
     "4×2" to DpSize(370.dp, 212.dp),
 )
+
+/**
+ * The editor's preview sizes: this widget's real size on your home screen first (selected, so the
+ * preview matches what you see after resizing it), labelled by its grid span, then the standard
+ * sizes. Portrait is the narrower of the sizes the launcher reports.
+ */
+fun editorPreviewSizes(ctx: android.content.Context, appWidgetId: Int): List<Pair<String, DpSize>> {
+    val o = runCatching { android.appwidget.AppWidgetManager.getInstance(ctx).getAppWidgetOptions(appWidgetId) }.getOrNull()
+        ?: return previewSizes
+    val reported = if (android.os.Build.VERSION.SDK_INT >= 31) {
+        o.getParcelableArrayList(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_SIZES, android.util.SizeF::class.java)
+            ?.filter { it.width > 0f && it.height > 0f }?.minByOrNull { it.width }?.let { DpSize(it.width.dp, it.height.dp) }
+    } else null
+    val real = reported ?: run {
+        val w = o.getInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
+        val h = o.getInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)
+        if (w > 0 && h > 0) DpSize(w.dp, h.dp) else null
+    } ?: return previewSizes
+    val cols = kotlin.math.max(1, kotlin.math.round(real.width.value / 97f).toInt())
+    val rows = kotlin.math.max(1, kotlin.math.round(real.height.value / 105f).toInt())
+    val label = "${cols}×${rows}"
+    return listOf(label to real) + previewSizes.filter { it.first != label }
+}
 
 // ---- grouped settings (Android 16 style segmented lists) -----------------------------------
 

@@ -38,7 +38,7 @@ object AppLog {
 
     private fun file(ctx: Context) = File(ctx.applicationContext.filesDir, FILE)
 
-    private fun write(ctx: Context, level: Level, tag: String, msg: String, t: Throwable?) {
+    private fun write(ctx: Context, level: Level, tag: String, msg: String, t: Throwable?, sync: Boolean = false) {
         val text = redact(if (t != null) "$msg: ${t.javaClass.simpleName}${t.message?.let { " – $it" } ?: ""}" else msg)
             .replace('\n', ' ').take(500)
         if (app.helpmeweather.BuildConfig.DEBUG) when (level) {
@@ -46,10 +46,26 @@ object AppLog {
             Level.W -> Log.w("HelpMeWeather", "[$tag] $text")
             Level.E -> Log.e("HelpMeWeather", "[$tag] $text")
         }
+        val line = "${System.currentTimeMillis()}|${level.name}|$tag|$text\n"
+        // No disk I/O on the main thread (ANR audit): UI callers hand the append to one
+        // background thread, which keeps their entries in order.
+        if (!sync && onMainThread()) io.execute { append(ctx, line) } else append(ctx, line)
+    }
+
+    /** For the crash handler: flushes queued lines, then writes this one on the calling thread. */
+    fun crash(ctx: Context, tag: String, msg: String, t: Throwable) {
+        runCatching { io.submit {}.get(1, java.util.concurrent.TimeUnit.SECONDS) }
+        write(ctx, Level.E, tag, msg, t, sync = true)
+    }
+
+    private val io = java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "AppLog").apply { isDaemon = true } }
+    private fun onMainThread() = runCatching { android.os.Looper.getMainLooper()?.isCurrentThread == true }.getOrDefault(false)
+
+    private fun append(ctx: Context, line: String) {
         runCatching {
             synchronized(lock) {
                 val f = file(ctx)
-                f.appendText("${System.currentTimeMillis()}|${level.name}|$tag|$text\n")
+                f.appendText(line)
                 val now = System.currentTimeMillis()
                 if (now - lastPrune > PRUNE_EVERY_MS || f.length() > MAX_BYTES) {
                     lastPrune = now
