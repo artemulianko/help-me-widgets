@@ -113,6 +113,7 @@ private fun HomeScreen() {
     val lastError by store.lastError.collectAsState(null)
     var hasLoc by remember { mutableStateOf(Locations.hasForeground(ctx)) }
     var hasBg by remember { mutableStateOf(Locations.hasBackground(ctx)) }
+    var hasPrecise by remember { mutableStateOf(Locations.hasPrecise(ctx)) }
     // Android 12+ "Pause app activity if unused" can stop a rarely-opened app after ~3 months.
     var hibernationExempt by remember { mutableStateOf(ctx.packageManager.isAutoRevokeWhitelisted) }
     var widgets by remember { mutableStateOf<List<Pair<Int, WidgetConfig>>>(emptyList()) }
@@ -127,6 +128,7 @@ private fun HomeScreen() {
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         hasLoc = Locations.hasForeground(ctx)
         hasBg = Locations.hasBackground(ctx)
+        hasPrecise = Locations.hasPrecise(ctx)
         hibernationExempt = ctx.packageManager.isAutoRevokeWhitelisted
         tick++
         refresh(false) // cheap no-op when fresh; refreshes location while we have foreground access
@@ -135,10 +137,13 @@ private fun HomeScreen() {
     }
     LaunchedEffect(tick) { widgets = WeatherRepository.widgetIds(ctx).map { it to store.widgetNow(it) } }
 
-    val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        hasLoc = granted
-        if (granted) refresh(true)
+    // Asks for precise and approximate together; Android lets the user pick either.
+    val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        hasLoc = Locations.hasForeground(ctx)
+        hasPrecise = Locations.hasPrecise(ctx)
+        if (hasLoc) refresh(true)
     }
+    val locPerms = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
     val bgLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { hasBg = it }
 
     val place = app.deviceLocation ?: widgets.firstNotNullOfOrNull { it.second.location }
@@ -196,11 +201,16 @@ private fun HomeScreen() {
 
             SettingsGroup("Location") {
                 if (!hasLoc) {
-                    infoRow("Use your location", "City-level accuracy only. No GPS.", R.drawable.ms_near_me) {
-                        TextButton(onClick = { permLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION) }, modifier = Modifier.testTag("grant_location")) { Text("Allow") }
+                    infoRow("Use your location", "Precise or approximate, your choice. Never tracked.", R.drawable.ms_near_me) {
+                        TextButton(onClick = { permLauncher.launch(locPerms) }, modifier = Modifier.testTag("grant_location")) { Text("Allow") }
                     }
                 } else {
                     infoRow(app.deviceLocation?.name ?: "Finding location…", app.deviceLocation?.region ?: "Current location", R.drawable.ms_near_me)
+                    if (!hasPrecise) {
+                        infoRow("Use precise location", "Approximate location can be a town or two off") {
+                            TextButton(onClick = { permLauncher.launch(locPerms) }, modifier = Modifier.testTag("grant_precise")) { Text("Allow") }
+                        }
+                    }
                     if (!hasBg) {
                         infoRow("Follow me while closed", "Choose “Allow all the time” so widgets update location in the background") {
                             TextButton(onClick = {

@@ -25,22 +25,43 @@ object Locations {
     fun hasBackground(ctx: Context) = hasForeground(ctx) &&
         ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
 
+    fun hasPrecise(ctx: Context) =
+        ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
     /**
-     * Power-friendly device location: reuse the fused provider's cached fix when it is fresh,
-     * otherwise ask for a single balanced-power (cell/Wi-Fi, no GPS) fix. Never keeps a listener.
+     * One location fix, never a listener.
+     *
+     * [precise] (the app is on screen or the refresh button was tapped, and precise permission
+     * is granted): a fresh high-accuracy fix. Cell-only network fixes can be tens of km off
+     * (a Pixel in central Warsaw with Wi-Fi off was placed in Płock), so a fix this old or
+     * vaguer isn't trusted. Otherwise: the fused cached fix when recent, or one balanced-power
+     * (cell/Wi-Fi) fix. A cached fix older than [STALE_MS] is never passed off as current.
      */
     @SuppressLint("MissingPermission")
-    suspend fun device(ctx: Context, maxAgeMs: Long = 30 * 60_000L, timeoutMs: Long = 25_000): Location? {
+    suspend fun device(ctx: Context, maxAgeMs: Long = 30 * 60_000L, timeoutMs: Long = 25_000, precise: Boolean = false): Location? {
         if (!hasForeground(ctx)) return null
+        val fine = precise && hasPrecise(ctx)
+        val maxAge = if (fine) 10 * 60_000L else maxAgeMs
         val client = LocationServices.getFusedLocationProviderClient(ctx)
         val last = runCatching { client.lastLocation.await() }.getOrNull()
-        if (last != null && System.currentTimeMillis() - last.time < maxAgeMs) return last
+        fun age(l: Location) = System.currentTimeMillis() - l.time
+        if (last != null && age(last) < maxAge && (!fine || last.accuracy <= 500f)) return last.also { log(ctx, it, "cached") }
         val req = CurrentLocationRequest.Builder()
-            .setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY)
-            .setMaxUpdateAgeMillis(maxAgeMs)
+            .setPriority(if (fine) Priority.PRIORITY_HIGH_ACCURACY else Priority.PRIORITY_BALANCED_POWER_ACCURACY)
+            .setMaxUpdateAgeMillis(maxAge)
             .setDurationMillis(timeoutMs)
             .build()
-        return withTimeoutOrNull(timeoutMs) { runCatching { client.getCurrentLocation(req, null).await() }.getOrNull() } ?: last
+        val fresh = withTimeoutOrNull(timeoutMs) { runCatching { client.getCurrentLocation(req, null).await() }.getOrNull() }
+        if (fresh != null) return fresh.also { log(ctx, it, if (fine) "precise" else "approximate") }
+        return last?.takeIf { age(it) < STALE_MS }?.also { log(ctx, it, "cached, no newer fix") }
+    }
+
+    private const val STALE_MS = 30 * 60_000L
+
+    /** Accuracy and age only, never coordinates. */
+    private fun log(ctx: Context, l: Location, kind: String) {
+        val acc = if (l.accuracy >= 1000f) "%.0f km".format(Locale.US, l.accuracy / 1000f) else "%.0f m".format(Locale.US, l.accuracy)
+        AppLog.i(ctx, "Location", "Fix: $kind, ±$acc, ${(System.currentTimeMillis() - l.time) / 1000} s old")
     }
 
     /** On-device reverse geocoding (no network quota); falls back to coordinates. */
@@ -64,8 +85,8 @@ object Locations {
     private fun fallbackName(lat: Double, lon: Double) = "%.2f, %.2f".format(Locale.US, lat, lon)
 
     /** Resolve the device location to a named Place, or null if unavailable. */
-    suspend fun devicePlace(ctx: Context, timeoutMs: Long = 25_000): Place? {
-        val loc = device(ctx, timeoutMs = timeoutMs) ?: return null
+    suspend fun devicePlace(ctx: Context, timeoutMs: Long = 25_000, precise: Boolean = false): Place? {
+        val loc = device(ctx, timeoutMs = timeoutMs, precise = precise) ?: return null
         // Round to ~1 km before geocoding or saving: nothing finer is ever kept or shared.
         val lat = Math.round(loc.latitude * 100) / 100.0
         val lon = Math.round(loc.longitude * 100) / 100.0

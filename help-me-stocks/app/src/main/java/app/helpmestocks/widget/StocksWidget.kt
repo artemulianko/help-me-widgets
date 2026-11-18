@@ -13,7 +13,6 @@ import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.SizeMode
-import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
@@ -100,10 +99,10 @@ private fun openApp(ctx: Context, s: WidgetState) = actionStartActivity(
 
 fun rootTap(ctx: Context, s: WidgetState): Action? {
     if (s.tickers.isEmpty()) return openApp(ctx, s)
-    if (s.quotes.quotes.isEmpty() && !s.refreshing) return actionRunCallback<RefreshAction>()
+    if (s.quotes.quotes.isEmpty() && !s.refreshing) return refreshAction()
     return when (s.cfg.tapAction) {
         TapAction.NONE -> null
-        TapAction.REFRESH -> actionRunCallback<RefreshAction>()
+        TapAction.REFRESH -> refreshAction()
         TapAction.APP -> openApp(ctx, s)
         TapAction.YAHOO, TapAction.GOOGLE -> actionStartActivity(
             // A single-stock widget opens that stock; a watchlist opens the provider's markets page.

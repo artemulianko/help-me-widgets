@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- City-level accuracy is plenty for weather and never needs GPS. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Optional: a precise fix only while the app is open or the refresh button is tapped. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!-- Optional: lets "Current location" widgets follow you while the app is closed. -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <!-- Log reboots and re-render widgets right after boot (WorkManager also uses it). -->
@@ -43,6 +45,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Widget refresh button: invisible, so the tap gets the network in Doze (see the class). -->
+        <activity
+            android:name=".ui.RefreshActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Refresh"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity="app.helpmeweather.refresh"
+            android:launchMode="singleInstance" />
 
         <activity
             android:name=".ui.LogsActivity"

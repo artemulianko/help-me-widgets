@@ -14,14 +14,14 @@ The stock Pixel weather options are a one-line At a Glance and a widget you can 
 
 ## Download
 
-**[⬇ Download Help Me Weather 0.1.5 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v0.1.5/help-me-weather-0.1.5.apk)** · Android 12+ · 4.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/weather-v0.1.5) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+**[⬇ Download Help Me Weather 0.1.6 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v0.1.6/help-me-weather-0.1.6.apk)** · Android 12+ · 4.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/weather-v0.1.6) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-SHA-256 `5ba9511e71e2adf3912719bffd5256832564631a2e02e0482a66ca90a6cf98cd`
+SHA-256 `34fb2ae88478fe554775ae92fa32e5633102ede9e46790c4751b9085208be754`
 
 > Upgrading from 0.1.0/0.1.1: since 0.1.2 the app has a new package name (`app.helpmeweather`), so uninstall the old version first and update your key restriction. Later updates install over it normally.
 
 1. Download the APK on your phone and open it (allow "Install unknown apps" for your browser when asked).
-2. Open **Help Me Weather** once and allow approximate location, or skip that and pick a city.
+2. Open **Help Me Weather** once and allow location (precise is best; approximate can be a town off), or skip that and pick a city.
 3. Long-press the home screen → **Widgets** → **Help Me Weather** → drag it out. Long-press the widget → **Customize** to change it.
 
 ## Why it fits a Pixel
@@ -54,13 +54,13 @@ How:
 
 - **WorkManager only.** Android batches refreshes with other apps' jobs, respects Doze and App Standby, waits for a network, and **skips background refreshes on low battery**. Manual refresh always works.
 - **No Glance sessions.** Jetpack Glance normally keeps a background job (and a wakelock) alive for about 45 s after every widget update. Help Me Weather renders straight to RemoteViews instead, so each update is a single short render.
-- **Location without GPS.** Approximate (cell/Wi‑Fi) location only, reusing Android's cached fix when it's recent. No location listener ever stays registered.
+- **Location without tracking.** In the background, Android's recent cached fix or one cell/Wi‑Fi fix. With precise location allowed, one high-accuracy fix only while the app is open or you tap refresh, reused for 10 minutes. No location listener ever stays registered.
 - **Fetches only what's shown.** One request set per location, cached and shared by every widget; nothing is downloaded while the data is still fresh.
 - **No notifications, no foreground service.** WorkManager's foreground-service path is stripped from the manifest.
 
 ## Privacy
 
-- Location is optional and approximate. Coordinates are **rounded to about 1 km** before they're stored, turned into a city name, or sent to a weather provider.
+- Location is optional. Coordinates are **rounded to about 1 km** before they're stored, turned into a city name, or sent to a weather provider.
 - No analytics, crash reporting, ads or accounts. Settings (including your API key) stay on the device and are excluded from backups and device transfers.
 - Network requests go to the weather provider you choose (Google or Open-Meteo), to Open-Meteo as an automatic fallback when Google fails, and to Open-Meteo's geocoding when you search for a city. The city name for your location comes from Android's system geocoder, which may use Google's servers.
 - The in-app **Logs** (last 3 days) stay on the phone; API keys are redacted from them.

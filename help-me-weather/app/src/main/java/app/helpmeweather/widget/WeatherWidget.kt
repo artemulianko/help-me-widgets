@@ -14,7 +14,6 @@ import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.SizeMode
-import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
@@ -104,7 +103,7 @@ fun tapAction(ctx: Context, s: WidgetState): Action? {
     }
     return when (s.cfg.tapAction) {
         TapAction.NONE -> null
-        TapAction.REFRESH -> actionRunCallback<RefreshAction>()
+        TapAction.REFRESH -> refreshAction()
         TapAction.APP -> actionStartActivity(
             Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 .putExtra(MainActivity.EXTRA_WIDGET_ID, s.appWidgetId),

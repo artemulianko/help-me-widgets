@@ -84,7 +84,7 @@ object WeatherRepository {
             ) {
                 // Known location → wait at most a few seconds for a better fix, so a manual refresh stays snappy.
                 val timeout = if (app.deviceLocation != null) 5_000L else 25_000L
-                val p = runCatching { Locations.devicePlace(ctx, timeout) }.getOrNull()
+                val p = runCatching { Locations.devicePlace(ctx, timeout, precise = visible) }.getOrNull()
                 if (p != null) {
                     store.updateApp { it.copy(deviceLocation = p, deviceLocationAt = System.currentTimeMillis()) }
                     app = store.appNow()

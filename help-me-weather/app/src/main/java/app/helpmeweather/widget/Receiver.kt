@@ -6,9 +6,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.glance.GlanceId
-import androidx.glance.action.ActionParameters
-import androidx.glance.appwidget.action.ActionCallback
 import app.helpmeweather.data.AppLog
 import app.helpmeweather.data.Store
 import app.helpmeweather.data.WeatherRepository
@@ -17,7 +14,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
+
+/** Widget refresh button / tap-to-refresh: opens the invisible [app.helpmeweather.ui.RefreshActivity]. */
+fun refreshAction(): androidx.glance.action.Action = androidx.glance.action.actionStartActivity<app.helpmeweather.ui.RefreshActivity>()
 
 private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -51,40 +50,6 @@ class WeatherWidgetReceiver : AppWidgetProvider() {
 
     override fun onDisabled(context: Context) {
         RefreshWorker.cancel(context)
-    }
-}
-
-/**
- * Refresh button / tap-to-refresh: fetches right here, like the in-app Refresh button.
- *
- * A widget tap lets the app run immediately, but a WorkManager job (even an expedited one) can
- * be held back for minutes by App Standby / background restrictions when the app is rarely
- * opened, so the tap appeared to do nothing until the app was opened. The worker is only the
- * fallback: offline (it waits for a network), or when this attempt fails or runs out of time.
- */
-class RefreshAction : ActionCallback {
-    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        AppLog.i(context, "Widget", "Refresh tapped")
-        val online = context.getSystemService(android.net.ConnectivityManager::class.java)?.activeNetwork != null
-        if (!online) {
-            // No spinner: the job waits for a network and a spinner would sit there indefinitely.
-            AppLog.w(context, "Widget", "No network: refresh will run automatically when you're back online")
-            RefreshWorker.refreshNow(context, force = true, reason = "refresh button (offline)")
-            return
-        }
-        // Glance runs this inside the receiver's goAsync() window (~10 s); a refresh takes ~1-2 s.
-        // Timing out cancels it cleanly (the repository clears the spinner and re-renders).
-        val result = withTimeoutOrNull(INLINE_BUDGET_MS) {
-            WeatherRepository.refresh(context, force = true, reason = "refresh button")
-        }
-        if (result == null || result.isFailure) {
-            AppLog.w(context, "Widget", if (result == null) "Refresh took too long; retrying in the background" else "Refresh failed; retrying in the background")
-            RefreshWorker.refreshNow(context, force = true, reason = "refresh button retry")
-        }
-    }
-
-    private companion object {
-        const val INLINE_BUDGET_MS = 8_000L
     }
 }
 

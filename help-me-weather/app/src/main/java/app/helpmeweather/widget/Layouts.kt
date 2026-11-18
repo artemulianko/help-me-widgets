@@ -14,7 +14,6 @@ import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.CircularProgressIndicator
-import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.layout.Alignment
@@ -152,7 +151,7 @@ fun WidgetLayouts(s: WidgetState, c: WColors) {
 @Composable
 private fun RefreshButton(x: Scope, target: Dp = TOUCH) {
     Box(
-        modifier = GlanceModifier.size(target).cornerRadius(target / 2).clickable(actionRunCallback<RefreshAction>()),
+        modifier = GlanceModifier.size(target).cornerRadius(target / 2).clickable(refreshAction()),
         contentAlignment = Alignment.Center,
     ) {
         if (x.s.refreshing) {

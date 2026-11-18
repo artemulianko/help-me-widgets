@@ -34,8 +34,10 @@ class ParsingTest {
                "weatherCondition":{"type":"MOSTLY_CLOUDY"},"temperature":{"degrees":10.9},"precipitation":{"probability":{"percent":10}}}
             ],"timeZone":{"id":"America/Los_Angeles"}}""",
         )
+        // Today in the fixture's zone: the parser drops days that are already over.
+        val today = java.time.LocalDate.now(java.time.ZoneId.of("America/Los_Angeles"))
         val days = Http.json.parseToJsonElement(
-            """{"forecastDays":[{"displayDate":{"year":2026,"month":11,"day":16},
+            """{"forecastDays":[{"displayDate":{"year":${today.year},"month":${today.monthValue},"day":${today.dayOfMonth}},
               "daytimeForecast":{"weatherCondition":{"type":"HEAVY_RAIN"},"precipitation":{"probability":{"percent":90}}},
               "maxTemperature":{"degrees":14.2},"minTemperature":{"degrees":8.7},
               "sunEvents":{"sunriseTime":"2026-11-16T14:50:00Z","sunsetTime":"2026-11-17T00:57:00Z"}}]}""",

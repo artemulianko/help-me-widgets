@@ -26,7 +26,7 @@ The projects share **no code and no Gradle build**. They share these rules, the 
 1. **Widgets, not apps.** The app exists to configure the widget: a home screen with a live preview, an "Add to home screen" button, a per-widget editor, settings shared by all widgets, and Logs. No feeds, no detail screens, no onboarding flows, no trading, no "pro" features.
 2. **No ads, no tracking, no accounts.** No analytics, crash reporting, telemetry, ad SDKs or sign-in. No identifiers sent anywhere.
 3. **No notifications, ever.** `POST_NOTIFICATIONS` and `FOREGROUND_SERVICE` are removed in the manifest with `tools:node="remove"`, and so is WorkManager's `SystemForegroundService`. Nothing may add them back.
-4. **Minimal permissions.** Only what the widget truly needs: `INTERNET`, `ACCESS_NETWORK_STATE`, `RECEIVE_BOOT_COMPLETED`, plus optional coarse location for weather. Every new permission needs the owner's approval.
+4. **Minimal permissions.** Only what the widget truly needs: `INTERNET`, `ACCESS_NETWORK_STATE`, `RECEIVE_BOOT_COMPLETED`, plus optional location for weather (coarse, or fine when the user grants precise; owner-approved 2026-11-18). Every new permission needs the owner's approval.
 5. **Minimal functionality.** One job per widget, done well. Prefer removing a setting to adding one. If a setting doesn't change what you see on the home screen, it probably shouldn't exist. (Example: the "Match At a Glance" switch was removed because a tonal theme at 60-70% opacity already does it.)
 6. **Clean design.** Material 3 by the guidelines, with layouts inspired by **iOS and Samsung One UI** widgets. Professional, calm, "not AI slop". See §4.
 7. **Invisible in battery stats.** See §6.
@@ -85,7 +85,7 @@ The projects share **no code and no Gradle build**. They share these rules, the 
 **Session-free rendering.** Glance normally hosts a composition in a WorkManager job and holds a wakelock for ~45 s after each update. We don't use that path: `WidgetRenderer.render()` calls `GlanceAppWidget.compose(ctx, glanceId, options)` (no explicit size, so Glance returns a sized RemoteViews map for every size the launcher reports) and hands it to `AppWidgetManager.updateAppWidget`. The receiver is a plain `AppWidgetProvider`. `SizeMode.Exact`. Renders are serialized by a `Mutex`. `CancellationException` is always rethrown, never logged as an error.
 
 **Refresh rules** (each was a shipped bug):
-- **A widget tap must act immediately.** Do the refresh in the `ActionCallback` (it runs inside Glance's `goAsync()` window). Don't rely only on WorkManager: Android's App Standby can hold even expedited jobs back for minutes when the app is rarely opened, and the tap then looks dead. Fall back to the worker when offline, when the attempt fails, or when it times out (≈8 s budget).
+- **A widget tap must act immediately.** The refresh button opens `RefreshActivity`: an invisible, untouchable, animation-free window that runs the refresh and closes when it's done (≈8 s budget). Don't refresh in a broadcast/`ActionCallback`: in the background Android 15+ blocks the network for the app (`DOZE|APP_BACKGROUND` in `dumpsys netpolicy`), `activeNetwork` reads null, and a widget broadcast doesn't lift that. Don't rely on WorkManager either: the fallback job was held back 13 minutes on the owner's Pixel. An activity on screen makes the app foreground, so the network opens at once. Fall back to the worker only when truly offline, when the attempt fails, or when it times out.
 - **A spinner must never stick.** Store the spinner state as a start timestamp that expires (90 s), clear it in `finally` with `NonCancellable`, and clear stale spinners on process start.
 - **Quota guard.** A manual refresh reuses data fetched under 1 minute ago. Extra taps while a refresh is running are ignored.
 - **Fetch only when something can change.** Stocks: market-hours aware, with no network on nights and weekends. Weather: cached and shared by every widget for the same location.
@@ -96,7 +96,7 @@ The projects share **no code and no Gradle build**. They share these rules, the 
 ## 6. Battery rules
 
 - WorkManager only: a periodic job (network + battery-not-low constraints) and expedited one-time work for manual or catch-up refreshes. No alarms, services, wakelocks or listeners.
-- Approximate (cell/Wi-Fi) location only, reusing Android's recent cached fix. No GPS, and no listener stays registered.
+- Location: background refreshes use Android's recent cached fix or one balanced-power (cell/Wi-Fi) fix. A precise high-accuracy fix only while the app is on screen or the refresh button is tapped, reused for 10 minutes. Cell-only fixes can be tens of km off (Płock instead of Warsaw), so a cached fix older than 30 min is never treated as current. No listener ever stays registered.
 - A render is one short `compose()` call. Charts are drawn once as white masks and tinted, so theme switches don't need a re-render.
 - Target budget per refresh: about 1-2 s of job time, under 1 s of CPU, a few KB of data. Measure it after any change to the refresh path.
 

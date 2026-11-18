@@ -61,6 +61,7 @@ Both widgets have a `WidgetFlowTest` (`app.helpmeweather.WidgetFlowTest`, `app.h
 
 1. **Pin → tap refresh → data arrives.** Open the app, tap `add_widget`, confirm in the **launcher's** pin dialog, find the widget's Refresh button on the home screen (swipe pages if needed), tap it, then assert `AppLog` gets "Refresh tapped" and a successful `Fetch` line with no `[ERROR]`, and that the widget shows a value.
 2. **Offline → waits → recovers.** `svc wifi disable; svc data disable`, tap refresh, assert "No network", re-enable, assert the refresh ran on its own.
+   **Blocked in the background → still instant.** Wi-Fi off, `am set-standby-bucket <pkg> restricted`, home screen for 60 s, `dumpsys deviceidle force-idle`; `dumpsys netpolicy` must show the app `blocked=DOZE|APP_BACKGROUND`. Tap refresh: "Refresh tapped" then `Refresh: Started (refresh button…)` within ~1 s and data within a few seconds, with no "No network" and no visible window. (Before `RefreshActivity`, this tap said "No network" and the job ran 13 minutes later on a real Pixel.)
 3. **Editor saves.** Open `ConfigActivity` for the widget id, toggle `sw_refresh`, Save, and assert the stored config changed.
 4. **Editor rejects foreign ids.** Launch with ids `999999`, `-5`, `0` → `RESULT_CANCELED`, nothing created.
 5. **Logs copy.** Copy puts the full log on the clipboard, starting with `<App name> v`, with no secrets.
@@ -102,7 +103,7 @@ Release builds don't mirror `AppLog` to logcat (and aren't `run-as` debuggable).
 | Dark mode | `adb shell cmd uimode night yes` / `no`. Dynamic colors must switch with **no** new render |
 | Time zone / locale | change them in Settings. `TimeChangeReceiver` must re-render |
 | Reboot | `adb reboot`. Logs must say "Phone restarted", not "App restarted after being stopped" |
-| Location (weather) | `adb emu geo fix <lon> <lat>`, `adb shell pm grant app.helpmeweather android.permission.ACCESS_COARSE_LOCATION` |
+| Location (weather) | `adb emu geo fix <lon> <lat>`, `adb shell pm grant app.helpmeweather android.permission.ACCESS_FINE_LOCATION` (and `ACCESS_COARSE_LOCATION`) |
 
 ## 5. Release-build verification
 
