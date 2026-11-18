@@ -18,9 +18,9 @@ This whole repository is vibe-coded: designed, built, tested and reviewed in con
 
 | | Widget | What it shows | Download |
 |---|---|---|---|
-| ☀️ | [**Help Me Weather**](help-me-weather/) | Temperature up front and a clean hourly or daily row, with Google's forecast and Google's weather icons, so it agrees with Pixel Weather and At a Glance. | **[⬇ APK 0.1.4](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v0.1.4/help-me-weather-0.1.4.apk)** · 4.2 MB |
+| ☀️ | [**Help Me Weather**](help-me-weather/) | Temperature up front and a clean hourly or daily row, with Google's forecast and Google's weather icons, so it agrees with Pixel Weather and At a Glance. | **[⬇ APK 0.1.5](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v0.1.5/help-me-weather-0.1.5.apk)** · 4.2 MB |
 | 🕒 | [**Help Me Clock**](help-me-clock/) | The At a Glance line made useful: date and time on the left, your next alarm on the right, in one calm 4×1 row. Or turn the time off for date + alarm. No internet permission. | Not released yet |
-| 📈 | [**Help Me Stocks**](help-me-stocks/) | Your watchlist with the day's chart, price and change at a glance, like the iPhone Stocks widget. Market-hours aware. | **[⬇ APK 0.1.2](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v0.1.2/help-me-stocks-0.1.2.apk)** · 3.7 MB |
+| 📈 | [**Help Me Stocks**](help-me-stocks/) | Your watchlist with the day's chart, price and change at a glance, like the iPhone Stocks widget. Market-hours aware. | **[⬇ APK 0.1.3](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v0.1.3/help-me-stocks-0.1.3.apk)** · 3.7 MB |
 
 They need Android 12 or later and are tuned on a Pixel 11 Pro running Android 17. Open the APK on your phone (allow "Install unknown apps" when asked), open the app once, then long-press the home screen → **Widgets**. Each widget's README has install details, SHA-256 checksums and release notes. All versions are on the [Releases](https://github.com/artemulianko/help-me-widgets/releases) page.
 
