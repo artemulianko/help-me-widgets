@@ -64,18 +64,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        lifecycleScope.launch { publishPickerPreviews(this@MainActivity) }
+        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.Default) { WidgetRenderer.removeGeneratedPreviews(this@MainActivity) }
         setContent { HelpMeClockTheme { HomeScreen() } }
     }
 }
 
-/** Generated widget-picker previews (Android 15+). Rate limited by the OS, so once per version. */
-private suspend fun publishPickerPreviews(ctx: Context) {
-    if (Build.VERSION.SDK_INT < 35) return
-    val prefs = ctx.getSharedPreferences("meta", Context.MODE_PRIVATE)
-    if (prefs.getInt("previews_v", 0) == BuildConfig.VERSION_CODE) return
-    if (WidgetRenderer.publishPreviews(ctx)) prefs.edit().putInt("previews_v", BuildConfig.VERSION_CODE).apply()
-}
 
 @Composable
 private fun HomeScreen() {
@@ -115,8 +108,9 @@ private fun HomeScreen() {
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).verticalScroll(rememberScrollState())) {
             Column(Modifier.padding(horizontal = 16.dp)) {
-                val alarm = remember(tick) { Alarms.next(ctx) ?: SampleData.alarm() }
-                WidgetPreview(WidgetState(WidgetConfig(), alarm, 0), previewSizes.first { it.first == "4×1" }.second)
+                // Remembered, so unrelated recompositions don't restart the preview render.
+                val previewState = remember(tick) { WidgetState(WidgetConfig(), Alarms.next(ctx) ?: SampleData.alarm(), 0) }
+                WidgetPreview(previewState, previewSizes.first { it.first == "4×1" }.second)
                 Text(
                     if (hasAlarm) alarmLine.substringBefore(" (shown)") else "Sample alarm · $alarmLine",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,

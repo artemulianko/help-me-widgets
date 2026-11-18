@@ -41,8 +41,12 @@ object WidgetRenderer {
             // With SizeMode.Exact and no explicit size, Glance composes one layout per size the
             // launcher reports (portrait/landscape, foldables) and returns a sized RemoteViews map,
             // so the host can switch layouts without waking us.
+            val t0 = android.os.SystemClock.elapsedRealtime()
             val views = ClockWidget().compose(ctx, glanceId, options)
+            val t1 = android.os.SystemClock.elapsedRealtime()
             mgr.updateAppWidget(appWidgetId, views)
+            // Debug only (never in the Logs screen): render cost, for the widget-perf-check skill.
+            if (app.helpmeclock.BuildConfig.DEBUG) Log.d(TAG, "render $appWidgetId: compose ${t1 - t0} ms, update ${android.os.SystemClock.elapsedRealtime() - t1} ms")
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e // a newer refresh replaced this one; not a failure
         } catch (e: Exception) {
@@ -50,16 +54,16 @@ object WidgetRenderer {
         }
     }
 
-    /** Generated widget-picker previews (Android 15+), from sample data. */
-    suspend fun publishPreviews(ctx: Context): Boolean {
-        if (Build.VERSION.SDK_INT < 35) return false
+    /**
+     * The picker uses the static `widget_preview` layout (live TextClocks, mirrors the 4×1).
+     * Generated previews, built from the widget's TextClock views, came out broken on a real
+     * Pixel, so any published by 0.1.0 are removed (Android 15+).
+     */
+    fun removeGeneratedPreviews(ctx: Context) {
+        if (Build.VERSION.SDK_INT < 35) return
         val mgr = AppWidgetManager.getInstance(ctx)
         val provider = ComponentName(ctx, ClockWidgetReceiver::class.java)
-        val info = mgr.installedProviders.firstOrNull { it.provider == provider }
-        return listOf(AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN, AppWidgetProviderInfo.WIDGET_CATEGORY_KEYGUARD).all { cat ->
-            runCatching { mgr.setWidgetPreview(provider, cat, ClockWidget().composeForPreview(ctx, cat, info)) }
-                .onFailure { Log.w(TAG, "preview failed", it) }.getOrDefault(false)
-        }
+        runCatching { mgr.removeWidgetPreview(provider, AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN) }
+        runCatching { mgr.removeWidgetPreview(provider, AppWidgetProviderInfo.WIDGET_CATEGORY_KEYGUARD) }
     }
-
 }

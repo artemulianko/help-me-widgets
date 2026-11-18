@@ -107,7 +107,8 @@ fun WidgetEditor(initial: WidgetConfig, onClose: () -> Unit, onSave: (WidgetConf
     val ctx = LocalContext.current
     // Your real next alarm; a sample one when none is set, so you can see where it goes.
     val alarm = remember { Alarms.next(ctx) ?: SampleData.alarm() }
-    val state = WidgetState(cfg, alarm, appWidgetId = 0)
+    // Keyed on the settings only, so the preview re-renders exactly when you change something.
+    val state = remember(cfg) { WidgetState(cfg, alarm, appWidgetId = 0) }
     // Date format samples are today's date in your language, so you pick what you'll see.
     val today = remember { java.util.Date() }
 

@@ -43,8 +43,8 @@ private const val GAP = 4f
 private const val LABEL = 14f        // header / secondary line, sp
 private const val LABEL_LARGE = 16f  // date and alarm on larger sizes, sp
 private const val AMPM_RATIO = 0.28f // AM/PM size relative to the numerals
-private const val BIG_DATE_MAX = 28f // a date-led line reads like At a Glance, not a poster
-private const val ALARM_BESIDE_DATE = 18f // sp: answers a 28 dp date without competing
+private const val BIG_DATE_MAX = 24f // date-led: a step above At a Glance, not a poster
+private const val ALARM_BESIDE_DATE = 16f // sp: answers a 24 dp date without competing
 private const val SOLO = 0.72f       // time alone: a calmer size than "fill the widget"
 
 /**
@@ -87,7 +87,8 @@ private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val wi
     val locale: Locale = Locale.getDefault()
     val is24 = DateFormat.is24HourFormat(ctx)
     // Labels follow the font-size setting, but capped so the numerals keep most of the space.
-    val fontScale = min(ctx.resources.configuration.fontScale, 1.3f)
+    // Capped at 1.15×: beyond that the labels outgrew the time at the largest font sizes.
+    val fontScale = min(ctx.resources.configuration.fontScale, 1.15f)
     fun pattern(skeleton: String): String = DateFormat.getBestDateTimePattern(locale, skeleton)
 
     val time12 = stripAmPm(pattern("hm"))
@@ -181,7 +182,8 @@ private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val wi
         return RemoteViews(ctx.packageName, R.layout.alarm_label).apply {
             setTextViewText(R.id.alarm_text, label)
             setTextViewTextSize(R.id.alarm_text, TypedValue.COMPLEX_UNIT_DIP, sp * fontScale)
-            c.textVariant.apply(this, R.id.alarm_text, "setTextColor")
+            // Same color as the date: gray read as "disabled". Only the icon stays quieter.
+            c.text.apply(this, R.id.alarm_text, "setTextColor")
             c.textVariant.apply(this, R.id.alarm_icon, "setImageTintList")
             val icon = sp * fontScale
             setViewLayoutWidth(R.id.alarm_icon, icon, TypedValue.COMPLEX_UNIT_DIP)

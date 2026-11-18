@@ -33,7 +33,7 @@ Not released yet. Build it from source (below) until the first GitHub Release.
 
 ## Every size, laid out properly
 
-4×1 is the default; every size from 1×1 (hours over minutes) up to 4×4, plus landscape, has its own layout. Text is measured and fitted to each size, so "12:58 PM" fits as well as "9:41", and it holds up on every launcher grid (Small to XL), display size and font size (font scaling is honored up to 1.3× so nothing overflows).
+4×1 is the default; every size from 1×1 (hours over minutes) up to 4×4, plus landscape, has its own layout. Text is measured and fitted to each size, so "12:58 PM" fits as well as "9:41", and it holds up on every launcher grid (Small to XL), display size and font size (font scaling is honored up to 1.15× so nothing overflows and the time stays the biggest thing).
 
 <p align="center"><img src="docs/screenshots/all-sizes.png" alt="Clock widget at 4x1 (12- and 24-hour), 1x1, 2x1, 2x2 and 4x2" width="900"></p>
 

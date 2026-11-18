@@ -116,10 +116,15 @@ fun WidgetPreview(state: WidgetState, size: DpSize, modifier: Modifier = Modifie
     val ctx = LocalContext.current
     val rv by produceState<RemoteViews?>(null, state, size) {
         delay(50) // coalesce rapid slider changes
-        // Off the main thread: composing the widget measures fonts and builds RemoteViews, and on
-        // a slow device that blocked input long enough to trigger an ANR.
-        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            runCatching { PreviewWidget(state).compose(ctx, size = size) }.getOrNull()
+        // Same path as Help Me Weather and Help Me Stocks (their previews update live on a real
+        // Pixel). Text measurements are cached, so composing stays cheap. A failure is logged
+        // instead of silently leaving an empty preview.
+        value = try {
+            PreviewWidget(state).compose(ctx, size = size)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            app.helpmeclock.data.AppLog.e(ctx, "Preview", "Couldn't draw the preview", e); null
         }
     }
     Box(
@@ -135,7 +140,10 @@ fun WidgetPreview(state: WidgetState, size: DpSize, modifier: Modifier = Modifie
             factory = { FrameLayout(it) },
             update = { fl ->
                 fl.removeAllViews()
-                rv?.let { runCatching { fl.addView(it.apply(fl.context, fl)) } }
+                rv?.let {
+                    runCatching { fl.addView(it.apply(fl.context, fl)) }
+                        .onFailure { e -> app.helpmeclock.data.AppLog.e(fl.context, "Preview", "Couldn't show the preview", e) }
+                }
             },
             modifier = Modifier.padding(vertical = 20.dp).size(size),
         )

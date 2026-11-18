@@ -40,10 +40,6 @@ class ClockWidget : GlanceAppWidget() {
     // Exact: the numerals are sized to the real cell size.
     override val sizeMode: SizeMode = SizeMode.Exact
 
-    // Generated picker previews at real Pixel spans (~97dp per column, ~105dp per row).
-    override val previewSizeMode = SizeMode.Responsive(
-        setOf(DpSize(194.dp, 105.dp), DpSize(387.dp, 105.dp), DpSize(194.dp, 212.dp), DpSize(387.dp, 212.dp)),
-    )
 
     /** Called by [WidgetRenderer] via compose(): read state once, render once. */
     override suspend fun provideGlance(context: Context, id: GlanceId) {
@@ -52,10 +48,6 @@ class ClockWidget : GlanceAppWidget() {
         provideContent { ClockContent(state) }
     }
 
-    override suspend fun providePreview(context: Context, widgetCategory: Int) {
-        val sample = SampleData.state()
-        provideContent { ClockContent(sample) }
-    }
 }
 
 /** Root: background, corner radius, and the tap action. Layout is chosen from the real size. */
