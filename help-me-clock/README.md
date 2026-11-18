@@ -1,10 +1,10 @@
 # Help Me Clock
 
-**The At a Glance line, made useful: date, time and your next alarm in one calm row.**
+**A calm digital clock that matches the rest of your widgets: date, time and your next alarm in one row.**
 
 *Part of [Help Me Widgets](../README.md), together with [Help Me Weather](../help-me-weather/) and [Help Me Stocks](../help-me-stocks/).*
 
-At a Glance gives you the date and sometimes the weather, but your next alarm only when it feels like it, and Pixel's clock widgets squeeze the date and alarm into a tiny line. Help Me Clock is a 4×1 row: the date over the time on the left, your next alarm on the right, nothing truncated, laid out like iOS and One UI widgets and built the Pixel way: Material 3, your wallpaper colors, and the same design and customization as its siblings.
+Pixel's clock widgets each have their own look and squeeze the date and alarm into a tiny line. Help Me Clock is a clean digital clock with the same design, colors and margins as Help Me Weather and Help Me Stocks, so they look like one set side by side. By default it's a 4×1 row: the date over the time on the left, your next alarm on the right, nothing truncated, laid out like iOS and One UI widgets and built the Pixel way: Material 3, your wallpaper colors, and the same design and customization as its siblings.
 
 <p align="center">
   <img src="docs/screenshots/hero.png" alt="Help Me Clock 4×1 widget in light and dark mode" width="700">
@@ -28,7 +28,7 @@ SHA-256 `f900a5846f718deccf3edf8e5e5691a998eb929815fbbbb538b8ca231d4e7a58`
 |---|---|
 | **Your next alarm, always** | The alarm from your clock app (Google Clock, Samsung Clock…) sits at the end of the row: "7:30 AM" when it rings within a day, "Thu 7:30 AM" when later. No alarm, no clutter. Tap it to open that alarm. |
 | **A date you can read** | Pick **Tue, 17 Nov**, **Tue, Nov 17** or **Tuesday, 17 November** (names in your language). Every size checks the longest weekday and month first and steps down to a shorter format instead of cutting anything off. |
-| **Time already in the status bar?** | Turn **Time** off and the date takes the lead (weekday large, month and day under it) with the alarm beside it: At a Glance, but with your alarm. |
+| **Time already in the status bar?** | Turn **Time** off and the date takes the lead (weekday large, month and day under it) with the alarm beside it. |
 | **Ticks for free** | The time is a system `TextClock` drawn by your launcher, so the widget never wakes the app to tick, and the date turns over at midnight on its own. |
 | **Matches your theme** | Material You colors come straight from the system's color resources, so the widget follows your wallpaper and light/dark mode immediately, even with a transparent background. Seven fixed palettes too. |
 | **Same customization as its siblings** | Palette, theme, background tone, opacity, numeral weight (Light, Regular, Medium), what to show, and what a tap does: identical controls, live preview, every size. |
