@@ -100,7 +100,7 @@ class WidgetFlowTest {
      * Widget views report *our* package (RemoteViews belong to the app) even though the launcher
      * draws them; on the home screen none of our activities are showing, so no filter is needed.
      */
-    private fun findWidgetRefresh(): UiObject2? = device.findObject(By.desc("Refresh"))
+    private fun findWidgetRefresh(): UiObject2? = device.findObject(By.desc("Refresh").pkg(ctx.packageName)) // sibling widgets on the same page have their own Refresh
 
     private fun tapWidgetRefresh() {
         // Tests share the widget; make sure its refresh button is enabled and rendered.
@@ -165,8 +165,15 @@ class WidgetFlowTest {
         runBlocking { Store(ctx).updateWidget(id) { it.copy(showRefresh = true) } }
         ctx.startActivity(Intent(ctx, ConfigActivity::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
         assertTrue("editor open", device.wait(Until.hasObject(By.res("save")), 15_000))
-        val scroller = device.findObject(By.scrollable(true))
-        val toggle = scroller.scrollUntil(Direction.DOWN, Until.findObject(By.res("sw_refresh")))
+        // Swipe the page: the first "scrollable" node is the horizontal palette row.
+        var toggle = device.findObject(By.res("sw_refresh"))
+        repeat(8) {
+            if (toggle == null) {
+                device.swipe(device.displayWidth / 2, device.displayHeight * 4 / 5, device.displayWidth / 2, device.displayHeight * 2 / 5, 20)
+                Thread.sleep(300)
+                toggle = device.findObject(By.res("sw_refresh"))
+            }
+        }
         assertTrue("toggle found", toggle != null)
         toggle.click()
         device.findObject(By.res("save")).click()
