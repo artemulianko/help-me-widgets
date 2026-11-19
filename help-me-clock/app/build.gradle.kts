@@ -14,8 +14,8 @@ android {
         applicationId = "app.helpmeclock"
         minSdk = 31
         targetSdk = 37
-        versionCode = 10
-        versionName = "1.0.0"
+        versionCode = 11
+        versionName = "1.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
     }
@@ -71,6 +71,9 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(libs.glance.appwidget)
     implementation(libs.glance.material3)
+    // Glance renders widgets in WorkManager jobs; pin the current version (the transitive one
+    // crashed the minified 1.0.0 build at startup: WorkDatabase could not be created).
+    implementation(libs.work.runtime)
     implementation(libs.datastore.preferences)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
