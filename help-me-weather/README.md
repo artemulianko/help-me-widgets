@@ -14,9 +14,9 @@ The stock Pixel weather options are a one-line At a Glance and a widget you can 
 
 ## Download
 
-**[⬇ Download Help Me Weather 0.1.9 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v0.1.9/help-me-weather-0.1.9.apk)** · Android 12+ · 4.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/weather-v0.1.9) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+**[⬇ Download Help Me Weather 1.0.0 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v1.0.0/help-me-weather-1.0.0.apk)** · Android 12+ · 4.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/weather-v1.0.0) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-SHA-256 `25ad3a31dc6412d33cd56d96a1c4f3da20401aa6cf5823dd9a23e5f455ce5437`
+SHA-256 `ff18e89793263ff0285904269aceb0079b47870c06db17a4fe75e7033bb45cf6`
 
 > Upgrading from 0.1.0/0.1.1: since 0.1.2 the app has a new package name (`app.helpmeweather`), so uninstall the old version first and update your key restriction. Later updates install over it normally.
 
@@ -99,7 +99,7 @@ To regenerate the icons (downloaded from Google and converted with Android's own
 ```
 app/src/main/java/app/helpmeweather/
   data/     providers (Google, Open-Meteo), settings + cache (DataStore), location, formatting
-  widget/   Glance layouts, colors, session-free renderer, receivers
+  widget/   Glance layouts, colors, standard Glance rendering, receivers
   work/     WorkManager refresh scheduling
   ui/       Compose (Material 3 Expressive) app + per-widget editor
 tools/      icon import, color generation, svg2vector

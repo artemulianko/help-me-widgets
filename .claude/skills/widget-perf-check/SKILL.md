@@ -30,12 +30,12 @@ The script prints ✓/✗ for registrations, CPU per update in each process stat
 
 | Measure | Budget |
 |---|---|
-| Scheduled jobs | 0 for the clock; 1-2 unique works for refreshing widgets |
-| Pending alarms, wake locks held, running services | 0 |
+| Scheduled jobs | Glance's own session worker (kept queued by Glance) plus, for refreshing widgets, 1-2 unique works |
+| Pending alarms, running services, wake locks held at idle | 0 (WorkManager holds a wake lock only while a Glance session or refresh job runs) |
 | Permissions | only those listed in AGENTS.md §2.4 |
 | Idle process CPU (home screen, minutes) | ~0 ms; the launcher draws `TextClock`/RemoteViews, not us |
 | Idle battery attributed | orders of magnitude below the launcher |
-| One update | a single `compose()` + `updateAppWidget`. Glance composes once per size the launcher reports (often 2-3, incl. landscape), so expect a few hundred ms on the emulator and much less on a Pixel. It must not repeat by itself |
+| One update | one Glance session job: a few hundred ms of CPU, the job itself open for a few seconds (Glance's idle timeout) and then stopped. It must not repeat by itself |
 
 ## 4. Gotchas learned the hard way
 

@@ -20,28 +20,31 @@ import kotlin.math.roundToInt
  */
 object Sparkline {
     /**
-     * The chart as a compressed PNG [android.graphics.drawable.Icon] (lossless, a few KB): a
-     * Bitmap in RemoteViews ships every raw pixel to the launcher for every size, which was ~7 MB
-     * per update. Falls back to the raw bitmap if encoding fails.
+     * [draw], cached: a session composes every size, and a data refresh redraws every widget,
+     * while a chart only changes with its data. Alpha-only masks (1 byte/px, tinted at render
+     * time) passed with ImageProvider(bitmap), as Google's widget guidance recommends for masks.
      */
-    fun icon(b: Bitmap): android.graphics.drawable.Icon {
-        val out = java.io.ByteArrayOutputStream()
-        val ok = runCatching { b.compress(Bitmap.CompressFormat.PNG, 100, out) }.getOrDefault(false)
-        if (app.helpmestocks.BuildConfig.DEBUG) android.util.Log.d("HelpMeStocksWidget", "chart ${b.width}x${b.height} ${b.config} -> png ${if (ok) out.size() else -1} B (raw ${b.byteCount} B)")
-        return if (ok && out.size() > 0) android.graphics.drawable.Icon.createWithData(out.toByteArray(), 0, out.size())
-        else android.graphics.drawable.Icon.createWithBitmap(b)
+    fun cached(q: Quote, widthDp: Float, heightDp: Float, density: Float, fill: Boolean): Bitmaps? {
+        val key = listOf(q.symbol, q.times.size, q.times.lastOrNull(), q.prices.hashCode(), q.previousClose, q.sessionStart, q.sessionEnd, widthDp, heightDp, density, fill)
+        synchronized(cache) { cache[key]?.let { return it } }
+        val made = draw(q, widthDp, heightDp, density, fill) ?: return null
+        synchronized(cache) { cache[key] = made }
+        return made
+    }
+
+    /** Small LRU: a few widgets × sizes × symbols. */
+    private val cache = object : LinkedHashMap<List<Any?>, Bitmaps>(64, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<List<Any?>, Bitmaps>?) = size > 96
     }
 
     private const val MAX_DENSITY = 2.75f
-    private const val MAX_PIXELS = 200_000f // drawn locally; only the compressed PNG is sent
+    private const val MAX_PIXELS = 200_000f // ~200 KB per ALPHA_8 mask
 
     class Bitmaps(val line: Bitmap, val baseline: Bitmap?)
 
     fun draw(q: Quote, widthDp: Float, heightDp: Float, density: Float, fill: Boolean): Bitmaps? {
         if (q.times.size < 2 || widthDp < 8f || heightDp < 8f) return null
-        // White masks, tinted at render time, sent as PNG (see [icon]): raw bitmaps sent ~4.5 MB to
-        // the launcher per update, and a Pixel 11 Pro launcher sometimes blanked the widget while
-        // taking it in. Widget bitmaps also share a budget (about 1.5× the screen for all of a widget's layouts), so
+        // Alpha masks, tinted at render time. Widget bitmaps share a budget (about 1.5× the screen for all of a widget's layouts), so
         // each chart is capped: plenty sharp at row and 4×2 sizes, softer only on huge resizes.
         var d = density.coerceIn(1f, MAX_DENSITY)
         val area = widthDp * heightDp * d * d
@@ -62,7 +65,7 @@ object Sparkline {
         val path = Path()
         q.times.forEachIndexed { i, t -> if (i == 0) path.moveTo(x(t), y(q.prices[i])) else path.lineTo(x(t), y(q.prices[i])) }
 
-        val line = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val line = Bitmap.createBitmap(w, h, Bitmap.Config.ALPHA_8)
         Canvas(line).apply {
             if (fill) {
                 val area = Path(path).apply {
@@ -78,7 +81,7 @@ object Sparkline {
             })
         }
         val baseline = prev?.takeIf { it.isFinite() }?.let { p ->
-            Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { b ->
+            Bitmap.createBitmap(w, h, Bitmap.Config.ALPHA_8).also { b ->
                 val yy = y(p)
                 Canvas(b).drawLine(pad, yy, w - pad, yy, Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     style = Paint.Style.STROKE; strokeWidth = 1.25f * d; color = 0xFFFFFFFF.toInt()

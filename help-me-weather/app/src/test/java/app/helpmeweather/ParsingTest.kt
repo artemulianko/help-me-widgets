@@ -18,8 +18,11 @@ class ParsingTest {
     private val base = System.currentTimeMillis() / 1000 / 3600 * 3600
 
     @Test fun googleResponseParses() {
+        // Hours relative to now (absolute dates rot: past hours are dropped).
+        val iso = { sec: Long -> java.time.Instant.ofEpochSecond(sec).toString() }
+        val h0 = base + 3600; val h1 = base + 7200; val h2 = base + 10800
         val cur = Http.json.parseToJsonElement(
-            """{"currentTime":"2026-11-16T23:00:00Z","timeZone":{"id":"America/Los_Angeles"},"isDaytime":true,
+            """{"currentTime":"${iso(base)}","timeZone":{"id":"America/Los_Angeles"},"isDaytime":true,
             "weatherCondition":{"iconBaseUri":"https://maps.gstatic.com/weather/v1/showers","description":{"text":"Rain","languageCode":"en"},"type":"RAIN"},
             "temperature":{"degrees":12.4,"unit":"CELSIUS"},"feelsLikeTemperature":{"degrees":11.0,"unit":"CELSIUS"},
             "relativeHumidity":88,"uvIndex":1,"precipitation":{"probability":{"percent":80,"type":"RAIN"}},
@@ -28,9 +31,9 @@ class ParsingTest {
         )
         val hrs = Http.json.parseToJsonElement(
             """{"forecastHours":[
-              {"interval":{"startTime":"2026-11-17T00:00:00Z","endTime":"2026-11-17T01:00:00Z"},"isDaytime":false,
+              {"interval":{"startTime":"${iso(h0)}","endTime":"${iso(h1)}"},"isDaytime":false,
                "weatherCondition":{"type":"SCATTERED_SHOWERS"},"temperature":{"degrees":11.5},"precipitation":{"probability":{"percent":40}}},
-              {"interval":{"startTime":"2026-11-17T01:00:00Z"},"isDaytime":false,
+              {"interval":{"startTime":"${iso(h1)}","endTime":"${iso(h2)}"},"isDaytime":false,
                "weatherCondition":{"type":"MOSTLY_CLOUDY"},"temperature":{"degrees":10.9},"precipitation":{"probability":{"percent":10}}}
             ],"timeZone":{"id":"America/Los_Angeles"}}""",
         )

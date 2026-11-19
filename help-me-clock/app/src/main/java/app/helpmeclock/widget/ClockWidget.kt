@@ -3,6 +3,8 @@ package app.helpmeclock.widget
 import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
@@ -43,9 +45,18 @@ class ClockWidget : GlanceAppWidget() {
 
     /** Called by [WidgetRenderer] via compose(): read state once, render once. */
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        // The content observes its inputs, so changes while a Glance session is open recompose it
+        // (an update() during a live session doesn't call provideGlance again). The next alarm
+        // isn't stored data: WidgetRenderer.changes ticks on every redraw request.
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
-        val state = WidgetState(Store(context).widget(appWidgetId).first(), Alarms.next(context), appWidgetId)
-        provideContent { ClockContent(state) }
+        val flow = kotlinx.coroutines.flow.combine(Store(context).widget(appWidgetId), WidgetRenderer.changes) { cfg, _ ->
+            WidgetState(cfg, Alarms.next(context), appWidgetId)
+        }
+        val initial = flow.first()
+        provideContent {
+            val state by flow.collectAsState(initial)
+            ClockContent(state)
+        }
     }
 
 }

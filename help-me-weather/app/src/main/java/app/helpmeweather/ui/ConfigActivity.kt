@@ -55,6 +55,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import app.helpmeweather.R
+import app.helpmeweather.data.AppLog
 import app.helpmeweather.data.AppSettings
 import app.helpmeweather.data.BgTone
 import app.helpmeweather.data.ForecastMode
@@ -109,11 +110,13 @@ class ConfigActivity : ComponentActivity() {
 
     private fun save(store: Store, cfg: WidgetConfig) {
         lifecycleScope.launch {
+            val t0 = android.os.SystemClock.elapsedRealtime()
             store.updateWidget(widgetId) { cfg }
             cfg.location?.let { p -> store.updateApp { a -> a.copy(recentPlaces = (listOf(p) + a.recentPlaces).distinctBy { it.key }.take(5)) } }
             WidgetRenderer.render(this@ConfigActivity, widgetId)
             RefreshWorker.scheduleNow(this@ConfigActivity)
             RefreshWorker.refreshNow(this@ConfigActivity, force = false)
+            AppLog.i(this@ConfigActivity, "Editor", "Saved widget $widgetId; widget update sent in ${android.os.SystemClock.elapsedRealtime() - t0} ms")
             finish()
         }
     }

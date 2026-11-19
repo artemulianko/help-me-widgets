@@ -16,11 +16,11 @@ Picked for technique only. Design and layout skills (for example `glance-canonic
 are deliberately **not** installed: how our widgets look is defined by `docs/design.md`.
 
 **Precedence.** `AGENTS.md` and `docs/` win over these skills. Known differences:
-- We render session-free (`compose()` + `updateAppWidget`), so advice about Glance sessions,
-  `updateAppWidgetState` and `provideContent` revisions applies only in spirit.
+- Since 1.0.0 we render the standard Glance way (`GlanceAppWidgetReceiver`, `update()` /
+  `updateAll()`, content that `collectAsState`s its data), so the session advice applies as is.
 - No `FileProvider` / `content://` images, and no new dependencies (Glance Material 3, Hilt, …)
   without the owner's approval.
-- Widget refresh taps go through `RefreshActivity` (see AGENTS.md §5); don't move them back
-  to a broadcast or WorkManager-only path.
+- Widget refresh taps: `actionRunCallback` with an inline fetch and an expedited-work fallback
+  (AGENTS.md §5). Never open an activity from a widget tap.
 
 To update: re-copy the folders from a newer android/skills commit and change the commit above.

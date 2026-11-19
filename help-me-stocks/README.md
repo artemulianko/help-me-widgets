@@ -14,9 +14,9 @@ iPhone has had a clean Stocks widget for years: your watchlist, the day's chart,
 
 ## Download
 
-**[⬇ Download Help Me Stocks 0.1.8 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v0.1.8/help-me-stocks-0.1.8.apk)** · Android 12+ · 3.9 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/stocks-v0.1.8) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+**[⬇ Download Help Me Stocks 1.0.0 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v1.0.0/help-me-stocks-1.0.0.apk)** · Android 12+ · 3.9 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/stocks-v1.0.0) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-SHA-256 `ae62f333c4cd50aafb3165c31ab9aad6af2cb2d09488ec9e023ff9817357bebc`
+SHA-256 `81af4c69dfb980bee5cad1b221e2413e128c668666796dbee190d48d3c8f8bca`
 
 1. Download the APK on your phone and open it (allow "Install unknown apps" for your browser when asked).
 2. Open **Help Me Stocks** once, and add or reorder stocks in **Watchlist**.
@@ -91,7 +91,7 @@ To regenerate the icons (Material Symbols, converted with Android's own SVG conv
 ```
 app/src/main/java/app/helpmestocks/
   data/     Yahoo Finance source, market hours, settings + quote cache (DataStore), formatting
-  widget/   Glance layouts, sparkline, colors, session-free renderer, receivers
+  widget/   Glance layouts, sparkline, colors, standard Glance rendering, receivers
   work/     WorkManager refresh scheduling
   ui/       Compose (Material 3 Expressive) app, watchlist editor, per-widget editor
 tools/      icon import, color generation, svg2vector

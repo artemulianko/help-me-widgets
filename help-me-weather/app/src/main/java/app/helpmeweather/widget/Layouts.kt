@@ -174,26 +174,31 @@ private fun CornerRefresh(x: Scope) {
 
 @Composable
 private fun LocationLabel(x: Scope, size: Float = 14f, modifier: GlanceModifier = GlanceModifier) {
-    if (!x.cfg.showLocation) return
+    // "Warszawa · 01:22": the update time follows the place, in the quieter color (like the market
+    // line on Help Me Stocks), when "Last updated time" is on.
+    val time = updatedText(x)
+    if (!x.cfg.showLocation && time == null) return
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        if (x.cfg.location == null) {
-            Image(
-                ImageProvider(R.drawable.ms_near_me), null,
-                GlanceModifier.size((size - 1f).dp).padding(end = 2.dp), colorFilter = ColorFilter.tint(x.c.text),
-            )
+        if (x.cfg.showLocation) {
+            if (x.cfg.location == null) {
+                Image(
+                    ImageProvider(R.drawable.ms_near_me), null,
+                    GlanceModifier.size((size - 1f).dp).padding(end = 2.dp), colorFilter = ColorFilter.tint(x.c.text),
+                )
+            }
+            Text(x.s.place?.name ?: x.w.place.name, style = style(x.c.text, size, FontWeight.Medium), maxLines = 1)
         }
-        Text(x.s.place?.name ?: x.w.place.name, style = style(x.c.text, size, FontWeight.Medium), maxLines = 1)
+        if (time != null) {
+            Text((if (x.cfg.showLocation) " · " else "") + time, style = style(x.c.textVariant, size), maxLines = 1)
+        }
     }
 }
 
-@Composable
-private fun UpdatedLabel(x: Scope) {
-    if (!x.cfg.showUpdated) return
+/** The last update time, or "Offline" when the forecast is stale; null when the option is off. */
+private fun updatedText(x: Scope): String? {
+    if (!x.cfg.showUpdated) return null
     val stale = System.currentTimeMillis() - x.w.fetchedAt > max(3L * 3_600_000L, x.s.app.refreshMinutes * 3L * 60_000L)
-    Text(
-        if (stale) x.ctx.getString(R.string.offline) else x.f.clock(x.w.fetchedAt),
-        style = style(x.c.textVariant, 11f), maxLines = 1,
-    )
+    return if (stale) x.ctx.getString(R.string.offline) else x.f.clock(x.w.fetchedAt)
 }
 
 @Composable
@@ -388,7 +393,7 @@ private fun Compact(x: Scope) {
         Spacer(GlanceModifier.width(GAP))
         Column(modifier = GlanceModifier.defaultWeight()) {
             Hero(x, 28f)
-            if (x.cfg.showLocation) LocationLabel(x, 12f)
+            if (x.cfg.showLocation || x.cfg.showUpdated) LocationLabel(x, 12f)
             else x.subLine?.let { Text(it, style = style(x.c.textVariant, 12f), maxLines = 1) }
         }
         if (x.cfg.showRefresh) RefreshButton(x) else Spacer(GlanceModifier.width(PAD - 4.dp))
@@ -409,7 +414,7 @@ private fun Strip(x: Scope) {
                 withForecast -> x.subLine
                 else -> listOfNotNull(if (x.cfg.showCondition) x.conditionText else null, x.subLine).joinToString("  ").ifEmpty { null }
             }
-            if (x.cfg.showLocation) LocationLabel(x, 12f)
+            if (x.cfg.showLocation || x.cfg.showUpdated) LocationLabel(x, 12f)
             sub?.let { Text(it, style = style(x.c.textVariant, 12f), maxLines = 1) }
         }
         if (withForecast) {
@@ -540,8 +545,7 @@ private fun Stacked(x: Scope, modifier: GlanceModifier, mode: ForecastMode, inne
             verticalAlignment = Alignment.CenterVertically,
         ) {
             LocationLabel(x, modifier = GlanceModifier.defaultWeight())
-            if (!x.cfg.showLocation) Spacer(GlanceModifier.defaultWeight())
-            UpdatedLabel(x)
+            if (!x.cfg.showLocation && !x.cfg.showUpdated) Spacer(GlanceModifier.defaultWeight())
         }
         // Hero row: condition block bottom-aligned with the temperature, clear of the corner button.
         Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
@@ -596,7 +600,6 @@ private fun MediumBody(x: Scope, modifier: GlanceModifier, mode: ForecastMode, i
         if (mode != ForecastMode.NONE) {
             Spacer(GlanceModifier.width(GAP))
             Column(modifier = GlanceModifier.defaultWeight().fillMaxHeight(), horizontalAlignment = Alignment.End) {
-                Row(modifier = GlanceModifier.padding(end = if (x.cfg.showRefresh && !inline) 40.dp else 0.dp, top = 2.dp)) { UpdatedLabel(x) }
                 Spacer(GlanceModifier.defaultWeight())
                 ForecastRow(x, innerW - leftW - 12f, mode, GlanceModifier.fillMaxWidth(), iconSize.dp, pop)
             }

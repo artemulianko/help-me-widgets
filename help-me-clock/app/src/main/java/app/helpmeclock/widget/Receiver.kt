@@ -2,11 +2,9 @@ package app.helpmeclock.widget
 
 import android.app.AlarmManager
 import android.appwidget.AppWidgetManager
-import android.appwidget.AppWidgetProvider
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
 import android.text.format.DateFormat
 import app.helpmeclock.data.Alarms
 import app.helpmeclock.data.AppLog
@@ -24,23 +22,22 @@ private fun BroadcastReceiver.async(block: suspend () -> Unit) {
     receiverScope.launch { try { block() } finally { pending.finish() } }
 }
 
-/** Plain AppWidgetProvider: renders through [WidgetRenderer] instead of Glance sessions. */
-class ClockWidgetReceiver : AppWidgetProvider() {
+/**
+ * The widget, the standard Glance way: Glance's receiver hosts the widget, handles placement,
+ * resizes and removal, and every redraw goes through [ClockWidget.update] / `updateAll`.
+ */
+class ClockWidgetReceiver : androidx.glance.appwidget.GlanceAppWidgetReceiver() {
+    override val glanceAppWidget = ClockWidget()
 
-    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) = async {
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        super.onUpdate(context, appWidgetManager, appWidgetIds)
         AppLog.i(context, "Widget", "System update for ${appWidgetIds.size} widget(s) (added, restored or rebooted)")
-        appWidgetIds.forEach { WidgetRenderer.render(context, it) }
     }
 
-    /** Resized: re-layout for the new size. */
-    override fun onAppWidgetOptionsChanged(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int, newOptions: Bundle) = async {
-        WidgetRenderer.render(context, appWidgetId)
-    }
-
-    override fun onDeleted(context: Context, appWidgetIds: IntArray) = async {
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        super.onDeleted(context, appWidgetIds)
         AppLog.i(context, "Widget", "Removed ${appWidgetIds.size} widget(s)")
-        val store = Store(context)
-        appWidgetIds.forEach { store.deleteWidget(it) }
+        receiverScope.launch { val store = Store(context); appWidgetIds.forEach { store.deleteWidget(it) } }
     }
 }
 

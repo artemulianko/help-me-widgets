@@ -22,7 +22,7 @@ Copy `help-me-stocks/` (the cleanest template) to `help-me-<name>/`, excluding `
 
 ## 3. Build every size
 
-Implement all breakpoints from `docs/design.md`, plus the empty, loading, refreshing and error states. Pre-render via `compose()`. Nothing scrolls.
+Implement all breakpoints from `docs/design.md`, plus the empty, loading, refreshing and error states. Render through Glance's `update()` / `updateAll()` with content that collects its state. Nothing scrolls.
 
 ## 4. Tests
 

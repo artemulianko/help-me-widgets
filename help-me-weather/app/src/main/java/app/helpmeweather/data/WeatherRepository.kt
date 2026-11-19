@@ -54,23 +54,30 @@ object WeatherRepository {
     /** Widget-tap, worker and in-app refreshes run one at a time, never interleaved. */
     private val lock = Mutex()
 
-    suspend fun refresh(ctx: Context, force: Boolean, foreground: Boolean = false, reason: String = "scheduled"): Result<Unit> =
-        lock.withLock { refreshLocked(ctx, force, foreground, reason) }
+    /**
+     * [widgets] = false: fetch only, no spinner and no widget redraw (the caller redraws later).
+     * Used by the refresh window: while any window is in front of the home screen, the launcher
+     * holds widget updates back and applies them afterwards, and on a Pixel 11 Pro one of those
+     * late updates sometimes left the widget an empty frame until the next update.
+     */
+    suspend fun refresh(ctx: Context, force: Boolean, foreground: Boolean = false, reason: String = "scheduled", widgets: Boolean = true): Result<Unit> =
+        lock.withLock { refreshLocked(ctx, force, foreground, reason, widgets) }
 
-    private suspend fun refreshLocked(ctx: Context, force: Boolean, foreground: Boolean, reason: String): Result<Unit> {
+    private suspend fun refreshLocked(ctx: Context, force: Boolean, foreground: Boolean, reason: String, widgets: Boolean): Result<Unit> {
         init(ctx)
         val started = System.currentTimeMillis()
         val store = Store(ctx)
         // Spinner only for user-initiated refreshes; background refreshes cost a single render.
-        if (force) {
+        var spinnerMs = 0L
+        if (force && widgets) {
             store.setRefreshing(true)
-            WidgetRenderer.renderAll(ctx)
+            spinnerMs = timed { WidgetRenderer.renderAll(ctx) }
         }
         var changed = false
         try {
             var app = store.appNow()
             val configs = widgetIds(ctx).map { store.widgetNow(it) }
-            AppLog.i(ctx, "Refresh", "Started ($reason${if (force) ", forced" else ""}) · ${configs.size} widget(s)")
+            AppLog.i(ctx, "Refresh", "Started ($reason${if (force) ", forced" else ""}) · ${configs.size} widget(s)${if (force && widgets) " · spinner shown in $spinnerMs ms" else ""}")
             val needsDevice = configs.isEmpty() || configs.any { it.location == null }
 
             // Location: only when something uses it, and only when the OS lets us (bg permission
@@ -153,9 +160,16 @@ object WeatherRepository {
             // Must run even when cancelled (a widget tap's time budget ran out, or the job was
             // stopped), or the spinner would outlive the refresh. Skipped when nothing changed.
             withContext(NonCancellable) {
-                if (force) store.setRefreshing(false)
-                if (force || changed) WidgetRenderer.renderAll(ctx)
+                if (force && widgets) store.setRefreshing(false)
+                if (widgets && (force || changed)) {
+                    val ms = timed { WidgetRenderer.renderAll(ctx) }
+                    if (force) AppLog.i(ctx, "Refresh", "Widgets redrawn in $ms ms")
+                }
             }
         }
+    }
+
+    private inline fun timed(block: () -> Unit): Long {
+        val t = android.os.SystemClock.elapsedRealtime(); block(); return android.os.SystemClock.elapsedRealtime() - t
     }
 }

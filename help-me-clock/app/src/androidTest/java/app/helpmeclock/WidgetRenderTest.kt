@@ -137,6 +137,11 @@ class WidgetRenderTest {
         val variants = mapOf(
             "light" to base.copy(weight = Weight.LIGHT),
             "medium" to base.copy(weight = Weight.MEDIUM),
+            "text_smaller" to base.copy(textSize = app.helpmeclock.data.TextSize.SMALLER),
+            "text_larger" to base.copy(textSize = app.helpmeclock.data.TextSize.LARGER),
+            "dateonly_text_smaller" to base.copy(showTime = false, textSize = app.helpmeclock.data.TextSize.SMALLER),
+            "dateonly_long_text_smaller" to base.copy(showTime = false, dateStyle = app.helpmeclock.data.DateStyle.LONG, textSize = app.helpmeclock.data.TextSize.SMALLER),
+            "dateonly_text_larger" to base.copy(showTime = false, textSize = app.helpmeclock.data.TextSize.LARGER),
             "dark_vibrant" to base.copy(themeMode = ThemeMode.DARK, bgTone = BgTone.PRIMARY),
             "light_tonal" to base.copy(themeMode = ThemeMode.LIGHT, bgTone = BgTone.SECONDARY),
             "dark" to base.copy(themeMode = ThemeMode.DARK),

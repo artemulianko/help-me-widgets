@@ -21,19 +21,26 @@ object StocksRepository {
      * does, the whole watchlist comes back in one batched request, so every widget is updated
      * by a single small download.
      */
-    suspend fun refresh(ctx: Context, force: Boolean, reason: String = "scheduled"): Result<Unit> = lock.withLock {
+    /**
+     * [widgets] = false: fetch only, no spinner and no widget redraw (the caller redraws later).
+     * Used by the refresh window: while any window is in front of the home screen, the launcher
+     * holds widget updates back and applies them afterwards, and on a Pixel 11 Pro one of those
+     * late updates sometimes left the widget an empty frame until the next update.
+     */
+    suspend fun refresh(ctx: Context, force: Boolean, reason: String = "scheduled", widgets: Boolean = true): Result<Unit> = lock.withLock {
         val started = System.currentTimeMillis()
         val store = Store(ctx)
         var changed = false
         try {
             // Spinner only for user-initiated refreshes; background refreshes cost a single render.
-            if (force) {
+            var spinnerMs = 0L
+            if (force && widgets) {
                 store.setRefreshing(true)
-                WidgetRenderer.renderAll(ctx)
+                spinnerMs = timed { WidgetRenderer.renderAll(ctx) }
             }
             val app = store.appNow()
             val symbols = app.watchlist.map { it.symbol }
-            AppLog.i(ctx, "Refresh", "Started ($reason${if (force) ", forced" else ""}) · ${widgetIds(ctx).size} widget(s), ${symbols.size} symbol(s)")
+            AppLog.i(ctx, "Refresh", "Started ($reason${if (force) ", forced" else ""}) · ${widgetIds(ctx).size} widget(s), ${symbols.size} symbol(s)${if (force && widgets) " · spinner shown in $spinnerMs ms" else ""}")
             if (symbols.isEmpty()) {
                 store.setError(null)
                 AppLog.i(ctx, "Refresh", "Watchlist is empty; nothing to fetch")
@@ -94,8 +101,11 @@ object StocksRepository {
         } finally {
             // Must run even when cancelled, or the spinner would outlive the refresh.
             withContext(NonCancellable) {
-                if (force) store.setRefreshing(false)
-                if (force || changed) WidgetRenderer.renderAll(ctx)
+                if (force && widgets) store.setRefreshing(false)
+                if (widgets && (force || changed)) {
+                    val ms = timed { WidgetRenderer.renderAll(ctx) }
+                    if (force) AppLog.i(ctx, "Refresh", "Widgets redrawn in $ms ms")
+                }
             }
         }
     }
@@ -112,5 +122,9 @@ object StocksRepository {
         if (filled.isEmpty()) return
         store.updateApp { a -> a.copy(watchlist = a.watchlist.map { w -> filled[w.symbol]?.takeIf { w.currency == null } ?: w }) }
         AppLog.i(ctx, "Watchlist", "Looked up currency for ${filled.keys.joinToString()}")
+    }
+
+    private inline fun timed(block: () -> Unit): Long {
+        val t = android.os.SystemClock.elapsedRealtime(); block(); return android.os.SystemClock.elapsedRealtime() - t
     }
 }

@@ -143,4 +143,52 @@ class WidgetRenderTest {
         listOf("2x2", "4x2", "4x1", "1x1").forEach { render("odd_$it", s, sizes.getValue(it)) }
         render("odd_price_4x2", s.copy(cfg = WidgetConfig(changeMode = ChangeMode.PRICE)), sizes.getValue("4x2"))
     }
+    /**
+     * A refresh redraws twice (spinner on, then off). The launcher only updates a widget in place
+     * when the new RemoteViews share the old layout; otherwise it throws the views away and
+     * inflates new ones, which shows as a flash on a real phone. reapply() fails exactly then.
+     */
+    @Test fun refreshRedrawUpdatesInPlace() = runBlocking {
+        val base = SampleData.state(WidgetConfig())
+        val bad = mutableListOf<String>()
+        for ((n, s) in sizes) {
+            val spinning = Fixed(base.copy(refreshing = true)).compose(ctx, size = s)
+            val view = spinning.apply(ctx, FrameLayout(ctx))
+            for ((label, next) in listOf(
+                "spinner off" to base.copy(refreshing = false),
+                "spinner on again" to base.copy(refreshing = true),
+            )) {
+                val rv = Fixed(next).compose(ctx, size = s)
+                runCatching { rv.reapply(ctx, view) }.onFailure { bad += "$n ($label): ${it.javaClass.simpleName} ${it.message?.take(90)}" }
+            }
+        }
+        assertTrue("re-inflated instead of updated in place:\n" + bad.joinToString("\n"), bad.isEmpty())
+    }
+
+    /**
+     * New quotes must also update in place. A first refresh after pinning redrew the whole widget
+     * on a Pixel 11 Pro: if a data change alters the view structure (a chart appearing, a baseline
+     * missing, a row changing shape), the launcher rebuilds everything.
+     */
+    @Test fun newQuotesUpdateInPlace() = runBlocking {
+        val base = SampleData.state(WidgetConfig())
+        fun edit(f: (app.helpmestocks.data.Quote) -> app.helpmestocks.data.Quote) =
+            base.copy(quotes = base.quotes.copy(quotes = base.quotes.quotes.mapValues { (_, q) -> f(q) }))
+        val variants = listOf(
+            "prices moved" to edit { q -> q.copy(price = q.price * 1.01, prices = q.prices.map { it * 1.01 }) },
+            "direction flipped" to edit { q -> q.copy(change = -q.change, changePct = -q.changePct) },
+            "one point (no chart)" to edit { q -> q.copy(times = q.times.take(1), prices = q.prices.take(1)) },
+            "no intraday data" to edit { q -> q.copy(times = emptyList(), prices = emptyList()) },
+            "no previous close" to edit { q -> q.copy(previousClose = null) },
+            "more points" to edit { q -> q.copy(times = q.times + (q.times.last() + 300), prices = q.prices + q.prices.last()) },
+        )
+        val bad = mutableListOf<String>()
+        for ((n, s) in sizes) for ((label, next) in variants) {
+            val view = Fixed(base).compose(ctx, size = s).apply(ctx, FrameLayout(ctx))
+            runCatching { Fixed(next).compose(ctx, size = s).reapply(ctx, view) }
+                .onFailure { bad += "$n ($label): ${it.javaClass.simpleName} ${it.message?.take(80)}" }
+        }
+        assertTrue("re-inflated instead of updated in place:\n" + bad.joinToString("\n"), bad.isEmpty())
+    }
+
 }

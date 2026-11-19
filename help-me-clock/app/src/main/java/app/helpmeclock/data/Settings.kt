@@ -16,6 +16,8 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
 enum class BgTone { SURFACE, PRIMARY, SECONDARY }
 /** Weight of the big numerals only; the date and alarm always stay regular. */
 enum class Weight(val value: Int) { LIGHT(300), REGULAR(400), MEDIUM(500) }
+/** Scales the date, time and alarm text; fitting still runs afterwards, so nothing is cut off. */
+enum class TextSize(val factor: Float) { SMALLER(0.88f), DEFAULT(1f), LARGER(1.12f) }
 /**
  * How the date line reads. Patterns use pattern letters, so names follow your language; the
  * order (day before or after month) is your choice, not the locale's. A format that doesn't fit
@@ -32,6 +34,7 @@ enum class TapAction { CLOCK, APP, NONE }
 @Serializable
 data class WidgetConfig(
     val weight: Weight = Weight.REGULAR,
+    val textSize: TextSize = TextSize.DEFAULT,
     val palette: Palette = Palette.DYNAMIC,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val bgTone: BgTone = BgTone.SURFACE,

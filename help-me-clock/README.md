@@ -14,9 +14,9 @@ Pixel's clock widgets each have their own look and squeeze the date and alarm in
 
 ## Download
 
-**[⬇ Download Help Me Clock 0.1.2 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/clock-v0.1.2/help-me-clock-0.1.2.apk)** · Android 12+ · 3.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/clock-v0.1.2) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+**[⬇ Download Help Me Clock 1.0.0 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/clock-v1.0.0/help-me-clock-1.0.0.apk)** · Android 12+ · 3.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/clock-v1.0.0) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-SHA-256 `9843e2aa656fca86853e1156fcf3ba622aadd806e9a207010066b97cfdc92614`
+SHA-256 `c473380e960711cf9dfb5b27bfdfeb5061079a4f30944803c7a64b30c4b237ed`
 
 1. Download the APK on your phone and open it (allow "Install unknown apps" for your browser when asked).
 2. Open **Help Me Clock** once.
@@ -54,14 +54,14 @@ Probably the cheapest widget on your home screen.
 |---|---|
 | Ticking every minute | **Nothing**: the launcher's TextClock does it |
 | The date at midnight | Nothing: TextClock again |
-| An alarm added, changed or removed | One short render (~100 ms), when Android says the next alarm changed |
+| An alarm added, changed or removed | One short Glance render job, when Android says the next alarm changed |
 | Time zone, 12/24-hour or language change | One short render |
 | Network | **None**: there's no internet permission |
-| Everything else | Nothing: no jobs, alarms, services, wakelocks or listeners. WorkManager (pulled in by Glance) is never even started. |
+| Everything else | Nothing: no alarms, services or listeners. Glance's render job (WorkManager) runs only when the widget is redrawn, for a few seconds. |
 
 ## Privacy
 
-- No accounts, analytics, crash reporting or ads. No internet, location or other permissions besides `RECEIVE_BOOT_COMPLETED`.
+- No accounts, analytics, crash reporting or ads. No internet, location or other user-facing permissions; besides `RECEIVE_BOOT_COMPLETED`, the manifest has only the wake-lock and network-state permissions WorkManager needs to run Glance's render jobs.
 - The widget reads only the time of your next alarm from Android (and which app set it, so it can show only your clock app's alarms).
 - Settings stay on the phone and are excluded from backups and device transfers.
 - The in-app **Logs** (last 3 days) stay on the phone.
@@ -92,7 +92,7 @@ To regenerate the icons (Material Symbols, converted with Android's own SVG conv
 ```
 app/src/main/java/app/helpmeclock/
   data/     next alarm (clock app only) and its label, settings (DataStore), logs
-  widget/   Glance layouts with TextClock, colors, session-free renderer, receivers
+  widget/   Glance layouts with TextClock, colors, standard Glance rendering, receivers
   ui/       Compose (Material 3 Expressive) app and per-widget editor
 tools/      icon import, color generation, svg2vector
 ```

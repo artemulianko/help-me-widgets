@@ -88,7 +88,11 @@ private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val wi
     val is24 = DateFormat.is24HourFormat(ctx)
     // Labels follow the font-size setting, but capped so the numerals keep most of the space.
     // Capped at 1.15×: beyond that the labels outgrew the time at the largest font sizes.
-    val fontScale = min(ctx.resources.configuration.fontScale, 1.15f)
+    // The Text size setting scales labels here and the big numerals and dates in the fit functions.
+    val textScale get() = cfg.textSize.factor
+    val fontScale = min(ctx.resources.configuration.fontScale, 1.15f) * s.cfg.textSize.factor
+    /** Smaller shrinks what would fill the space; Larger only raises caps (it can't exceed a fit). */
+    private val shrink get() = min(textScale, 1f)
     fun pattern(skeleton: String): String = DateFormat.getBestDateTimePattern(locale, skeleton)
 
     val time12 = stripAmPm(pattern("hm"))
@@ -209,18 +213,18 @@ private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val wi
         val t = timeUnit
         val perUnitW = t.width + if (is24) 0f else AMPM_RATIO * ampmUnit.width
         val fixedW = if (is24) 0f else GAP
-        return max(8f, min((maxW - fixedW) * 0.97f / perUnitW, maxH / t.height))
+        return max(8f, min((maxW - fixedW) * 0.97f / perUnitW, maxH / t.height) * shrink)
     }
 
     /** Largest size (dp) for one line of [sample] digits. */
     fun fitDigits(sample: String, maxW: Float, maxH: Float): Float {
         val t = Metrics.measure(sample, cfg.weight.value)
-        return max(8f, min(maxW * 0.97f / t.width, maxH / t.height))
+        return max(8f, min(maxW * 0.97f / t.width, maxH / t.height) * shrink)
     }
 
     /** Largest size (dp) at which every date the pattern can show fits. */
     fun fitDate(pattern: String, maxW: Float, maxH: Float): Float =
-        max(8f, min(maxW * 0.97f / worst(pattern, cfg.weight.value, -0.02f), maxH / timeUnit.height))
+        max(8f, min(maxW * 0.97f / worst(pattern, cfg.weight.value, -0.02f), maxH / timeUnit.height) * shrink)
 
     fun bigLineHeight(size: Float): Float = timeUnit.height * size
     /** Empty space under digits (they have no descenders) at [size]. */
@@ -297,7 +301,7 @@ private fun BigDate(sc: Scope, maxW: Float, maxH: Float, cap: Float = Float.MAX_
     // Prefer the chosen style; drop to a shorter one only if it would end up label-sized.
     val p = listOf(sc.cfg.dateStyle.pattern, "EEE, " + sc.dayMonth(false), "EEE d")
         .firstOrNull { sc.fitDate(it, maxW, maxH) >= LABEL_LARGE * 1.25f } ?: "EEE d"
-    val size = min(cap, sc.fitDate(p, maxW, maxH))
+    val size = min(cap * sc.textScale, sc.fitDate(p, maxW, maxH))
     Big(sc, p, p, size, sc.bigDateWidth(p, size))
 }
 

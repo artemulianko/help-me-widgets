@@ -48,12 +48,14 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import app.helpmeclock.R
+import app.helpmeclock.data.AppLog
 import app.helpmeclock.data.Alarms
 import app.helpmeclock.data.BgTone
 import app.helpmeclock.data.DateStyle
 import app.helpmeclock.data.Store
 import app.helpmeclock.data.TapAction
 import app.helpmeclock.data.ThemeMode
+import app.helpmeclock.data.TextSize
 import app.helpmeclock.data.Weight
 import app.helpmeclock.data.WidgetConfig
 import app.helpmeclock.widget.ClockWidgetReceiver
@@ -93,8 +95,10 @@ class ConfigActivity : ComponentActivity() {
 
     private fun save(store: Store, cfg: WidgetConfig) {
         lifecycleScope.launch {
+            val t0 = android.os.SystemClock.elapsedRealtime()
             store.updateWidget(widgetId) { cfg }
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { WidgetRenderer.render(this@ConfigActivity, widgetId) }
+            AppLog.i(this@ConfigActivity, "Editor", "Saved widget $widgetId; widget update sent in ${android.os.SystemClock.elapsedRealtime() - t0} ms")
             finish()
         }
     }
@@ -143,6 +147,9 @@ fun WidgetEditor(initial: WidgetConfig, onClose: () -> Unit, onSave: (WidgetConf
                 SettingsGroup("Clock") {
                     choiceRow("Weight", listOf(Weight.LIGHT to "Light", Weight.REGULAR to "Regular", Weight.MEDIUM to "Medium"), cfg.weight, "weight") {
                         cfg = cfg.copy(weight = it)
+                    }
+                    choiceRow("Text size", listOf(TextSize.SMALLER to "Smaller", TextSize.DEFAULT to "Default", TextSize.LARGER to "Larger"), cfg.textSize, "textsize") {
+                        cfg = cfg.copy(textSize = it)
                     }
                 }
 

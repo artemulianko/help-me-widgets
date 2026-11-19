@@ -198,4 +198,27 @@ class WidgetFlowTest {
             assertTrue("no keys in logs", !clip.contains("AIza"))
         }
     }
+    /**
+     * Reproduces the owner's "widget vanished, slot still there" report: updates landing while the
+     * launcher is animating (going home, swiping pages) must still leave the widget drawn.
+     */
+    @Test fun widgetStaysDrawnWhenUpdatedDuringLauncherAnimations() {
+        ensureWidget()
+        device.pressHome(); Thread.sleep(1_000)
+        val stop = java.util.concurrent.atomic.AtomicBoolean(false)
+        val renders = Thread {
+            while (!stop.get()) { runBlocking { WidgetRenderer.renderAll(ctx) }; Thread.sleep(150) }
+        }.apply { start() }
+        try {
+            repeat(10) {
+                device.swipe(device.displayWidth * 9 / 10, device.displayHeight / 2, device.displayWidth / 10, device.displayHeight / 2, 12)
+                device.swipe(device.displayWidth / 10, device.displayHeight / 2, device.displayWidth * 9 / 10, device.displayHeight / 2, 12)
+                device.pressHome()
+            }
+        } finally { stop.set(true); renders.join() }
+        Thread.sleep(3_000) // no more updates: what the launcher shows now stays
+        val time = onHomeFind { device.findObject(By.pkg(ctx.packageName).text(timePattern)) }
+        assertTrue("widget still drawn after updates during launcher animations", time != null)
+    }
+
 }

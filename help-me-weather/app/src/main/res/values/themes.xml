@@ -6,20 +6,4 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
-    <!-- RefreshActivity: a 1x1 transparent floating window. Floating windows never take over
-         the status and navigation bars (a full-screen translucent one painted them black on a
-         Pixel 11 Pro), so the home screen keeps drawing them exactly as before. -->
-    <style name="Theme.Refresh" parent="android:Theme.Translucent.NoTitleBar">
-        <item name="android:windowIsFloating">true</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowAnimationStyle">@null</item>
-        <item name="android:windowDisablePreview">true</item>
-        <item name="android:backgroundDimEnabled">false</item>
-        <item name="android:windowContentOverlay">@null</item>
-        <item name="android:windowCloseOnTouchOutside">false</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:enforceStatusBarContrast">false</item>
-        <item name="android:enforceNavigationBarContrast">false</item>
-    </style>
 </resources>

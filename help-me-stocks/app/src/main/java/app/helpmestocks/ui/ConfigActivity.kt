@@ -54,6 +54,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import app.helpmestocks.R
+import app.helpmestocks.data.AppLog
 import app.helpmestocks.data.AppSettings
 import app.helpmestocks.data.BgTone
 import app.helpmestocks.data.ChangeMode
@@ -104,10 +105,12 @@ class ConfigActivity : ComponentActivity() {
 
     private fun save(store: Store, cfg: WidgetConfig) {
         lifecycleScope.launch {
+            val t0 = android.os.SystemClock.elapsedRealtime()
             store.updateWidget(widgetId) { cfg }
             WidgetRenderer.render(this@ConfigActivity, widgetId)
             RefreshWorker.scheduleNow(this@ConfigActivity)
             RefreshWorker.refreshNow(this@ConfigActivity, force = false)
+            AppLog.i(this@ConfigActivity, "Editor", "Saved widget $widgetId; widget update sent in ${android.os.SystemClock.elapsedRealtime() - t0} ms")
             finish()
         }
     }

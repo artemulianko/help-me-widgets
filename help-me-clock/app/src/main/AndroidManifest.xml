@@ -10,9 +10,8 @@
          thing that could post one) is removed. The clock schedules no jobs at all. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:node="remove" />
-    <!-- WorkManager (pulled in by Glance) adds these; the clock schedules no work at all. -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" tools:node="remove" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
+    <!-- WAKE_LOCK / ACCESS_NETWORK_STATE come from WorkManager, which Glance's update sessions
+         run on. The clock itself schedules no work. -->
 
     <!-- Tap target and alarm filter: find the phone's clock app (Google Clock, Samsung Clock…). -->
     <queries>
@@ -97,16 +96,5 @@
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             tools:node="remove" />
-        <!-- Never start WorkManager: rendering is session-free (compose() → updateAppWidget), so
-             nothing needs it, and without it no job or wakelock can ever run. -->
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
-            android:exported="false"
-            tools:node="merge">
-            <meta-data
-                android:name="androidx.work.WorkManagerInitializer"
-                tools:node="remove" />
-        </provider>
     </application>
 </manifest>

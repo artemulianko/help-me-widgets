@@ -81,8 +81,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         // Off the main thread: 8 widget renders (4 sizes x home + lock screen) once per version kept
-        // the first screen on the splash for seconds after every update.
-        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.Default) { publishPickerPreviews(this@MainActivity) }
+        // the first screen on the splash for seconds after every update. Delayed 15 s so it doesn't
+        // compete with the in-app preview's first draw (14 s on a cold debug start when it did).
+        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.Default) { kotlinx.coroutines.delay(15_000); publishPickerPreviews(this@MainActivity) }
         setContent { HelpMeStocksTheme { HomeScreen() } }
     }
 }

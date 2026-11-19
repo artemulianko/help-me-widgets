@@ -42,7 +42,10 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -116,11 +119,7 @@ private class PreviewWidget(private val state: WidgetState) : GlanceAppWidget() 
 @Composable
 fun WidgetPreview(state: WidgetState, size: DpSize, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
-    val rv by produceState<RemoteViews?>(null, state, size) {
-        delay(50) // coalesce rapid slider changes
-        // Same path as Help Me Weather and Help Me Stocks (their previews update live on a real
-        // Pixel). Text measurements are cached, so composing stays cheap. A failure is logged
-        // instead of silently leaving an empty preview.
+    suspend fun androidx.compose.runtime.ProduceStateScope<RemoteViews?>.draw() {
         value = try {
             withContext(Dispatchers.Default) { PreviewWidget(state).compose(ctx, size = size) }
         } catch (e: kotlinx.coroutines.CancellationException) {
@@ -129,6 +128,28 @@ fun WidgetPreview(state: WidgetState, size: DpSize, modifier: Modifier = Modifie
             app.helpmeclock.data.AppLog.e(ctx, "Preview", "Couldn't draw the preview", e); null
         }
     }
+    // Checkpoints in the Logs: when the preview first appears, and slow draws (a blank or stale
+    // preview on a real phone is otherwise invisible to us).
+    val opened = remember { android.os.SystemClock.elapsedRealtime() }
+    var firstDrawn by remember { mutableStateOf(false) }
+    // Draw only while the screen is visible: a stopped activity keeps its composition, and the
+    // preview used to redraw in the background on every widget data change.
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    val visible by remember(lifecycle) { lifecycle.currentStateFlow }.collectAsState()
+    val started = visible.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
+    val rv by produceState<RemoteViews?>(null, state, size, started) {
+        if (!started) return@produceState
+        delay(50) // coalesce rapid slider changes
+        val t0 = android.os.SystemClock.elapsedRealtime()
+        try { draw() } finally {
+            val now = android.os.SystemClock.elapsedRealtime()
+            if (value != null && !firstDrawn) { firstDrawn = true; app.helpmeclock.data.AppLog.i(ctx, "Preview", "Preview first drawn ${now - opened} ms after opening") }
+            else if (now - t0 > 1_500) app.helpmeclock.data.AppLog.w(ctx, "Preview", "Slow preview draw: ${now - t0} ms")
+        }
+    }
+        // Same path as Help Me Weather and Help Me Stocks (their previews update live on a real
+        // Pixel). Text measurements are cached, so composing stays cheap. A failure is logged
+        // instead of silently leaving an empty preview.
     Box(
         modifier = modifier
             .fillMaxWidth()

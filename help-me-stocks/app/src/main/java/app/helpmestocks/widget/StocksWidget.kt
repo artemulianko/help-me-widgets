@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
@@ -57,11 +59,19 @@ class StocksWidget : GlanceAppWidget() {
         setOf(DpSize(190.dp, 210.dp), DpSize(387.dp, 105.dp), DpSize(387.dp, 212.dp), DpSize(387.dp, 316.dp)),
     )
 
-    /** Called by [WidgetRenderer] via compose(): read state once, render once. */
+    /**
+     * Glance runs this when a session starts. The content collects the widget's data, so changes
+     * while the session is open recompose it (an `update()` during a live session doesn't call
+     * provideGlance again); the first value is read up front so the first frame has real data.
+     */
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
-        val state = stateFlow(Store(context), appWidgetId).first()
-        provideContent { StocksContent(state) }
+        val flow = stateFlow(Store(context), appWidgetId)
+        val initial = flow.first()
+        provideContent {
+            val state by flow.collectAsState(initial)
+            StocksContent(state)
+        }
     }
 
     override suspend fun providePreview(context: Context, widgetCategory: Int) {

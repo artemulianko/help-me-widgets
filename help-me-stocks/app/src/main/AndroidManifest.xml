@@ -46,16 +46,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Widget refresh button: invisible, so the tap gets the network in Doze (see the class). -->
-        <activity
-            android:name=".ui.RefreshActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Refresh"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:taskAffinity="app.helpmestocks.refresh"
-            android:launchMode="singleInstance" />
-
         <activity
             android:name=".ui.LogsActivity"
             android:exported="false" />
@@ -84,6 +74,7 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/stocks_widget_info" />
         </receiver>
+
 
         <receiver
             android:name=".widget.SystemEventsReceiver"

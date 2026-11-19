@@ -98,6 +98,9 @@ class WidgetRenderTest {
             "symbols" to base.copy(iconStyle = IconStyle.SYMBOLS),
             "minimal" to base.copy(showLocation = false, showCondition = false, showHighLow = false, showRefresh = false),
             "everything" to base.copy(showFeelsLike = true, showUpdated = true),
+            "updated_time" to base.copy(showUpdated = true),
+            "updated_time_dark" to base.copy(showUpdated = true, themeMode = ThemeMode.DARK),
+            "updated_no_location" to base.copy(showUpdated = true, showLocation = false),
             "no_location_with_refresh" to base.copy(showLocation = false, showRefresh = true),
             "daily_bold" to base.copy(forecast = ForecastMode.DAILY, style = WidgetStyle.BOLD),
         )
@@ -107,4 +110,26 @@ class WidgetRenderTest {
             render("cfg_${n}_4x3", c, sizes.getValue("4x3"))
         }
     }
+    /**
+     * A refresh redraws twice (spinner on, then off). The launcher only updates a widget in place
+     * when the new RemoteViews share the old layout; otherwise it throws the views away and
+     * inflates new ones, which shows as a flash on a real phone. reapply() fails exactly then.
+     */
+    @Test fun refreshRedrawUpdatesInPlace() = runBlocking {
+        val base = SampleData.state(ctx)
+        val bad = mutableListOf<String>()
+        for ((n, s) in sizes) {
+            val spinning = Fixed(base.copy(refreshing = true)).compose(ctx, size = s)
+            val view = spinning.apply(ctx, FrameLayout(ctx))
+            for ((label, next) in listOf(
+                "spinner off" to base.copy(refreshing = false),
+                "spinner on again" to base.copy(refreshing = true),
+            )) {
+                val rv = Fixed(next).compose(ctx, size = s)
+                runCatching { rv.reapply(ctx, view) }.onFailure { bad += "$n ($label): ${it.javaClass.simpleName} ${it.message?.take(90)}" }
+            }
+        }
+        assertTrue("re-inflated instead of updated in place:\n" + bad.joinToString("\n"), bad.isEmpty())
+    }
+
 }

@@ -1,11 +1,15 @@
 package app.helpmestocks.widget
 
 import android.appwidget.AppWidgetManager
-import android.appwidget.AppWidgetProvider
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
+import androidx.glance.GlanceId
+import androidx.glance.action.Action
+import androidx.glance.action.ActionParameters
+import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.action.ActionCallback
+import androidx.glance.appwidget.action.actionRunCallback
 import app.helpmestocks.data.AppLog
 import app.helpmestocks.data.StocksRepository
 import app.helpmestocks.data.Store
@@ -14,44 +18,74 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
-/** Widget refresh button / tap-to-refresh: opens the invisible [app.helpmestocks.ui.RefreshActivity]. */
-fun refreshAction(): androidx.glance.action.Action = androidx.glance.action.actionStartActivity<app.helpmestocks.ui.RefreshActivity>()
+/**
+ * The widget, the standard Glance way: Glance's receiver hosts the widget, handles placement,
+ * resizes and removal, and every redraw goes through [StocksWidget.update] / `updateAll`.
+ */
+class StocksWidgetReceiver : GlanceAppWidgetReceiver() {
+    override val glanceAppWidget = StocksWidget()
+
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        super.onUpdate(context, appWidgetManager, appWidgetIds)
+        AppLog.i(context, "Widget", "System update for ${appWidgetIds.size} widget(s) (added, restored or rebooted)")
+        // Make sure the periodic schedule exists. No one-time work here (Google's widget skill:
+        // a finished one-time job toggles WorkManager's RescheduleReceiver, Android broadcasts
+        // PACKAGE_CHANGED and the launcher calls onUpdate again).
+        RefreshWorker.schedule(context)
+    }
+
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        super.onDeleted(context, appWidgetIds)
+        AppLog.i(context, "Widget", "Removed ${appWidgetIds.size} widget(s)")
+        receiverScope.launch { val store = Store(context); appWidgetIds.forEach { store.deleteWidget(it) } }
+    }
+
+    override fun onDisabled(context: Context) {
+        super.onDisabled(context)
+        RefreshWorker.cancel(context)
+    }
+}
+
+/** Widget refresh button / tap-to-refresh. */
+fun refreshAction(): Action = actionRunCallback<RefreshAction>()
+
+/**
+ * Runs inside Glance's tap receiver (a short `goAsync` window). Refreshes right here when Android
+ * lets the app use the network; otherwise (the app idle in the background or Doze, where Android
+ * blocks its network) hands the refresh to an expedited background job, the documented path.
+ */
+class RefreshAction : ActionCallback {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        val tapped = android.os.SystemClock.elapsedRealtime()
+        val online = context.getSystemService(android.net.ConnectivityManager::class.java)?.activeNetwork != null
+        if (!online) {
+            // Offline, or Android is holding the network back while the app is idle (Doze, app
+            // background): the job runs as soon as Android allows it.
+            AppLog.w(context, "Widget", "Refresh tapped. No network for the app right now; refreshing in the background as soon as Android allows")
+            RefreshWorker.refreshNow(context, force = true, reason = "refresh button (offline)")
+            return
+        }
+        AppLog.i(context, "Widget", "Refresh tapped")
+        val result = withTimeoutOrNull(INLINE_BUDGET_MS) { StocksRepository.refresh(context, force = true, reason = "refresh button") }
+        if (result == null || result.isFailure) {
+            AppLog.w(context, "Widget", if (result == null) "Refresh took too long; retrying in the background" else "Refresh failed; retrying in the background")
+            RefreshWorker.refreshNow(context, force = true, reason = "refresh button retry")
+        }
+        AppLog.i(context, "Widget", "Refresh tap handled in ${android.os.SystemClock.elapsedRealtime() - tapped} ms")
+    }
+
+    private companion object {
+        const val INLINE_BUDGET_MS = 8_000L
+    }
+}
 
 private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
 private fun BroadcastReceiver.async(block: suspend () -> Unit) {
     val pending = goAsync()
     receiverScope.launch { try { block() } finally { pending.finish() } }
-}
-
-/** Plain AppWidgetProvider: renders through [WidgetRenderer] instead of Glance sessions. */
-class StocksWidgetReceiver : AppWidgetProvider() {
-
-    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) = async {
-        AppLog.i(context, "Widget", "System update for ${appWidgetIds.size} widget(s) (added, restored or rebooted)")
-        appWidgetIds.forEach { WidgetRenderer.render(context, it) }
-        // Added / restored / rebooted: make sure the periodic schedule exists. No one-time work
-        // here: when it finishes, WorkManager toggles its RescheduleReceiver, Android broadcasts
-        // PACKAGE_CHANGED and the launcher calls onUpdate again (a loop, per Google's widget
-        // skill). Fresh data comes from the periodic job, opening the app, or the refresh button.
-        RefreshWorker.scheduleNow(context)
-    }
-
-    /** Resized: re-layout for the new size (no network). */
-    override fun onAppWidgetOptionsChanged(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int, newOptions: Bundle) = async {
-        WidgetRenderer.render(context, appWidgetId)
-    }
-
-    override fun onDeleted(context: Context, appWidgetIds: IntArray) = async {
-        AppLog.i(context, "Widget", "Removed ${appWidgetIds.size} widget(s)")
-        val store = Store(context)
-        appWidgetIds.forEach { store.deleteWidget(it) }
-    }
-
-    override fun onDisabled(context: Context) {
-        RefreshWorker.cancel(context)
-    }
 }
 
 /**
