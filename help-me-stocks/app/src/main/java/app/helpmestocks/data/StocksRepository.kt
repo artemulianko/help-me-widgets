@@ -27,20 +27,20 @@ object StocksRepository {
      * holds widget updates back and applies them afterwards, and on a Pixel 11 Pro one of those
      * late updates sometimes left the widget an empty frame until the next update.
      */
-    suspend fun refresh(ctx: Context, force: Boolean, reason: String = "scheduled", widgets: Boolean = true): Result<Unit> = lock.withLock {
+    suspend fun refresh(ctx: Context, force: Boolean, reason: String = "scheduled", widgets: Boolean = true, spinner: Boolean = force): Result<Unit> = lock.withLock {
         val started = System.currentTimeMillis()
         val store = Store(ctx)
         var changed = false
         try {
             // Spinner only for user-initiated refreshes; background refreshes cost a single render.
             var spinnerMs = 0L
-            if (force && widgets) {
+            if (spinner && widgets) {
                 store.setRefreshing(true)
                 spinnerMs = timed { WidgetRenderer.renderAll(ctx) }
             }
             val app = store.appNow()
             val symbols = app.watchlist.map { it.symbol }
-            AppLog.i(ctx, "Refresh", "Started ($reason${if (force) ", forced" else ""}) · ${widgetIds(ctx).size} widget(s), ${symbols.size} symbol(s)${if (force && widgets) " · spinner shown in $spinnerMs ms" else ""}")
+            AppLog.i(ctx, "Refresh", "Started ($reason${if (force) ", forced" else ""}) · ${widgetIds(ctx).size} widget(s), ${symbols.size} symbol(s)${if (spinner && widgets) " · spinner shown in $spinnerMs ms" else ""}")
             if (symbols.isEmpty()) {
                 store.setError(null)
                 AppLog.i(ctx, "Refresh", "Watchlist is empty; nothing to fetch")
@@ -101,7 +101,7 @@ object StocksRepository {
         } finally {
             // Must run even when cancelled, or the spinner would outlive the refresh.
             withContext(NonCancellable) {
-                if (force && widgets) store.setRefreshing(false)
+                if (spinner && widgets) store.setRefreshing(false)
                 if (widgets && (force || changed)) {
                     val ms = timed { WidgetRenderer.renderAll(ctx) }
                     if (force) AppLog.i(ctx, "Refresh", "Widgets redrawn in $ms ms")

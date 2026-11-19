@@ -10,13 +10,13 @@ The stock Pixel weather options are a one-line At a Glance and a widget you can 
   <img src="docs/screenshots/hero.png" alt="Help Me Weather 4×2 widget in light and dark mode" width="900">
 </p>
 
-> **It's just a widget.** No notifications (the permission is removed from the manifest), no ads, no analytics, no accounts. Location is optional.
+> **It's just a widget.** No notifications you ever see (the permission is removed from the manifest), no ads, no analytics, no accounts. Location is optional.
 
 ## Download
 
-**[⬇ Download Help Me Weather 1.0.0 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v1.0.0/help-me-weather-1.0.0.apk)** · Android 12+ · 4.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/weather-v1.0.0) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+**[⬇ Download Help Me Weather 1.0.3 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v1.0.3/help-me-weather-1.0.3.apk)** · Android 12+ · 4.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/weather-v1.0.3) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-SHA-256 `ff18e89793263ff0285904269aceb0079b47870c06db17a4fe75e7033bb45cf6`
+SHA-256 `18329ca249e612152bab97a6f3686d5864515f9289cb52910d7742e0a37cfc35`
 
 > Upgrading from 0.1.0/0.1.1: since 0.1.2 the app has a new package name (`app.helpmeweather`), so uninstall the old version first and update your key restriction. Later updates install over it normally.
 
@@ -47,16 +47,18 @@ Designed to be invisible in your battery stats. Measured on an Android 17 emulat
 | What | Cost |
 |---|---|
 | Background refresh (hourly by default) | ~1.5 s job, ~0.5 s CPU, ~7 KB of data |
-| Rendering the widget | ~100 ms, one-shot |
-| Between refreshes | Nothing: no alarms, no services, no wakelocks, no listeners |
+| Rendering the widget | One short Glance job per update |
+| Refresh button | A 1-2 s foreground service, only when you tap it |
+| Between refreshes | Nothing: no alarms, no running services, no listeners |
 
 How:
 
 - **WorkManager only.** Android batches refreshes with other apps' jobs, respects Doze and App Standby, waits for a network, and **skips background refreshes on low battery**. Manual refresh always works.
-- **No Glance sessions.** Jetpack Glance normally keeps a background job (and a wakelock) alive for about 45 s after every widget update. Help Me Weather renders straight to RemoteViews instead, so each update is a single short render.
-- **Location without tracking.** In the background, Android's recent cached fix or one cell/Wi‑Fi fix. With precise location allowed, one high-accuracy fix only while the app is open or you tap refresh, reused for 10 minutes. No location listener ever stays registered.
+- **Standard Glance rendering.** The widget is drawn the documented Jetpack Glance way: each update is a short background job that Android schedules, and the launcher updates the widget in place.
+- **The refresh button works even when the phone is idle.** Android cuts the network for idle apps (Doze and the background-app limit), and a widget tap doesn't lift that, so a plain background job ran minutes after the tap. The button therefore starts a **short foreground service**: Android allows that when you tap a widget, and it gets the network right away. It runs for a second or two, only when you tap, and never opens a window, so you can keep swiping. Android requires a notification for every foreground service, but **you never see it**: the app has no notification permission, so the notification is never shown. The only trace is a line in the system's list of running apps while it runs.
+- **Location without tracking.** In the background, Android's recent cached fix or one cell/Wi‑Fi fix. With precise location allowed, one high-accuracy fix only while the app is open, reused for 10 minutes. No location listener ever stays registered.
 - **Fetches only what's shown.** One request set per location, cached and shared by every widget; nothing is downloaded while the data is still fresh.
-- **No notifications, no foreground service.** WorkManager's foreground-service path is stripped from the manifest.
+- **No visible notifications.** The notification permission is removed, and WorkManager's own foreground-service path is stripped from the manifest; the refresh button's short service is the only foreground service.
 
 ## Privacy
 

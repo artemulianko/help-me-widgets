@@ -20,7 +20,7 @@ are deliberately **not** installed: how our widgets look is defined by `docs/des
   `updateAll()`, content that `collectAsState`s its data), so the session advice applies as is.
 - No `FileProvider` / `content://` images, and no new dependencies (Glance Material 3, Hilt, …)
   without the owner's approval.
-- Widget refresh taps: `actionRunCallback` with an inline fetch and an expedited-work fallback
-  (AGENTS.md §5). Never open an activity from a widget tap.
+- Widget refresh taps: `actionRunCallback` that starts `RefreshService`, a `shortService`
+  foreground service (AGENTS.md §5). Never open an activity from a widget tap.
 
 To update: re-copy the folders from a newer android/skills commit and change the commit above.

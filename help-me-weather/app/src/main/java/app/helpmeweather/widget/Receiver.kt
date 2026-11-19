@@ -52,32 +52,22 @@ class WeatherWidgetReceiver : GlanceAppWidgetReceiver() {
 fun refreshAction(): Action = actionRunCallback<RefreshAction>()
 
 /**
- * Runs inside Glance's tap receiver (a short `goAsync` window). Refreshes right here when Android
- * lets the app use the network; otherwise (the app idle in the background or Doze, where Android
- * blocks its network) hands the refresh to an expedited background job, the documented path.
+ * The refresh button: starts [RefreshService], a short foreground service that gets the network
+ * right away even when the phone is idle. If Android refuses (it shouldn't after a widget tap),
+ * refreshes inline when there is a network, else hands off to a background job.
  */
 class RefreshAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        val tapped = android.os.SystemClock.elapsedRealtime()
+        if (RefreshService.start(context)) return
         val online = context.getSystemService(android.net.ConnectivityManager::class.java)?.activeNetwork != null
         if (!online) {
-            // Offline, or Android is holding the network back while the app is idle (Doze, app
-            // background): the job runs as soon as Android allows it.
             AppLog.w(context, "Widget", "Refresh tapped. No network for the app right now; refreshing in the background as soon as Android allows")
             RefreshWorker.refreshNow(context, force = true, reason = "refresh button (offline)")
             return
         }
         AppLog.i(context, "Widget", "Refresh tapped")
-        val result = withTimeoutOrNull(INLINE_BUDGET_MS) { WeatherRepository.refresh(context, force = true, reason = "refresh button") }
-        if (result == null || result.isFailure) {
-            AppLog.w(context, "Widget", if (result == null) "Refresh took too long; retrying in the background" else "Refresh failed; retrying in the background")
-            RefreshWorker.refreshNow(context, force = true, reason = "refresh button retry")
-        }
-        AppLog.i(context, "Widget", "Refresh tap handled in ${android.os.SystemClock.elapsedRealtime() - tapped} ms")
-    }
-
-    private companion object {
-        const val INLINE_BUDGET_MS = 8_000L
+        val result = withTimeoutOrNull(8_000) { WeatherRepository.refresh(context, force = true, reason = "refresh button") }
+        if (result == null || result.isFailure) RefreshWorker.refreshNow(context, force = true, reason = "refresh button retry")
     }
 }
 

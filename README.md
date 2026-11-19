@@ -18,16 +18,16 @@ This whole repository is vibe-coded: designed, built, tested and reviewed in con
 
 | | Widget | What it shows | Download |
 |---|---|---|---|
-| ☀️ | [**Help Me Weather**](help-me-weather/) | Temperature up front and a clean hourly or daily row, with Google's forecast and Google's weather icons, so it agrees with Pixel Weather and At a Glance. | **[⬇ APK 1.0.0](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v1.0.0/help-me-weather-1.0.0.apk)** · 4.2 MB |
-| 🕒 | [**Help Me Clock**](help-me-clock/) | A calm digital clock in the same style as its siblings: date and time on the left, your next alarm on the right, in one 4×1 row. Or turn the time off for date + alarm. No internet permission. | **[⬇ APK 1.0.1](https://github.com/artemulianko/help-me-widgets/releases/download/clock-v1.0.1/help-me-clock-1.0.1.apk)** · 3.2 MB |
-| 📈 | [**Help Me Stocks**](help-me-stocks/) | Your watchlist with the day's chart, price and change at a glance, like the iPhone Stocks widget. Market-hours aware. | **[⬇ APK 1.0.0](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v1.0.0/help-me-stocks-1.0.0.apk)** · 3.9 MB |
+| ☀️ | [**Help Me Weather**](help-me-weather/) | Temperature up front and a clean hourly or daily row, with Google's forecast and Google's weather icons, so it agrees with Pixel Weather and At a Glance. | **[⬇ APK 1.0.3](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v1.0.3/help-me-weather-1.0.3.apk)** · 4.2 MB |
+| 🕒 | [**Help Me Clock**](help-me-clock/) | A calm digital clock in the same style as its siblings: date and time on the left, your next alarm on the right, in one 4×1 row. Or turn the time off for date + alarm. No internet permission. | **[⬇ APK 1.0.2](https://github.com/artemulianko/help-me-widgets/releases/download/clock-v1.0.2/help-me-clock-1.0.2.apk)** · 3.2 MB |
+| 📈 | [**Help Me Stocks**](help-me-stocks/) | Your watchlist with the day's chart, price and change at a glance, like the iPhone Stocks widget. Market-hours aware. | **[⬇ APK 1.0.3](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v1.0.3/help-me-stocks-1.0.3.apk)** · 3.9 MB |
 
 They need Android 12 or later and are tuned on a Pixel 11 Pro running Android 17. Open the APK on your phone (allow "Install unknown apps" when asked), open the app once, then long-press the home screen → **Widgets**. Each widget's README has install details, SHA-256 checksums and release notes. All versions are on the [Releases](https://github.com/artemulianko/help-me-widgets/releases) page.
 
 ## Philosophy
 
 - **Widget first.** These aren't apps that happen to have a widget. Each widget's app is a settings screen: a live preview, an editor and in-app logs. That's all.
-- **No ads, no tracking, no accounts.** No analytics, no crash reporting, no notifications (the permission is removed from the manifest). Your settings never leave the phone and are excluded from backups.
+- **No ads, no tracking, no accounts.** No analytics, no crash reporting, no notifications you ever see (the permission is removed from the manifest; the refresh button's short foreground service needs one, and Android never shows it). Your settings never leave the phone and are excluded from backups.
 - **Minimal functionality.** Each widget does one job well. Every feature has to earn its place on a home screen, and when something is in doubt we remove it.
 - **Clean design.** Material 3 by the guidelines, with layouts inspired by iOS and One UI. Nothing scrolls inside a widget, every size from 1×1 to 4×4 has its own layout, and nothing should look generic or AI-generated.
 - **Invisible in battery stats.** No alarms, services, wakelocks or listeners. A refresh is one short WorkManager job, and the widget is drawn once per update with no Glance session left running.

@@ -2,6 +2,7 @@
 
 package app.helpmeclock.ui
 
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import android.app.WallpaperManager
@@ -119,15 +120,6 @@ private class PreviewWidget(private val state: WidgetState) : GlanceAppWidget() 
 @Composable
 fun WidgetPreview(state: WidgetState, size: DpSize, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
-    suspend fun androidx.compose.runtime.ProduceStateScope<RemoteViews?>.draw() {
-        value = try {
-            withContext(Dispatchers.Default) { PreviewWidget(state).compose(ctx, size = size) }
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            app.helpmeclock.data.AppLog.e(ctx, "Preview", "Couldn't draw the preview", e); null
-        }
-    }
     // Checkpoints in the Logs: when the preview first appears, and slow draws (a blank or stale
     // preview on a real phone is otherwise invisible to us).
     val opened = remember { android.os.SystemClock.elapsedRealtime() }
@@ -137,13 +129,26 @@ fun WidgetPreview(state: WidgetState, size: DpSize, modifier: Modifier = Modifie
     val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
     val visible by remember(lifecycle) { lifecycle.currentStateFlow }.collectAsState()
     val started = visible.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
-    val rv by produceState<RemoteViews?>(null, state, size, started) {
-        if (!started) return@produceState
-        delay(50) // coalesce rapid slider changes
-        val t0 = android.os.SystemClock.elapsedRealtime()
-        try { draw() } finally {
+    // Every draw runs to the end, then the newest settings are drawn next. (Restarting on each
+    // change, as before, meant a preview that takes a second or more to draw on a phone never
+    // finished while you kept adjusting, so it looked stuck.)
+    val latest by androidx.compose.runtime.rememberUpdatedState(state to size)
+    var rv by remember { mutableStateOf<RemoteViews?>(null) }
+    androidx.compose.runtime.LaunchedEffect(started) {
+        if (!started) return@LaunchedEffect
+        @OptIn(kotlinx.coroutines.FlowPreview::class)
+        androidx.compose.runtime.snapshotFlow { latest }.conflate().collect { (s, sz) ->
+            val t0 = android.os.SystemClock.elapsedRealtime()
+            val drawn = try {
+                withContext(Dispatchers.Default) { PreviewWidget(s).compose(ctx, size = sz) }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                app.helpmeclock.data.AppLog.e(ctx, "Preview", "Couldn't draw the preview", e); null
+            }
+            if (drawn != null) rv = drawn
             val now = android.os.SystemClock.elapsedRealtime()
-            if (value != null && !firstDrawn) { firstDrawn = true; app.helpmeclock.data.AppLog.i(ctx, "Preview", "Preview first drawn ${now - opened} ms after opening") }
+            if (drawn != null && !firstDrawn) { firstDrawn = true; app.helpmeclock.data.AppLog.i(ctx, "Preview", "Preview first drawn ${now - opened} ms after opening") }
             else if (now - t0 > 1_500) app.helpmeclock.data.AppLog.w(ctx, "Preview", "Slow preview draw: ${now - t0} ms")
         }
     }

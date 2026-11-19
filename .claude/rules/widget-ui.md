@@ -13,6 +13,6 @@ paths:
 - Colors come from `widgetColors(cfg)`. Dynamic colors must stay **resource-backed** (`DynRes`) so they follow wallpaper and dark mode without a re-render. Never hard-code a color in a layout.
 - Opacity affects the background only.
 - Rendering goes only through `WidgetRenderer.render()` / `renderAll()`, which call Glance's standard `update()` / `updateAll()`. Never call `AppWidgetManager.updateAppWidget` or build RemoteViews by hand. Widget content must `collectAsState` its data so updates during an open session show.
-- Click actions: `actionRunCallback<…>()` classes must keep a no-arg constructor (R8 keep rule in `proguard-rules.pro`). A refresh callback does the work inline with a timeout and falls back to WorkManager (AGENTS.md §5). Never open an activity from a widget tap.
+- Click actions: `actionRunCallback<…>()` classes must keep a no-arg constructor (R8 keep rule in `proguard-rules.pro`). The refresh callback starts `RefreshService`, the short foreground service (AGENTS.md §5). Never open an activity from a widget tap, invisible or not: it blocks home screen swipes.
 - The static `previewLayout` / `initialLayout` XML may only use RemoteViews-safe views (no `Space`).
 - After any change: render every size in light and dark (`WidgetRenderTest`), look at the PNGs, and update `docs/screenshots` if what users see changed.

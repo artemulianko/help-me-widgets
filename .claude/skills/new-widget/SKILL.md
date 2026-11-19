@@ -17,7 +17,7 @@ Copy `help-me-stocks/` (the cleanest template) to `help-me-<name>/`, excluding `
 - Rename the package `app.helpmestocks` → `app.helpme<name>` (namespace, applicationId, source dirs, manifest, proguard, tests, `tools/`).
 - Rename the classes (`StocksWidget`, `StocksWidgetReceiver`, `StocksRepository`, `HelpMeStocksApp`, theme, strings, `copyReleaseApk` rename pattern).
 - `versionCode = 1`, `versionName = "0.1.0"`.
-- Keep **as is**: `Http.kt`, `AppLog.kt`, `WidgetRenderer.kt`, `WidgetColors.kt` + `DynRes.kt` + `tools/gen_colors.py`, the receivers, the manifest hardening, `proguard-rules.pro`, data-extraction rules, the signing guard, `LogsActivity`, editor components, `RefreshAction` (inline refresh + worker fallback).
+- Keep **as is**: `Http.kt`, `AppLog.kt`, `WidgetRenderer.kt`, `WidgetColors.kt` + `DynRes.kt` + `tools/gen_colors.py`, the receivers, the manifest hardening, `proguard-rules.pro`, data-extraction rules, the signing guard, `LogsActivity`, editor components, `RefreshAction` + `RefreshService` (short foreground service for the refresh button).
 - Replace: the data source and models, `Settings.kt` (keep palette, themeMode, bgTone, opacity, showRefresh, tapAction; add only what's needed), layouts, sample data, icons (`tools/import_icons.py`).
 
 ## 3. Build every size

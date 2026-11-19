@@ -10,13 +10,13 @@ iPhone has had a clean Stocks widget for years: your watchlist, the day's chart,
   <img src="docs/screenshots/hero.png" alt="Help Me Stocks 4×2 widget in light and dark mode" width="900">
 </p>
 
-> **It's just a widget.** Not a trading or finance app: no accounts, no ads, no analytics, no notifications (the permission is removed from the manifest), no location. Tapping a stock opens it in Yahoo Finance (as Apple's widget does) or Google.
+> **It's just a widget.** Not a trading or finance app: no accounts, no ads, no analytics, no notifications you ever see (the permission is removed from the manifest), no location. Tapping a stock opens it in Yahoo Finance (as Apple's widget does) or Google.
 
 ## Download
 
-**[⬇ Download Help Me Stocks 1.0.0 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v1.0.0/help-me-stocks-1.0.0.apk)** · Android 12+ · 3.9 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/stocks-v1.0.0) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+**[⬇ Download Help Me Stocks 1.0.3 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v1.0.3/help-me-stocks-1.0.3.apk)** · Android 12+ · 3.9 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/stocks-v1.0.3) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-SHA-256 `81af4c69dfb980bee5cad1b221e2413e128c668666796dbee190d48d3c8f8bca`
+SHA-256 `c78e6ea403977e299a312e8eab2c236cb1e6faa3aa0b037bb0b616fe046a61de`
 
 1. Download the APK on your phone and open it (allow "Install unknown apps" for your browser when asked).
 2. Open **Help Me Stocks** once, and add or reorder stocks in **Watchlist**.
@@ -49,15 +49,17 @@ Designed to be invisible in your battery stats, the same way Help Me Weather is.
 |---|---|
 | A refresh (every 30 min by default, **only while a market is open**) | One request for the whole watchlist, ~2 KB gzipped |
 | Nights, weekends, between sessions | **No network at all**: closing prices are kept until the next session is due |
-| Rendering the widget | ~100 ms, one-shot |
-| Between refreshes | Nothing: no alarms, no services, no wakelocks, no listeners |
+| Rendering the widget | One short Glance job per update |
+| Refresh button | A 1-2 s foreground service, only when you tap it |
+| Between refreshes | Nothing: no alarms, no running services, no listeners |
 
 How:
 
 - **Market-hours aware.** Every quote carries its exchange's session times, so the app knows when prices can't change: after the close it fetches once more for the final prices, then nothing until shortly before the next weekday session (holidays cost at most a few tiny checks). Works for any exchange, and 24-hour markets like crypto keep refreshing.
 - **One batched request.** Yahoo's chart endpoint returns price, change and the intraday line for up to 20 symbols at once; the whole watchlist is one small download, shared by every widget.
 - **WorkManager only.** Android batches refreshes with other apps' jobs, respects Doze and App Standby, waits for a network, and **skips background refreshes on low battery**. Manual refresh always works.
-- **No Glance sessions.** Jetpack Glance normally keeps a background job (and a wakelock) alive for about 45 s after every widget update. Help Me Stocks renders straight to RemoteViews instead, so each update is a single short render.
+- **Standard Glance rendering.** The widget is drawn the documented Jetpack Glance way: each update is a short background job that Android schedules, and the launcher updates the widget in place.
+- **The refresh button works even when the phone is idle.** Android cuts the network for idle apps (Doze and the background-app limit), and a widget tap doesn't lift that, so a plain background job ran minutes after the tap. The button therefore starts a **short foreground service**: Android allows that when you tap a widget, and it gets the network right away. It runs for a second or two, only when you tap, and never opens a window, so you can keep swiping. Android requires a notification for every foreground service, but **you never see it**: the app has no notification permission, so the notification is never shown. The only trace is a line in the system's list of running apps while it runs.
 - **Charts tinted, not redrawn.** The chart is drawn once as a white mask and tinted with theme colors, so light/dark switches don't need a new render.
 
 ## Privacy

@@ -34,7 +34,13 @@ class RefreshWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ct
         val attempt = runAttemptCount + 1
         AppLog.i(ctx, "Job", "Started: $reason${if (attempt > 1) " (attempt $attempt)" else ""}")
         try {
-            val r = WeatherRepository.refresh(ctx, force = force, reason = reason)
+            // No spinner from a background job: Android may run it minutes after the tap, and a
+            // redraw it sends can be held back too, which once left the spinner up until the app
+            // was opened (Pixel 11 Pro, 1.0.0).
+            val r = WeatherRepository.refresh(ctx, force = force, reason = reason, spinner = false)
+            // Glance applies the redraw in its own session; stay running a moment so Android
+            // doesn't freeze the app before it lands.
+            kotlinx.coroutines.delay(SETTLE_MS)
             return when {
                 r.isSuccess -> Result.success()
                 runAttemptCount < 2 -> {
@@ -66,6 +72,8 @@ class RefreshWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ct
     }
 
     companion object {
+        /** How long a job stays alive after its redraw so Glance can apply it. */
+        private const val SETTLE_MS = 3_000L
         private const val PERIODIC = "periodic-refresh"
         private const val NOW = "refresh-now"
         private const val KEY_FORCE = "force"

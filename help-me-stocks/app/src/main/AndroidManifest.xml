@@ -7,9 +7,11 @@
     <!-- Log reboots and re-render widgets right after boot (WorkManager also uses it). -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <!-- No notifications, ever: WorkManager's foreground-service path (the only thing that could
-         post one) is removed. Refreshes run as plain/expedited jobs, which need no notification. -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
+    <!-- The refresh button runs as a short foreground service so it gets the network even when
+         the phone is idle (owner-approved 2026-11-19; see RefreshService). Its notification is
+         never shown: POST_NOTIFICATIONS stays removed. WorkManager's own foreground path stays
+         removed too. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:node="remove" />
 
     <!-- Tap targets: open quotes in Yahoo Finance or the Google app when installed. -->
@@ -94,6 +96,10 @@
                 <action android:name="android.intent.action.LOCALE_CHANGED" />
             </intent-filter>
         </receiver>
+        <service
+            android:name=".widget.RefreshService"
+            android:exported="false"
+            android:foregroundServiceType="shortService" />
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             tools:node="remove" />
