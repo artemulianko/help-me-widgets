@@ -122,7 +122,7 @@ class RefreshWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ct
         }
 
         fun refreshNow(ctx: Context, force: Boolean, reason: String = if (force) "manual" else "widget update") {
-            CoroutineScope(Dispatchers.Default).launch {
+            CoroutineScope(Dispatchers.IO).launch { // getWorkInfos…().get() blocks
                 // A refresh already downloading wins: extra taps would only cancel it and spend quota.
                 val running = runCatching {
                     WorkManager.getInstance(ctx).getWorkInfosForUniqueWork(NOW).get()

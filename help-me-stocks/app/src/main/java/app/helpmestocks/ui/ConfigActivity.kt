@@ -103,7 +103,12 @@ class ConfigActivity : ComponentActivity() {
         }
     }
 
+    /** Set on the first Save tap, so a double tap doesn't save and redraw twice. */
+    private var saving = false
+
     private fun save(store: Store, cfg: WidgetConfig) {
+        if (saving) return
+        saving = true
         lifecycleScope.launch {
             val t0 = android.os.SystemClock.elapsedRealtime()
             store.updateWidget(widgetId) { cfg }
@@ -123,7 +128,9 @@ fun WidgetEditor(initial: WidgetConfig, app: AppSettings, store: Store, onClose:
     val ctx = LocalContext.current
     val cached by store.quotes.collectAsState(QuoteSet())
     // Real quotes where we have them; sample ones fill in for anything not fetched yet.
-    val quotes = QuoteSet(SampleData.quotes(app.watchlist.map { it.symbol }).quotes + cached.quotes)
+    // Remembered: sample charts are random, and regenerating them on every slider move made them jump.
+    val sample = remember(app.watchlist) { SampleData.quotes(app.watchlist.map { it.symbol }) }
+    val quotes = QuoteSet(sample.quotes + cached.quotes)
     val state = WidgetState(app, cfg, quotes, refreshing = false, appWidgetId = 0)
 
     Scaffold(
@@ -194,7 +201,7 @@ fun WidgetEditor(initial: WidgetConfig, app: AppSettings, store: Store, onClose:
                             Text("${cfg.opacity}%", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                         }
                         Slider(
-                            value = cfg.opacity.toFloat(), onValueChange = { cfg = cfg.copy(opacity = (it / 10f).toInt() * 10) },
+                            value = cfg.opacity.toFloat(), onValueChange = { cfg = cfg.copy(opacity = kotlin.math.round(it / 10f).toInt() * 10) },
                             valueRange = 0f..100f, steps = 9, modifier = Modifier.testTag("opacity"),
                         )
                     }

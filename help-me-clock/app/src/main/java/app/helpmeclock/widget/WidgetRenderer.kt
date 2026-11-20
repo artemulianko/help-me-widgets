@@ -11,6 +11,7 @@ import app.helpmeclock.BuildConfig
 import app.helpmeclock.data.AppLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 
 /**
  * Widget redraws, the standard Glance way: [ClockWidget.update] for one widget, `updateAll` for
@@ -31,13 +32,13 @@ object WidgetRenderer {
         AppWidgetManager.getInstance(ctx).getAppWidgetIds(ComponentName(ctx, ClockWidgetReceiver::class.java))
 
     suspend fun renderAll(ctx: Context) {
-        _changes.value = _changes.value + 1
+        _changes.update { it + 1 }
         runCatching { ClockWidget().updateAll(ctx) }
             .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; AppLog.e(ctx, "Widget", "Widget update failed", it) }
     }
 
     suspend fun render(ctx: Context, appWidgetId: Int) {
-        _changes.value = _changes.value + 1
+        _changes.update { it + 1 }
         runCatching { ClockWidget().update(ctx, GlanceAppWidgetManager(ctx).getGlanceIdBy(appWidgetId)) }
             .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; AppLog.e(ctx, "Widget", "Update of widget $appWidgetId failed", it) }
     }

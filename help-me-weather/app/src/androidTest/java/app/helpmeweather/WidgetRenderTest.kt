@@ -60,6 +60,10 @@ class WidgetRenderTest {
         "grid3_1x2" to DpSize(117.dp, 171.dp),
         "grid5_4x1" to DpSize(310.dp, 100.dp),
         "grid4x4_4x2" to DpSize(387.dp, 300.dp),
+        // Tall sizes: up to 7 daily rows (once past Glance's 10-children-per-column limit).
+        "2x4" to DpSize(190.dp, 420.dp),
+        "2x5" to DpSize(190.dp, 525.dp),
+        "4x5" to DpSize(387.dp, 525.dp),
     )
 
     private fun render(name: String, cfg: WidgetConfig, size: DpSize) = runBlocking {
@@ -81,6 +85,14 @@ class WidgetRenderTest {
     @Test fun everySizeRenders() {
         val cfg = WidgetConfig(location = SampleData.weather().place)
         sizes.forEach { (n, s) -> render("size_$n", cfg, s) }
+    }
+
+    /** The tallest layouts with every daily row and no hourly row (the 4×4 path that had 11 children). */
+    @Test fun tallLayoutsWithManyRowsRender() {
+        val base = WidgetConfig(location = SampleData.weather().place)
+        for ((n, c) in mapOf("no_forecast" to base.copy(forecast = ForecastMode.NONE), "daily" to base.copy(forecast = ForecastMode.DAILY), "hourly" to base)) {
+            for (size in listOf("2x4", "2x5", "4x4", "4x5")) render("tall_${n}_$size", c, sizes.getValue(size))
+        }
     }
 
     @Test fun configurationMatrixRenders() {

@@ -292,8 +292,8 @@ private fun HomeScreen() {
 
             Text(
                 if (app.provider == ProviderPref.GOOGLE)
-                    "Google is the forecast Pixel Weather and At a Glance use. It needs a Google Maps Platform key with the Weather API enabled; without one, Open-Meteo is used. Updates are batched by Android, skipped on low battery and never use GPS."
-                else "Open-Meteo combines national weather services (ECMWF, DWD, NOAA). Data CC BY 4.0. Updates are batched by Android, skipped on low battery and never use GPS.",
+                    "Google is the forecast Pixel Weather and At a Glance use. It needs a Google Maps Platform key with the Weather API enabled; without one, Open-Meteo is used. Updates are batched by Android, skipped on low battery; in the background they only use Android's cached or cell/Wi‑Fi location, never GPS."
+                else "Open-Meteo combines national weather services (ECMWF, DWD, NOAA). Data CC BY 4.0. Updates are batched by Android, skipped on low battery; in the background they only use Android's cached or cell/Wi‑Fi location, never GPS.",
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp),
             )

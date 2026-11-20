@@ -42,8 +42,11 @@ object Market {
      */
     fun nextExpectedOpen(q: Quote): Long {
         val len = (q.sessionEnd - q.sessionStart).coerceIn(0, DAY)
-        var k = 1L
-        while (k < 8) {
+        // Start from the day of the last fetch: a session more than a week old (a halted or delisted
+        // symbol, a long holiday) otherwise returned a time in the past, so it fetched around the clock.
+        val first = ((q.fetchedAt / 1000 - q.sessionStart) / DAY).coerceAtLeast(1)
+        var k = first
+        while (k < first + 8) {
             val open = q.sessionStart + k * DAY
             val mid = Instant.ofEpochSecond(open + len / 2).atOffset(ZoneOffset.UTC).dayOfWeek
             if (open + GRACE_SEC > q.fetchedAt / 1000 && mid != DayOfWeek.SATURDAY && mid != DayOfWeek.SUNDAY) return open

@@ -161,9 +161,10 @@ class WidgetFlowTest {
         assertTrue("editor open", device.wait(Until.hasObject(By.res("save")), 15_000))
         // Swipe the page: the first "scrollable" node is the horizontal palette row.
         var toggle = device.findObject(By.res("sw_refresh"))
-        repeat(8) {
+        // Slow swipes (no fling), or the list can carry past the switch between checks.
+        repeat(12) {
             if (toggle == null) {
-                device.swipe(device.displayWidth / 2, device.displayHeight * 4 / 5, device.displayWidth / 2, device.displayHeight * 2 / 5, 20)
+                device.swipe(device.displayWidth / 2, device.displayHeight * 4 / 5, device.displayWidth / 2, device.displayHeight * 3 / 5, 80)
                 Thread.sleep(300)
                 toggle = device.findObject(By.res("sw_refresh"))
             }

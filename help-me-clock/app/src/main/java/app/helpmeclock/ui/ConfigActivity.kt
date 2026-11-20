@@ -93,7 +93,12 @@ class ConfigActivity : ComponentActivity() {
         }
     }
 
+    /** Set on the first Save tap, so a double tap doesn't save and redraw twice. */
+    private var saving = false
+
     private fun save(store: Store, cfg: WidgetConfig) {
+        if (saving) return
+        saving = true
         lifecycleScope.launch {
             val t0 = android.os.SystemClock.elapsedRealtime()
             store.updateWidget(widgetId) { cfg }
@@ -166,7 +171,7 @@ fun WidgetEditor(initial: WidgetConfig, onClose: () -> Unit, onSave: (WidgetConf
                             Text("${cfg.opacity}%", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                         }
                         Slider(
-                            value = cfg.opacity.toFloat(), onValueChange = { cfg = cfg.copy(opacity = (it / 10f).toInt() * 10) },
+                            value = cfg.opacity.toFloat(), onValueChange = { cfg = cfg.copy(opacity = kotlin.math.round(it / 10f).toInt() * 10) },
                             valueRange = 0f..100f, steps = 9, modifier = Modifier.testTag("opacity"),
                         )
                     }

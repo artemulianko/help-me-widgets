@@ -39,11 +39,15 @@ object YahooFinance {
     }
 
     /** Fills in the currency (and a better exchange name) for a ticker, keeping it as is on failure. */
-    suspend fun withDetails(t: Ticker): Ticker = runCatching {
+    suspend fun withDetails(t: Ticker): Ticker = try {
         val (cur, exch) = details(t.symbol)
         // "" marks "looked up, none reported" so it isn't requested again on every refresh.
         t.copy(currency = cur ?: t.currency ?: "", exchange = if (t.type == "INDEX") null else exchangeName(t.exchange ?: exch))
-    }.getOrDefault(t)
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e // a cancelled refresh stops here instead of looking up the next ticker
+    } catch (e: Exception) {
+        t
+    }
 
     /** Nasdaq's market tiers (NasdaqGS/GM/CM) all read as "NASDAQ"; NYSE's likewise. */
     fun exchangeName(e: String?): String? = when {

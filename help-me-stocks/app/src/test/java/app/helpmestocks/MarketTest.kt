@@ -50,6 +50,15 @@ class MarketTest {
         assertFalse(Market.needsFetch(late, utc(2026, 11, 16, 22, 0) * 1000, maxAge))
     }
 
+    @Test fun haltedSymbolWithAWeekOldSessionStillSleepsAtNight() {
+        // Last session Friday 13 Nov, still the latest one when fetched Wednesday 25 Nov (halted,
+        // delisted or a long holiday). It used to compute a next open in the past and fetch 24/7.
+        val q = nyse(utc(2026, 11, 25, 22, 0))
+        assertEquals(utc(2026, 11, 26, 14, 30), Market.nextExpectedOpen(q))
+        assertFalse(Market.needsFetch(q, utc(2026, 11, 26, 3, 0) * 1000, maxAge)) // Thursday night
+        assertTrue(Market.needsFetch(q, utc(2026, 11, 26, 13, 30) * 1000, maxAge)) // shortly before the open
+    }
+
     @Test fun tokyoAndSydneyWeekdaysUseExchangeDate() {
         // Tokyo Monday session 00:00–06:30 UTC; fetched after Friday's close → next is Monday.
         val tFri = Quote("7203.T", 1.0, 0.0, 0.0, 1.0, utc(2026, 11, 13, 0, 0), utc(2026, 11, 13, 6, 30), fetchedAt = utc(2026, 11, 13, 7, 0) * 1000)

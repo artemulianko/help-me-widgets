@@ -59,7 +59,9 @@ class LiveMarketsTest {
         quotes.forEach { assertTrue("${it.symbol} price", it.price > 0) }
         // Each market keeps its own session: XETRA closes hours before New York.
         val x = quotes.first { it.symbol == "VWCE.DE" }; val n = quotes.first { it.symbol == "NFLX" }
-        assertTrue(x.sessionEnd < n.sessionEnd)
+        // Compare closing times of day (UTC): before New York opens, Yahoo still reports Netflix's
+        // previous day, so comparing dates failed mid-day in Europe.
+        assertTrue(x.sessionEnd % 86_400 < n.sessionEnd % 86_400)
 
         val state = WidgetState(AppSettings(watchlist = list), WidgetConfig(), QuoteSet(quotes.associateBy { it.symbol }), false, 0)
         val out = File(ctx.getExternalFilesDir(null), "renders").apply { mkdirs() }

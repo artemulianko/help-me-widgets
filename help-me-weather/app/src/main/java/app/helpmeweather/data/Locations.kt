@@ -51,7 +51,17 @@ object Locations {
             .setMaxUpdateAgeMillis(maxAge)
             .setDurationMillis(timeoutMs)
             .build()
-        val fresh = withTimeoutOrNull(timeoutMs) { runCatching { client.getCurrentLocation(req, null).await() }.getOrNull() }
+        // A token, so a refresh that is cancelled or times out also stops Google's location request.
+        val cts = com.google.android.gms.tasks.CancellationTokenSource()
+        val fresh = try {
+            withTimeoutOrNull(timeoutMs) {
+                runCatching { client.getCurrentLocation(req, cts.token).await() }
+                    .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                    .getOrNull()
+            }
+        } finally {
+            cts.cancel()
+        }
         if (fresh != null) return fresh.also { log(ctx, it, if (fine) "precise" else "approximate") }
         return last?.takeIf { age(it) < STALE_MS }?.also { log(ctx, it, "cached, no newer fix") }
     }
@@ -68,6 +78,13 @@ object Locations {
     suspend fun nameFor(ctx: Context, lat: Double, lon: Double): Pair<String, String?> {
         if (!Geocoder.isPresent()) return fallbackName(lat, lon) to null
         val addr = withTimeoutOrNull(8_000) {
+            // The listener overload is API 33+; minSdk is 31, so Android 12 uses the blocking call.
+            if (android.os.Build.VERSION.SDK_INT < 33) {
+                return@withTimeoutOrNull kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    @Suppress("DEPRECATION")
+                    runCatching { Geocoder(ctx, Locale.getDefault()).getFromLocation(lat, lon, 1)?.firstOrNull() }.getOrNull()
+                }
+            }
             suspendCancellableCoroutine { cont ->
                 runCatching {
                     Geocoder(ctx, Locale.getDefault()).getFromLocation(lat, lon, 1, object : Geocoder.GeocodeListener {

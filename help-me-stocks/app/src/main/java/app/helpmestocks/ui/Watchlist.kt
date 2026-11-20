@@ -102,7 +102,7 @@ fun WatchlistGroup(app: AppSettings, title: String = "Watchlist") {
             item { shapes ->
                 SegmentedListItem(
                     shapes = shapes, modifier = Modifier.testTag("wl_${t.symbol}"),
-                    supportingContent = { Text(listOfNotNull(t.symbol.takeIf { it != t.label }, t.name.takeIf { it != t.label }, t.exchange, t.currency).joinToString(" · "), maxLines = 1) },
+                    supportingContent = { Text(listOfNotNull(t.symbol.takeIf { it != t.label }, t.name.takeIf { it != t.label }, t.exchange, t.currency?.takeIf { it.isNotBlank() }).joinToString(" · "), maxLines = 1) },
                     trailingContent = {
                         Row {
                             IconButton(onClick = { update { l -> move(l, t.symbol, -1) } }, enabled = i > 0) {

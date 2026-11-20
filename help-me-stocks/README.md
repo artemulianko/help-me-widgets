@@ -2,7 +2,7 @@
 
 **The stocks widget Pixel should have shipped with.**
 
-*Part of [Help Me Widgets](../README.md), together with [Help Me Weather](../help-me-weather/).*
+*Part of [Help Me Widgets](../README.md), together with [Help Me Weather](../help-me-weather/) and [Help Me Clock](../help-me-clock/).*
 
 iPhone has had a clean Stocks widget for years: your watchlist, the day's chart, price and a green or red change at a glance. Pixel has nothing like it. Help Me Stocks brings that layout to Pixel and builds it the Pixel way: Material 3, your wallpaper colors, and the same design and customization as its sibling, [Help Me Weather](../help-me-weather/), so the two widgets sit together on one home screen.
 
@@ -14,9 +14,9 @@ iPhone has had a clean Stocks widget for years: your watchlist, the day's chart,
 
 ## Download
 
-**[⬇ Download Help Me Stocks 1.0.5 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v1.0.5/help-me-stocks-1.0.5.apk)** · Android 12+ · 3.9 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/stocks-v1.0.5) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+**[⬇ Download Help Me Stocks 1.0.6 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v1.0.6/help-me-stocks-1.0.6.apk)** · Android 12+ · 3.9 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/stocks-v1.0.6) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-SHA-256 `f6e73a677916bcc86806c0da30805303835f4d8750209ab3914ac753f1562a42`
+SHA-256 `e0c323b8b40d9790c1ec888091a483d34b7bc09c016850b696276fbfa2c38dd9`
 
 > **Upgrading to 1.0.5 or later from an earlier version:** 1.0.5 moved to a new signing key (registered with Google's developer verification), so Android won't install it over an older version. Uninstall the old app once, install the new one and add the widget again. Later updates install over it normally.
 
@@ -37,7 +37,7 @@ SHA-256 `f6e73a677916bcc86806c0da30805303835f4d8750209ab3914ac753f1562a42`
 
 ## Every size, laid out properly
 
-From 1×1 up to 4×4, plus landscape and foldables. Show your watchlist, or one stock large with its chart (and the day's open, high, low and previous close on bigger sizes). All sizes are pre-rendered, so resizing or rotating never wakes the app.
+From 1×1 up to 4×4, plus landscape and foldables. Show your watchlist, or one stock large with its chart (and the day's open, high, low and previous close on bigger sizes). Glance redraws it for the new size when you resize or rotate.
 
 <p align="center"><img src="docs/screenshots/all-sizes.png" alt="Widget at every size from 1x1 to 4x4, watchlist and single stock" width="900"></p>
 

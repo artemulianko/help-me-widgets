@@ -88,7 +88,8 @@ private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val f:
     // listing's exchange, but only when the watchlist actually mixes them, so an all-US list
     // stays as clean as Apple's.
     private val listed = s.app.watchlist.filter { it.type != "INDEX" }
-    val mixedCurrency = listed.mapNotNull { it.currency?.uppercase()?.take(3) }.distinct().size > 1
+    // "" means "looked up, none reported": not a currency of its own.
+    val mixedCurrency = listed.mapNotNull { it.currency?.takeIf { c -> c.isNotBlank() }?.uppercase()?.take(3) }.distinct().size > 1
     val mixedExchange = listed.mapNotNull { it.exchange }.distinct().size > 1 || listed.any { it.label != it.symbol && it.symbol.contains('.') }
     fun priceText(t: Ticker, q: Quote?) = q?.let { if (mixedCurrency && t.type != "INDEX") f.price(it.price, t.currency) else f.price(it.price) } ?: "–"
     fun subtitle(t: Ticker): String? {

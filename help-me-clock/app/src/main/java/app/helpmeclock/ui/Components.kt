@@ -235,9 +235,18 @@ val previewSizes = listOf(
 fun editorPreviewSizes(ctx: android.content.Context, appWidgetId: Int): List<Pair<String, DpSize>> {
     val o = runCatching { android.appwidget.AppWidgetManager.getInstance(ctx).getAppWidgetOptions(appWidgetId) }.getOrNull()
         ?: return previewSizes
-    val reported = if (android.os.Build.VERSION.SDK_INT >= 31) {
-        o.getParcelableArrayList(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_SIZES, android.util.SizeF::class.java)
-            ?.filter { it.width > 0f && it.height > 0f }?.minByOrNull { it.width }?.let { DpSize(it.width.dp, it.height.dp) }
+    // The typed getParcelableArrayList is API 33+; minSdk is 31 (it crashed the editor on Android 12).
+    val sizes: List<android.util.SizeF>? = runCatching {
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            o.getParcelableArrayList(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_SIZES, android.util.SizeF::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            o.getParcelableArrayList<android.util.SizeF>(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_SIZES)
+        }
+    }.getOrNull()
+    val reported = if (sizes != null) {
+        sizes
+            .filter { it.width > 0f && it.height > 0f }?.minByOrNull { it.width }?.let { DpSize(it.width.dp, it.height.dp) }
     } else null
     val real = reported ?: run {
         val w = o.getInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)

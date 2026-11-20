@@ -91,7 +91,8 @@ object WeatherRepository {
             ) {
                 // Known location → wait at most a few seconds for a better fix, so a manual refresh stays snappy.
                 val timeout = if (app.deviceLocation != null) 5_000L else 25_000L
-                val p = runCatching { Locations.devicePlace(ctx, timeout, precise = visible) }.getOrNull()
+                val p = runCatching { Locations.devicePlace(ctx, timeout, precise = visible) }
+                    .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull()
                 if (p != null) {
                     store.updateApp { it.copy(deviceLocation = p, deviceLocationAt = System.currentTimeMillis()) }
                     app = store.appNow()
@@ -129,7 +130,8 @@ object WeatherRepository {
                 val t0 = System.currentTimeMillis()
                 AppLog.i(ctx, "Fetch", "Requesting ${providerName(primary)} for ${place.name}")
                 val data = runCatching { primary.fetch(place) }.recoverCatching { e ->
-                    if (fallback == null) throw e
+                    // Cancelled (replaced or stopped): not a provider failure, so no fallback request.
+                    if (fallback == null || e is kotlinx.coroutines.CancellationException) throw e
                     AppLog.w(ctx, "Fetch", "${place.name}: ${providerName(primary)} failed after ${System.currentTimeMillis() - t0} ms, trying Open-Meteo", e)
                     error = "${providerName(primary)}: ${(e as? HttpException)?.detail ?: e.message ?: e.javaClass.simpleName} Showing Open-Meteo instead."
                     fallback.fetch(place)
@@ -149,7 +151,9 @@ object WeatherRepository {
             store.pruneWeather(places.map { it.key }.toSet() + listOfNotNull(app.deviceLocation?.key))
             store.setError(error)
             AppLog.i(ctx, "Refresh", "Done in ${System.currentTimeMillis() - started} ms${if (error != null) " (with errors)" else ""}")
-            return if (error == null || places.isNotEmpty()) Result.success(Unit) else Result.failure(Exception(error))
+            // A failure when nothing could be fetched, so the worker's backoff and the refresh
+            // button's retry kick in (it used to report success whenever a place was configured).
+            return if (error == null || changed) Result.success(Unit) else Result.failure(Exception(error))
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e // the worker logs why Android stopped it
         } catch (e: Exception) {

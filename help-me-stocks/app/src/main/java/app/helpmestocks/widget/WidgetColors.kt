@@ -32,7 +32,8 @@ class ChangeColors(
         else -> when { dir > 0 -> upContainer; dir < 0 -> downContainer; else -> flatContainer }
     }
     fun onContainer(dir: Int, solid: Boolean) = when {
-        solid -> onSolid
+        // A flat (0.00%) solid chip uses the light neutral container, so white text was unreadable.
+        solid -> if (dir == 0) onFlatContainer else onSolid
         else -> when { dir > 0 -> onUpContainer; dir < 0 -> onDownContainer; else -> onFlatContainer }
     }
 }

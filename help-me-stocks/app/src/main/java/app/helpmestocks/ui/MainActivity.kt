@@ -139,7 +139,8 @@ private fun HomeScreen() {
         Column(Modifier.fillMaxSize().padding(pad).imePadding().verticalScroll(rememberScrollState())) {
             Column(Modifier.padding(horizontal = 16.dp)) {
                 val real = quotes.quotes.isNotEmpty()
-                val q = if (real) quotes else SampleData.quotes(app.watchlist.map { it.symbol })
+                val sample = remember(app.watchlist) { SampleData.quotes(app.watchlist.map { it.symbol }) }
+                val q = if (real) quotes else sample
                 WidgetPreview(WidgetState(app, WidgetConfig(), q, refreshing, 0), previewSizes[2].second)
                 Text(
                     if (real) "Updated ${DateFormat.getTimeInstance(DateFormat.SHORT).format(quotes.fetchedAt)} · Yahoo Finance"

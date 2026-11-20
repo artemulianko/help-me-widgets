@@ -5,6 +5,8 @@ import android.app.Application
 import android.app.ApplicationExitInfo
 import android.content.Context
 import app.helpmeweather.data.AppLog
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 /**
  * Logs process lifecycle for the in-app Logs screen: each process start, why the previous
@@ -16,10 +18,25 @@ class HelpMeWeatherApp : Application() {
         super.onCreate()
         AppLog.i(this, "App", "Process started (v${BuildConfig.VERSION_NAME})")
         logPreviousExit()
+        clearStaleSpinner()
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
             runCatching { AppLog.crash(this, "Crash", "Uncaught on ${thread.name}", error) }
             previous?.uncaughtException(thread, error)
+        }
+    }
+
+    /**
+     * A new process means no refresh is running: if the last one was killed mid-way, clear its
+     * spinner and re-render so widgets never keep spinning (as Help Me Stocks does).
+     */
+    private fun clearStaleSpinner() {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
+            val store = app.helpmeweather.data.Store(this@HelpMeWeatherApp)
+            if (store.refreshing.first()) {
+                store.setRefreshing(false)
+                app.helpmeweather.widget.WidgetRenderer.renderAll(this@HelpMeWeatherApp)
+            }
         }
     }
 

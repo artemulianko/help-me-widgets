@@ -41,7 +41,8 @@ object WidgetRenderer {
         val info = mgr.installedProviders.firstOrNull { it.provider == provider }
         return listOf(AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN, AppWidgetProviderInfo.WIDGET_CATEGORY_KEYGUARD).all { cat ->
             runCatching { mgr.setWidgetPreview(provider, cat, WeatherWidget().composeForPreview(ctx, cat, info)) }
-                .onFailure { Log.w(TAG, "preview failed", it) }.getOrDefault(false)
+                .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; if (app.helpmeweather.BuildConfig.DEBUG) Log.w(TAG, "preview failed", it) }
+                .getOrDefault(false)
         }
     }
 }

@@ -197,7 +197,7 @@ private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val wi
         clockRv(bigLayout(), fmt12, fmt24, sizeDp, TypedValue.COMPLEX_UNIT_DIP, color)
 
     // Labels are drawn in dp at exactly the size they were measured at (font scale applied,
-    // capped at 1.3×). Drawn in sp, a 2× font setting outgrew its measured box and truncated.
+    // capped at 1.15×). Drawn in sp, a 2× font setting outgrew its measured box and truncated.
     fun dateRv(pattern: String, sp: Float, color: WColor) =
         clockRv(R.layout.clock_text, pattern, pattern, sp * fontScale, TypedValue.COMPLEX_UNIT_DIP, color)
 
@@ -214,7 +214,9 @@ private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val wi
             setViewLayoutWidth(R.id.alarm_icon, icon, TypedValue.COMPLEX_UNIT_DIP)
             setViewLayoutHeight(R.id.alarm_icon, icon, TypedValue.COMPLEX_UNIT_DIP)
             setContentDescription(R.id.alarm, ctx.getString(R.string.next_alarm, label))
-            if (cfg.tapAction != TapAction.NONE) {
+            // Only with "On tap: Clock". With "Help Me Clock" the tap falls through to the widget's
+            // own action (it used to open the clock app here regardless).
+            if (cfg.tapAction == TapAction.CLOCK) {
                 // The clock app's own intent opens exactly this alarm; else its alarm list.
                 val pi = a.showIntent ?: PendingIntent.getActivity(
                     ctx, 0, Intent(AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_IMMUTABLE,
@@ -227,7 +229,11 @@ private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val wi
     // ---- fitting ----
 
     private val timeUnit get() = Metrics.measure(timeSample, cfg.weight.value)
-    private val ampmUnit get() = Metrics.measure(" PM", 400, tnum = false, spacing = 0f)
+    /** The widest AM/PM marker in this language ("PM" in English; "nachm." in German). */
+    private val ampmUnit by lazy {
+        val marks = java.text.DateFormatSymbols.getInstance(locale).amPmStrings.filter { it.isNotBlank() }.ifEmpty { listOf("PM") }
+        marks.map { Metrics.measure(" $it", 400, tnum = false, spacing = 0f) }.maxBy { it.width }
+    }
 
     /** Largest numeral size (dp) whose time (+ AM/PM in 12-hour mode) fits [maxW] × [maxH]. */
     fun fitTime(maxW: Float, maxH: Float): Float {

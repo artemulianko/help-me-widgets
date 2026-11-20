@@ -4,6 +4,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import kotlinx.serialization.json.Json
@@ -28,21 +30,30 @@ object Http {
                 readTimeout = 15_000
                 setRequestProperty("Accept", "application/json")
                 setRequestProperty("Accept-Encoding", "gzip")
-                setRequestProperty("User-Agent", "HelpMeStocks/0.1 (Android widget)")
+                setRequestProperty("User-Agent", "HelpMeStocks/${app.helpmestocks.BuildConfig.VERSION_NAME} (Android widget)")
                 headers.forEach { (k, v) -> setRequestProperty(k, v) }
             }
             try {
-                // Hard total deadline: disconnecting unblocks any read stuck on a slow server.
-                withTimeout(DEADLINE_MS) {
-                    runInterruptible {
-                        val code = conn.responseCode
-                        val ok = code in 200..299
-                        val stream = (if (ok) conn.inputStream else conn.errorStream)?.let {
-                            if ("gzip".equals(conn.contentEncoding, true)) GZIPInputStream(it) else it
+                // Hard total deadline. A blocked read doesn't wake on interrupt, so a watchdog closes
+                // the connection at the deadline, or as soon as the caller is cancelled; that
+                // unblocks any read stuck on a slow server.
+                kotlinx.coroutines.coroutineScope {
+                    val watchdog = launch { try { delay(DEADLINE_MS) } finally { conn.disconnect() } }
+                    try {
+                        withTimeout(DEADLINE_MS) {
+                            runInterruptible {
+                                val code = conn.responseCode
+                                val ok = code in 200..299
+                                val stream = (if (ok) conn.inputStream else conn.errorStream)?.let {
+                                    if ("gzip".equals(conn.contentEncoding, true)) GZIPInputStream(it) else it
+                                }
+                                val raw = stream?.use { readBounded(it, if (ok) MAX_BODY else MAX_ERROR_BODY, failOnOverflow = ok) }.orEmpty()
+                                if (!ok) throw HttpException(code, errorMessage(raw))
+                                json.parseToJsonElement(raw)
+                            }
                         }
-                        val raw = stream?.use { readBounded(it, if (ok) MAX_BODY else MAX_ERROR_BODY, failOnOverflow = ok) }.orEmpty()
-                        if (!ok) throw HttpException(code, errorMessage(raw))
-                        json.parseToJsonElement(raw)
+                    } finally {
+                        watchdog.cancel()
                     }
                 }
             } finally {

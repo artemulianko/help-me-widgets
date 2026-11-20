@@ -2,7 +2,7 @@
 
 **The weather widget Pixel should have shipped with.**
 
-*Part of [Help Me Widgets](../README.md), together with [Help Me Stocks](../help-me-stocks/).*
+*Part of [Help Me Widgets](../README.md), together with [Help Me Stocks](../help-me-stocks/) and [Help Me Clock](../help-me-clock/).*
 
 The stock Pixel weather options are a one-line At a Glance and a widget you can barely customize. iOS and One UI have had proper weather widgets for years, with the temperature up front and a clean hourly row. Help Me Weather brings that layout to Pixel and builds it the Pixel way: Material 3, your wallpaper colors, Google's own weather icons, and Google's forecast, so the widget agrees with Pixel Weather and At a Glance.
 
@@ -14,9 +14,9 @@ The stock Pixel weather options are a one-line At a Glance and a widget you can 
 
 ## Download
 
-**[⬇ Download Help Me Weather 1.0.5 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v1.0.5/help-me-weather-1.0.5.apk)** · Android 12+ · 4.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/weather-v1.0.5) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+**[⬇ Download Help Me Weather 1.0.6 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v1.0.6/help-me-weather-1.0.6.apk)** · Android 12+ · 4.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/weather-v1.0.6) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-SHA-256 `b4e20b046ef2d575e667ef5d82fb5c282f7b3a06891084f3d15995576ec0190f`
+SHA-256 `a6683d90f5d906eaf816be9693b547e74256b06d0273ec677ad552a2d6bf6fd2`
 
 > **Upgrading to 1.0.5 or later from an earlier version:** 1.0.5 moved to a new signing key (registered with Google's developer verification), so Android won't install it over an older version. Uninstall the old app once, install the new one and add the widget again. Later updates install over it normally.
 
@@ -38,7 +38,7 @@ SHA-256 `b4e20b046ef2d575e667ef5d82fb5c282f7b3a06891084f3d15995576ec0190f`
 
 ## Every size, laid out properly
 
-The layout adapts to the real cell size the launcher reports, from 1×1 up to 4×4, plus landscape and foldables. All of these are pre-rendered, so resizing or rotating never wakes the app.
+The layout adapts to the real cell size the launcher reports, from 1×1 up to 4×4, plus landscape and foldables. Glance redraws it for the new size when you resize or rotate.
 
 <p align="center"><img src="docs/screenshots/all-sizes.png" alt="Widget at every size from 1x1 to 4x4 and landscape" width="900"></p>
 

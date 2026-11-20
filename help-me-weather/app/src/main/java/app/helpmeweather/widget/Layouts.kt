@@ -224,7 +224,8 @@ private fun TempBlock(x: Scope, modifier: GlanceModifier, heroSize: Float, trail
     Column(modifier = modifier) {
         Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             LocationLabel(x, modifier = GlanceModifier.defaultWeight())
-            if (!x.cfg.showLocation) Spacer(GlanceModifier.defaultWeight())
+            // Only when the label draws nothing (as in Stacked): with the time alone it took half the width.
+            if (!x.cfg.showLocation && !x.cfg.showUpdated) Spacer(GlanceModifier.defaultWeight())
             trailing?.invoke()
         }
         if (x.bold) {
@@ -495,12 +496,16 @@ private fun Tall(x: Scope) {
             x.subLine?.let { Text(it, style = style(x.c.textVariant, 12f), maxLines = 1) }
             Spacer(GlanceModifier.height(GAP))
             val rows = floor((x.height - 32f - 130f) / 30f).toInt().coerceIn(1, 7)
-            x.w.upcomingDays().take(rows).forEachIndexed { i, d ->
-                Row(modifier = GlanceModifier.fillMaxWidth().defaultWeight(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(x.f.day(d.epochSec, i), style = style(x.c.text, 13f, FontWeight.Medium), maxLines = 1, modifier = GlanceModifier.defaultWeight())
-                    x.Icon(d.condition, true, 22.dp)
-                    Text(x.f.temp(d.highC), style = style(x.c.text, 13f, FontWeight.Medium, align = TextAlign.End), maxLines = 1, modifier = GlanceModifier.width(36.dp))
-                    Text(x.f.temp(d.lowC), style = style(x.c.textVariant, 13f, align = TextAlign.End), maxLines = 1, modifier = GlanceModifier.width(34.dp))
+            // The day rows get their own column: with the header lines above, up to 7 rows put
+            // 12 children in one Glance column, past its limit of 10.
+            Column(modifier = GlanceModifier.fillMaxWidth().defaultWeight()) {
+                x.w.upcomingDays().take(rows).forEachIndexed { i, d ->
+                    Row(modifier = GlanceModifier.fillMaxWidth().defaultWeight(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(x.f.day(d.epochSec, i), style = style(x.c.text, 13f, FontWeight.Medium), maxLines = 1, modifier = GlanceModifier.defaultWeight())
+                        x.Icon(d.condition, true, 22.dp)
+                        Text(x.f.temp(d.highC), style = style(x.c.text, 13f, FontWeight.Medium, align = TextAlign.End), maxLines = 1, modifier = GlanceModifier.width(36.dp))
+                        Text(x.f.temp(d.lowC), style = style(x.c.textVariant, 13f, align = TextAlign.End), maxLines = 1, modifier = GlanceModifier.width(34.dp))
+                    }
                 }
             }
         }
@@ -571,7 +576,7 @@ private fun Stacked(x: Scope, modifier: GlanceModifier, mode: ForecastMode, inne
         // Header (22) + hero line (font box ≈ 1.3× size) + forecast; drop the rain-chance row first
         // when space is tight so nothing gets clipped.
         val pop = innerH - 22f - heroSize * 1.3f - forecastHeight(daily, iconSize, true) >= 0f
-        ForecastRow(x, innerW, mode, GlanceModifier.fillMaxWidth(), iconSize.dp, allowPop = pop, minCell = 52f)
+        if (mode != ForecastMode.NONE) ForecastRow(x, innerW, mode, GlanceModifier.fillMaxWidth(), iconSize.dp, allowPop = pop, minCell = 52f)
     }
 }
 
@@ -614,21 +619,20 @@ private fun MediumBody(x: Scope, modifier: GlanceModifier, mode: ForecastMode, i
 private fun Large(x: Scope) {
     val innerW = x.width - 32f
     val hasHourly = x.cfg.forecast != ForecastMode.NONE
-    val topH = if (hasHourly) 184f else 96f
+    // Without hourly, the same header as with it (condition beside the temperature), just without
+    // the hourly row. The stacked temperature block cut the icon in half and hid the condition.
+    val topH = if (hasHourly) 184f else 104f
     Box(modifier = GlanceModifier.fillMaxSize()) {
         Column(modifier = GlanceModifier.fillMaxSize().padding(PAD)) {
-            if (hasHourly) {
-                Stacked(x, GlanceModifier.fillMaxWidth().height(topH.dp), ForecastMode.HOURLY, innerW, topH)
-            } else {
-                MediumBody(x, GlanceModifier.fillMaxWidth().height(topH.dp), ForecastMode.NONE, innerW, topH)
-            }
+            Stacked(x, GlanceModifier.fillMaxWidth().height(topH.dp), if (hasHourly) ForecastMode.HOURLY else ForecastMode.NONE, innerW, topH)
             Spacer(GlanceModifier.height(GAP))
             Box(modifier = GlanceModifier.fillMaxWidth().height(1.dp).background(x.c.track)) {}
             Spacer(GlanceModifier.height(TEXT_GAP))
             val rows = floor((x.height - 32f - topH - GAP.value - 5f) / 34f).toInt().coerceIn(1, 7)
-            DailyList(x, rows, innerW)
+            // Own column: 4 children above + up to 7 rows was 11 in one Glance column (limit 10).
+            Column(modifier = GlanceModifier.fillMaxWidth().defaultWeight()) { DailyList(x, rows, innerW) }
         }
-        if (hasHourly) CornerRefresh(x)
+        CornerRefresh(x)
     }
 }
 

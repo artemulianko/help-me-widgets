@@ -14,9 +14,9 @@ Pixel's clock widgets each have their own look and squeeze the date and alarm in
 
 ## Download
 
-**[⬇ Download Help Me Clock 1.0.5 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/clock-v1.0.5/help-me-clock-1.0.5.apk)** · Android 12+ · 3.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/clock-v1.0.5) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+**[⬇ Download Help Me Clock 1.0.6 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/clock-v1.0.6/help-me-clock-1.0.6.apk)** · Android 12+ · 3.4 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/clock-v1.0.6) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-SHA-256 `a5f8106c54aefc00648b9188a653e544166dc6948130fff544ba80cbee3fb98f`
+SHA-256 `3197ea6d89c8f62a85a27d53d1bcbe9c8bb098403eec9a264dcdaa173e6e12f5`
 
 > **Upgrading to 1.0.5 or later from an earlier version:** 1.0.5 moved to a new signing key (registered with Google's developer verification), so Android won't install it over an older version. Uninstall the old app once, install the new one and add the widget again. Later updates install over it normally.
 
@@ -30,7 +30,7 @@ SHA-256 `a5f8106c54aefc00648b9188a653e544166dc6948130fff544ba80cbee3fb98f`
 |---|---|
 | **Your next alarm, always** | The alarm from your clock app (Google Clock, Samsung Clock…) sits at the end of the row: "7:30 AM" when it rings within a day, "Thu 7:30 AM" when later. No alarm, no clutter. Tap it to open that alarm. |
 | **A date you can read** | Pick **Tue, 17 Nov**, **Tue, Nov 17** or **Tuesday, 17 November** (names in your language). The format you pick is always shown in full: every size checks the longest weekday and month (and the widest alarm) first and makes the text smaller rather than cutting it or switching to a shorter format. |
-| **Time already in the status bar?** | Turn **Time** off and the date takes the lead (weekday large, month and day under it) with the alarm beside it. |
+| **Time already in the status bar?** | Turn **Time** off and the date takes the lead in large type, with the alarm beside it. |
 | **Ticks for free** | The time is a system `TextClock` drawn by your launcher, so the widget never wakes the app to tick, and the date turns over at midnight on its own. |
 | **Matches your theme** | Material You colors come straight from the system's color resources, so the widget follows your wallpaper and light/dark mode immediately, even with a transparent background. Seven fixed palettes too. |
 | **Same customization as its siblings** | Palette, theme, background tone, opacity, numeral weight (Light, Regular, Medium), main and secondary text size (Smaller, Default, Larger: the time or big date, and the small date and alarm), what to show, and what a tap does: identical controls, live preview, every size. |

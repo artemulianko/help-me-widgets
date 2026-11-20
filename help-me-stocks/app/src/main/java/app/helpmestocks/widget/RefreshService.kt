@@ -37,6 +37,7 @@ class RefreshService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         goForeground()
+        lastStartId = startId
         if (work?.isActive == true) {
             AppLog.i(this, "Widget", "Refresh already in progress; ignoring extra tap")
             return START_NOT_STICKY
@@ -63,13 +64,22 @@ class RefreshService : Service() {
                 }
                 AppLog.i(app, "Widget", "Refresh tap handled in ${SystemClock.elapsedRealtime() - tapped} ms")
             } finally {
-                stopSelf()
+                // The latest start, so a tap that arrives as this one finishes isn't cut off.
+                stopSelf(lastStartId)
             }
         }
         return START_NOT_STICKY
     }
 
-    /** Android 14+ stops a short service after a few minutes; ours never gets close. */
+    /** Android 14 stops a short service after a few minutes; ours never gets close. */
+    @Deprecated("Android 15+ calls the two-argument version")
+    override fun onTimeout(startId: Int) {
+        AppLog.w(this, "Widget", "Refresh service timed out; stopping")
+        work?.cancel()
+        stopSelf()
+    }
+
+    /** Android 15+ stops a short service after a few minutes; ours never gets close. */
     override fun onTimeout(startId: Int, fgsType: Int) {
         AppLog.w(this, "Widget", "Refresh service timed out; stopping")
         work?.cancel()
@@ -106,6 +116,7 @@ class RefreshService : Service() {
         /** Not tied to the service: stopping it must not cut a refresh's cleanup short. */
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         private var work: Job? = null
+        @Volatile private var lastStartId = 0
 
         /** Milliseconds until the app has a network (it follows the foreground state with a short delay), or -1. */
         private suspend fun waitForNetwork(ctx: Context, maxMs: Long): Long {

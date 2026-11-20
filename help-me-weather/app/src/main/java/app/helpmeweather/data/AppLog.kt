@@ -40,7 +40,7 @@ object AppLog {
 
     private fun write(ctx: Context, level: Level, tag: String, msg: String, t: Throwable?, sync: Boolean = false) {
         val text = redact(if (t != null) "$msg: ${t.javaClass.simpleName}${t.message?.let { " – $it" } ?: ""}" else msg)
-            .replace('\n', ' ').take(500)
+            .replace('\r', ' ').replace('\n', ' ').take(500)
         if (app.helpmeweather.BuildConfig.DEBUG) when (level) {
             Level.I -> Log.i("HelpMeWeather", "[$tag] $text")
             Level.W -> Log.w("HelpMeWeather", "[$tag] $text")
