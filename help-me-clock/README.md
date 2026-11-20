@@ -14,9 +14,9 @@ Pixel's clock widgets each have their own look and squeeze the date and alarm in
 
 ## Download
 
-**[⬇ Download Help Me Clock 1.0.2 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/clock-v1.0.2/help-me-clock-1.0.2.apk)** · Android 12+ · 3.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/clock-v1.0.2) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+**[⬇ Download Help Me Clock 1.0.3 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/clock-v1.0.3/help-me-clock-1.0.3.apk)** · Android 12+ · 3.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/clock-v1.0.3) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-SHA-256 `35726aeb032dbe95214c940db6d77b55a25b74b806765915034f408ca8a745a2`
+SHA-256 `ab95ecfd219d56414d106db174256719673cf7bbaa514d7935b32391b30a4507`
 
 1. Download the APK on your phone and open it (allow "Install unknown apps" for your browser when asked).
 2. Open **Help Me Clock** once.
@@ -27,11 +27,11 @@ SHA-256 `35726aeb032dbe95214c940db6d77b55a25b74b806765915034f408ca8a745a2`
 | | |
 |---|---|
 | **Your next alarm, always** | The alarm from your clock app (Google Clock, Samsung Clock…) sits at the end of the row: "7:30 AM" when it rings within a day, "Thu 7:30 AM" when later. No alarm, no clutter. Tap it to open that alarm. |
-| **A date you can read** | Pick **Tue, 17 Nov**, **Tue, Nov 17** or **Tuesday, 17 November** (names in your language). Every size checks the longest weekday and month first and steps down to a shorter format instead of cutting anything off. |
+| **A date you can read** | Pick **Tue, 17 Nov**, **Tue, Nov 17** or **Tuesday, 17 November** (names in your language). The format you pick is always shown in full: every size checks the longest weekday and month (and the widest alarm) first and makes the text smaller rather than cutting it or switching to a shorter format. |
 | **Time already in the status bar?** | Turn **Time** off and the date takes the lead (weekday large, month and day under it) with the alarm beside it. |
 | **Ticks for free** | The time is a system `TextClock` drawn by your launcher, so the widget never wakes the app to tick, and the date turns over at midnight on its own. |
 | **Matches your theme** | Material You colors come straight from the system's color resources, so the widget follows your wallpaper and light/dark mode immediately, even with a transparent background. Seven fixed palettes too. |
-| **Same customization as its siblings** | Palette, theme, background tone, opacity, numeral weight (Light, Regular, Medium), what to show, and what a tap does: identical controls, live preview, every size. |
+| **Same customization as its siblings** | Palette, theme, background tone, opacity, numeral weight (Light, Regular, Medium), main and secondary text size (Smaller, Default, Larger: the time or big date, and the small date and alarm), what to show, and what a tap does: identical controls, live preview, every size. |
 | **Material 3, by the guidelines** | 16 dp padding, the system corner radius, Google Sans on Pixel, tabular digits so the time never shifts sideways, AM/PM small on the baseline, 12/24-hour from your system setting. |
 
 ## Every size, laid out properly

@@ -90,7 +90,8 @@ private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val wi
     // Capped at 1.15×: beyond that the labels outgrew the time at the largest font sizes.
     // The Text size setting scales labels here and the big numerals and dates in the fit functions.
     val textScale get() = cfg.textSize.factor
-    val fontScale = min(ctx.resources.configuration.fontScale, 1.15f) * s.cfg.textSize.factor
+    /** Small text (date label, alarm): the system font scale times the secondary text size. */
+    val fontScale = min(ctx.resources.configuration.fontScale, 1.15f) * s.cfg.secondaryTextSize.factor
     /** Smaller shrinks what would fill the space; Larger only raises caps (it can't exceed a fit). */
     private val shrink get() = min(textScale, 1f)
     fun pattern(skeleton: String): String = DateFormat.getBestDateTimePattern(locale, skeleton)
@@ -133,12 +134,30 @@ private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val wi
     }
     fun dateWidth(pattern: String, sp: Float) = worst(pattern) * sp * fontScale + 2f
 
-    /** The chosen date style, or a shorter one when it can't fit [maxW] at [sp]. Never truncated. */
-    fun dateLine(maxW: Float, sp: Float): String =
-        listOf(cfg.dateStyle.pattern, "EEE, " + dayMonth(false), "EEE d", "d")
-            .distinct().firstOrNull { dateWidth(it, sp) <= maxW } ?: "d"
+    /**
+     * Size for the chosen date style in [maxW]: [sp], or smaller so the full date fits. The owner's
+     * rule: shrink the text rather than cut it or switch to a shorter format (2026-11-20).
+     */
+    fun dateSp(maxW: Float, sp: Float): Float {
+        val w = dateWidth(cfg.dateStyle.pattern, sp) - 2f
+        return if (w <= maxW - 2f) sp else max(6f, sp * (maxW - 2f) / w)
+    }
 
     fun alarmWidth(sp: Float) = alarmText?.let { sp * fontScale + 4f + labelWidth(it, sp) + 2f } ?: 0f
+
+    /**
+     * Room for the widest alarm of the same kind as the current one (time only, or weekday and
+     * time; 12 or 24 hour), so text placed beside it keeps one size whatever the alarm is and can
+     * never overlap it. ("9:19" vs "10:00" used to decide whether the full date fit on a 4×1.)
+     */
+    fun alarmReserveWidth(sp: Float): Float {
+        val a = alarm ?: return 0f
+        val sym = java.text.DateFormatSymbols.getInstance(locale)
+        fun widest(xs: Iterable<String>) = xs.filter { it.isNotBlank() }.maxByOrNull { labelWidth(it, sp) }.orEmpty()
+        val time = if (is24) "23:59" else "12:59 " + widest(sym.amPmStrings.asIterable())
+        val day = if (a.triggerAt - s.now >= 24 * 60 * 60 * 1000L) widest(sym.shortWeekdays.asIterable()) + " " else ""
+        return max(alarmWidth(sp), sp * fontScale + 4f + labelWidth(day + time, sp) + 2f)
+    }
 
     // ---- RemoteViews builders (TextClock isn't available as a Glance composable) ----
 
@@ -298,9 +317,9 @@ private fun Big(sc: Scope, fmt12: String, fmt24: String, size: Float, width: Flo
 /** A big date line in the chosen style, fitted to [maxW] × [maxH], at most [cap] dp. */
 @Composable
 private fun BigDate(sc: Scope, maxW: Float, maxH: Float, cap: Float = Float.MAX_VALUE) {
-    // Prefer the chosen style; drop to a shorter one only if it would end up label-sized.
-    val p = listOf(sc.cfg.dateStyle.pattern, "EEE, " + sc.dayMonth(false), "EEE d")
-        .firstOrNull { sc.fitDate(it, maxW, maxH) >= LABEL_LARGE * 1.25f } ?: "EEE d"
+    // Always the chosen style in full, shrunk to fit: never cut, never swapped for a shorter one
+    // (it swapped "Friday, 20 November" for "Fri, 20 Nov" on a 4×1; owner, 2026-11-20).
+    val p = sc.cfg.dateStyle.pattern
     val size = min(cap * sc.textScale, sc.fitDate(p, maxW, maxH))
     Big(sc, p, p, size, sc.bigDateWidth(p, size))
 }
@@ -364,7 +383,7 @@ private fun Compact(sc: Scope) {
     val header = max(sc.labelHeight(sp), sp * sc.fontScale)
     val dateMax = inner - sc.alarmWidth(sp) - 8f
     Box(GlanceModifier.fillMaxSize().padding(PAD.dp)) {
-        SplitLine(header, { if (sc.showDate) DateLabel(sc, sc.dateLine(dateMax, sp), sp, sc.c.textVariant) }, { Alarm(sc, sp) })
+        SplitLine(header, { if (sc.showDate) DateLabel(sc, sc.cfg.dateStyle.pattern, sc.dateSp(dateMax, sp), sc.c.textVariant) }, { Alarm(sc, sp) })
         Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.BottomStart) {
             TimeRow(sc, sc.width - 2 * PAD, sc.height - 2 * PAD - header - GAP)
         }
@@ -393,7 +412,7 @@ private fun Wide(sc: Scope) {
         Box(GlanceModifier.fillMaxSize().padding(top = nudge.dp), contentAlignment = Alignment.CenterStart) {
             Column {
                 if (sc.showDate) {
-                    DateLabel(sc, sc.dateLine(leftW, LABEL_LARGE), LABEL_LARGE, sc.c.text)
+                    DateLabel(sc, sc.cfg.dateStyle.pattern, sc.dateSp(leftW, LABEL_LARGE), sc.c.text)
                     Spacer(GlanceModifier.height(GAP.dp))
                 }
                 TimeRow(sc, timeW, timeH)
@@ -437,7 +456,7 @@ private fun Large(sc: Scope) {
     val header = max(sc.labelHeight(LABEL_LARGE), LABEL_LARGE * sc.fontScale)
     val dateMax = sc.width - 2 * PAD - sc.alarmWidth(LABEL_LARGE) - 16f
     Box(GlanceModifier.fillMaxSize().padding(PAD.dp)) {
-        SplitLine(header, { if (sc.showDate) DateLabel(sc, sc.dateLine(dateMax, LABEL_LARGE), LABEL_LARGE, sc.c.text) }, { Alarm(sc, LABEL_LARGE) })
+        SplitLine(header, { if (sc.showDate) DateLabel(sc, sc.cfg.dateStyle.pattern, sc.dateSp(dateMax, LABEL_LARGE), sc.c.text) }, { Alarm(sc, LABEL_LARGE) })
         Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.BottomStart) {
             TimeRow(sc, sc.width - 2 * PAD, sc.height - 2 * PAD - header - GAP)
         }
@@ -484,7 +503,7 @@ private fun DateCompact(sc: Scope) {
 @Composable
 private fun DateWide(sc: Scope) {
     val alarmSp = ALARM_BESIDE_DATE
-    val alarmW = sc.alarmWidth(alarmSp)
+    val alarmW = sc.alarmReserveWidth(alarmSp)
     Box(GlanceModifier.fillMaxSize().padding(horizontal = PAD.dp, vertical = 12.dp)) {
         Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
             BigDate(sc, sc.width - 2 * PAD - (if (alarmW > 0f) alarmW + 24f else 0f), sc.height - 24f, BIG_DATE_MAX)

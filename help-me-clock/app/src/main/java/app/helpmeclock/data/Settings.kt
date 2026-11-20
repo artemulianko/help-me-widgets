@@ -16,12 +16,16 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
 enum class BgTone { SURFACE, PRIMARY, SECONDARY }
 /** Weight of the big numerals only; the date and alarm always stay regular. */
 enum class Weight(val value: Int) { LIGHT(300), REGULAR(400), MEDIUM(500) }
-/** Scales the date, time and alarm text; fitting still runs afterwards, so nothing is cut off. */
+/**
+ * Scales text; fitting still runs afterwards, so nothing is cut off. [WidgetConfig.textSize] is
+ * the main line (the time, or the date when the time is off); [WidgetConfig.secondaryTextSize]
+ * is the small text (the date under the time, the next alarm).
+ */
 enum class TextSize(val factor: Float) { SMALLER(0.88f), DEFAULT(1f), LARGER(1.12f) }
 /**
  * How the date line reads. Patterns use pattern letters, so names follow your language; the
- * order (day before or after month) is your choice, not the locale's. A format that doesn't fit
- * a size falls back to a shorter one rather than being cut off.
+ * order (day before or after month) is your choice, not the locale's. The chosen format is
+ * shown in full and shrinks to fit; only a size too small to read falls back to a shorter one.
  */
 enum class DateStyle(val pattern: String) {
     DAY_MONTH("EEE, d MMM"),        // Tue, 17 Nov
@@ -35,6 +39,7 @@ enum class TapAction { CLOCK, APP, NONE }
 data class WidgetConfig(
     val weight: Weight = Weight.REGULAR,
     val textSize: TextSize = TextSize.DEFAULT,
+    val secondaryTextSize: TextSize = TextSize.DEFAULT,
     val palette: Palette = Palette.DYNAMIC,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val bgTone: BgTone = BgTone.SURFACE,

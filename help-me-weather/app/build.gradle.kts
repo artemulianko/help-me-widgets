@@ -14,8 +14,8 @@ android {
         applicationId = "app.helpmeweather"
         minSdk = 31
         targetSdk = 37
-        versionCode = 19
-        versionName = "1.0.3"
+        versionCode = 20
+        versionName = "1.0.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
     }

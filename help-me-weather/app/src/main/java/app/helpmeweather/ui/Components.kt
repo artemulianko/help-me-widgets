@@ -68,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.composeForPreview
 import androidx.glance.appwidget.compose
 import androidx.glance.appwidget.provideContent
 import app.helpmeweather.data.Palette
@@ -110,9 +111,20 @@ fun HelpMeWeatherTheme(content: @Composable () -> Unit) {
 
 // ---- live widget preview: renders the real Glance RemoteViews -----------------------------
 
-private class PreviewWidget(private val state: WidgetState) : GlanceAppWidget() {
+/**
+ * The widget's own content at one exact [size], drawn with Glance's single-pass preview composer.
+ * (`compose()` ran a whole widget session per draw: 12 s per preview on an emulator, so quick
+ * switch changes showed stale states for seconds.)
+ */
+private class PreviewWidget(private val state: WidgetState, private val size: DpSize) : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent { WeatherContent(state) }
+    }
+
+    override suspend fun providePreview(context: Context, widgetCategory: Int) {
+        provideContent {
+            androidx.compose.runtime.CompositionLocalProvider(androidx.glance.LocalSize provides size) { WeatherContent(state) }
+        }
     }
 }
 
@@ -140,7 +152,7 @@ fun WidgetPreview(state: WidgetState, size: DpSize, modifier: Modifier = Modifie
         androidx.compose.runtime.snapshotFlow { latest }.conflate().collect { (s, sz) ->
             val t0 = android.os.SystemClock.elapsedRealtime()
             val drawn = try {
-                withContext(Dispatchers.Default) { PreviewWidget(s).compose(ctx, size = sz) }
+                withContext(Dispatchers.Default) { PreviewWidget(s, sz).composeForPreview(ctx, android.appwidget.AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN) }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {

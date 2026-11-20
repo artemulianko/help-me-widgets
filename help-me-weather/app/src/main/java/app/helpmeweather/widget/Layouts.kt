@@ -189,7 +189,8 @@ private fun LocationLabel(x: Scope, size: Float = 14f, modifier: GlanceModifier 
             Text(x.s.place?.name ?: x.w.place.name, style = style(x.c.text, size, FontWeight.Medium), maxLines = 1)
         }
         if (time != null) {
-            Text((if (x.cfg.showLocation) " · " else "") + time, style = style(x.c.textVariant, size), maxLines = 1)
+            // A step smaller than the place, so the time reads as a detail (owner, 2026-11-20).
+            Text((if (x.cfg.showLocation) " · " else "") + time, style = style(x.c.textVariant, size - 2f), maxLines = 1)
         }
     }
 }

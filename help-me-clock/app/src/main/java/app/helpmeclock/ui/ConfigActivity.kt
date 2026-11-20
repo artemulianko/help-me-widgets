@@ -148,9 +148,9 @@ fun WidgetEditor(initial: WidgetConfig, onClose: () -> Unit, onSave: (WidgetConf
                     choiceRow("Weight", listOf(Weight.LIGHT to "Light", Weight.REGULAR to "Regular", Weight.MEDIUM to "Medium"), cfg.weight, "weight") {
                         cfg = cfg.copy(weight = it)
                     }
-                    choiceRow("Text size", listOf(TextSize.SMALLER to "Smaller", TextSize.DEFAULT to "Default", TextSize.LARGER to "Larger"), cfg.textSize, "textsize") {
-                        cfg = cfg.copy(textSize = it)
-                    }
+                    val sizes = listOf(TextSize.SMALLER to "Smaller", TextSize.DEFAULT to "Default", TextSize.LARGER to "Larger")
+                    choiceRow("Main text size", sizes, cfg.textSize, "textsize") { cfg = cfg.copy(textSize = it) }
+                    choiceRow("Secondary text size", sizes, cfg.secondaryTextSize, "textsize2") { cfg = cfg.copy(secondaryTextSize = it) }
                 }
 
                 SettingsGroup("Appearance") {
@@ -178,14 +178,18 @@ fun WidgetEditor(initial: WidgetConfig, onClose: () -> Unit, onSave: (WidgetConf
                         cfg = cfg.copy(showTime = it, showDate = cfg.showDate || !it)
                     }
                     switchRow("Date", cfg.showDate, tag = "sw_date") { cfg = cfg.copy(showDate = it, showTime = cfg.showTime || !it) }
-                    if (cfg.showDate) {
-                        choiceRow(
-                            "Date format",
-                            DateStyle.entries.map { it to java.text.SimpleDateFormat(it.pattern, java.util.Locale.getDefault()).format(today) },
-                            cfg.dateStyle, "datefmt",
-                        ) { cfg = cfg.copy(dateStyle = it) }
-                    }
                     switchRow("Next alarm", cfg.showAlarm, "Alarms from your clock app. Hidden when none is set", tag = "sw_alarm") { cfg = cfg.copy(showAlarm = it) }
+                }
+
+                if (cfg.showDate) {
+                    // Full examples as titles: in a segmented row "Friday, 20 November" was cut off.
+                    SettingsGroup("Date format") {
+                        listOf(DateStyle.DAY_MONTH to "Short", DateStyle.MONTH_DAY to "Short, month first", DateStyle.LONG to "Full")
+                            .forEachIndexed { i, (style, summary) ->
+                                val example = java.text.SimpleDateFormat(style.pattern, java.util.Locale.getDefault()).format(today)
+                                radioRow(example, cfg.dateStyle == style, summary, tag = "datefmt_$i") { cfg = cfg.copy(dateStyle = style) }
+                            }
+                    }
                 }
 
                 SettingsGroup("On tap") {
