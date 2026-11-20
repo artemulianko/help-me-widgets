@@ -45,6 +45,8 @@ private const val LABEL_LARGE = 16f  // date and alarm on larger sizes, sp
 private const val AMPM_RATIO = 0.28f // AM/PM size relative to the numerals
 private const val BIG_DATE_MAX = 24f // date-led: a step above At a Glance, not a poster
 private const val ALARM_BESIDE_DATE = 16f // sp: answers a 24 dp date without competing
+private const val ALARM_SHARE = 0.30f     // 4×1 date-led: the alarm's share of the width
+private const val ZONE_GAP = 16f          // dp between the date and alarm zones
 private const val SOLO = 0.72f       // time alone: a calmer size than "fill the widget"
 
 /**
@@ -150,12 +152,12 @@ private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val wi
      * time; 12 or 24 hour), so text placed beside it keeps one size whatever the alarm is and can
      * never overlap it. ("9:19" vs "10:00" used to decide whether the full date fit on a 4×1.)
      */
-    fun alarmReserveWidth(sp: Float): Float {
+    fun alarmReserveWidth(sp: Float, anyKind: Boolean = false): Float {
         val a = alarm ?: return 0f
         val sym = java.text.DateFormatSymbols.getInstance(locale)
         fun widest(xs: Iterable<String>) = xs.filter { it.isNotBlank() }.maxByOrNull { labelWidth(it, sp) }.orEmpty()
         val time = if (is24) "23:59" else "12:59 " + widest(sym.amPmStrings.asIterable())
-        val day = if (a.triggerAt - s.now >= 24 * 60 * 60 * 1000L) widest(sym.shortWeekdays.asIterable()) + " " else ""
+        val day = if (anyKind || a.triggerAt - s.now >= 24 * 60 * 60 * 1000L) widest(sym.shortWeekdays.asIterable()) + " " else ""
         return max(alarmWidth(sp), sp * fontScale + 4f + labelWidth(day + time, sp) + 2f)
     }
 
@@ -242,8 +244,8 @@ private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val wi
     }
 
     /** Largest size (dp) at which every date the pattern can show fits. */
-    fun fitDate(pattern: String, maxW: Float, maxH: Float): Float =
-        max(8f, min(maxW * 0.97f / worst(pattern, cfg.weight.value, -0.02f), maxH / timeUnit.height) * shrink)
+    fun fitDate(pattern: String, maxW: Float, maxH: Float, applyShrink: Boolean = true): Float =
+        max(8f, min(maxW * 0.97f / worst(pattern, cfg.weight.value, -0.02f), maxH / timeUnit.height) * (if (applyShrink) shrink else 1f))
 
     fun bigLineHeight(size: Float): Float = timeUnit.height * size
     /** Empty space under digits (they have no descenders) at [size]. */
@@ -316,11 +318,11 @@ private fun Big(sc: Scope, fmt12: String, fmt24: String, size: Float, width: Flo
 
 /** A big date line in the chosen style, fitted to [maxW] × [maxH], at most [cap] dp. */
 @Composable
-private fun BigDate(sc: Scope, maxW: Float, maxH: Float, cap: Float = Float.MAX_VALUE) {
+private fun BigDate(sc: Scope, maxW: Float, maxH: Float, cap: Float = Float.MAX_VALUE, shrinkFit: Boolean = true) {
     // Always the chosen style in full, shrunk to fit: never cut, never swapped for a shorter one
     // (it swapped "Friday, 20 November" for "Fri, 20 Nov" on a 4×1; owner, 2026-11-20).
     val p = sc.cfg.dateStyle.pattern
-    val size = min(cap * sc.textScale, sc.fitDate(p, maxW, maxH))
+    val size = min(cap * sc.textScale, sc.fitDate(p, maxW, maxH, shrinkFit))
     Big(sc, p, p, size, sc.bigDateWidth(p, size))
 }
 
@@ -502,11 +504,19 @@ private fun DateCompact(sc: Scope) {
  */
 @Composable
 private fun DateWide(sc: Scope) {
-    val alarmSp = ALARM_BESIDE_DATE
-    val alarmW = sc.alarmReserveWidth(alarmSp)
+    // Fixed zones (owner, 2026-11-20): the alarm owns the end ~30%, the date the rest. Each text
+    // has its normal size (main / secondary text size) and only shrinks if its own widest case
+    // ("Wednesday, 30 September"; "Wed 23:59") can't fit its zone, so neither depends on the
+    // other and both stay one size day to day. The zone follows the setting, not whether an
+    // alarm is set right now, so the date doesn't jump when an alarm comes or goes.
+    val inner = sc.width - 2 * PAD
+    val alarmZone = if (sc.cfg.showAlarm) inner * ALARM_SHARE else 0f
+    val dateZone = inner - if (alarmZone > 0f) alarmZone + ZONE_GAP else 0f
+    val worstAlarm = sc.alarmReserveWidth(ALARM_BESIDE_DATE, anyKind = true)
+    val alarmSp = if (worstAlarm > alarmZone && worstAlarm > 0f) ALARM_BESIDE_DATE * alarmZone / worstAlarm else ALARM_BESIDE_DATE
     Box(GlanceModifier.fillMaxSize().padding(horizontal = PAD.dp, vertical = 12.dp)) {
         Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
-            BigDate(sc, sc.width - 2 * PAD - (if (alarmW > 0f) alarmW + 24f else 0f), sc.height - 24f, BIG_DATE_MAX)
+            BigDate(sc, dateZone, sc.height - 24f, BIG_DATE_MAX, shrinkFit = false)
         }
         Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) { Alarm(sc, alarmSp) }
     }
