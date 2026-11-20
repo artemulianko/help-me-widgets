@@ -110,7 +110,7 @@ Release builds don't mirror `AppLog` to logcat (and aren't `run-as` debuggable).
 R8 has broken features that worked in debug (the refresh button in weather 0.1.0). Before any release:
 
 ```bash
-./gradlew assembleRelease            # stocks: add -PallowDebugSigning=true (no release key yet)
+./gradlew assembleRelease            # signed with the shared key in keystore/ at the repo root
 adb install -r releases/help-me-<widget>-<version>.apk
 ```
 

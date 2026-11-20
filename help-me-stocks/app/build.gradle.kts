@@ -14,22 +14,23 @@ android {
         applicationId = "app.helpmestocks"
         minSdk = 31
         targetSdk = 37
-        versionCode = 19
-        versionName = "1.0.4"
+        versionCode = 20
+        versionName = "1.0.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
     }
 
-    // Release key lives in keystore/ (git-ignored). Without it, release falls back to the debug key.
+    // One release key for every widget, in keystore/ at the repo root (git-ignored). Without it,
+    // release falls back to the debug key.
     val keystoreProps = Properties().apply {
-        rootProject.file("keystore/keystore.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+        rootProject.file("../keystore/keystore.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
     }
     // A usable key needs every property and the keystore file; anything less counts as missing.
     val hasReleaseKey = listOf("storeFile", "storePassword", "keyAlias", "keyPassword").all { !keystoreProps.getProperty(it).isNullOrBlank() } &&
-        rootProject.file(keystoreProps.getProperty("storeFile")).isFile
+        rootProject.file("../keystore/" + keystoreProps.getProperty("storeFile")).isFile
     signingConfigs {
         if (hasReleaseKey) create("release") {
-            storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))
+            storeFile = rootProject.file("../keystore/" + keystoreProps.getProperty("storeFile"))
             storePassword = keystoreProps.getProperty("storePassword")
             keyAlias = keystoreProps.getProperty("keyAlias")
             keyPassword = keystoreProps.getProperty("keyPassword")

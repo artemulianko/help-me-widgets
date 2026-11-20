@@ -14,19 +14,20 @@ android {
         applicationId = "app.helpmeweather"
         minSdk = 31
         targetSdk = 37
-        versionCode = 20
-        versionName = "1.0.4"
+        versionCode = 21
+        versionName = "1.0.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
     }
 
-    // Release key lives in keystore/ (git-ignored). Without it, release falls back to the debug key.
+    // One release key for every widget, in keystore/ at the repo root (git-ignored). Without it,
+    // release falls back to the debug key.
     val keystoreProps = Properties().apply {
-        rootProject.file("keystore/keystore.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+        rootProject.file("../keystore/keystore.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
     }
     signingConfigs {
         if (keystoreProps.isNotEmpty()) create("release") {
-            storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))
+            storeFile = rootProject.file("../keystore/" + keystoreProps.getProperty("storeFile"))
             storePassword = keystoreProps.getProperty("storePassword")
             keyAlias = keystoreProps.getProperty("keyAlias")
             keyPassword = keystoreProps.getProperty("keyPassword")

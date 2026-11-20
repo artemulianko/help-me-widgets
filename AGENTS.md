@@ -128,7 +128,7 @@ Rules:
 2. Run unit tests and the device tests, then build the release:
    `./gradlew testDebugUnitTest assembleRelease`
    The APK is copied to `releases/help-me-<widget>-<version>.apk` (git-ignored).
-3. Signing: weather uses `keystore/release.jks` (git-ignored; never commit, never print passwords). Stocks and Clock have **no release key yet**: their builds are debug-signed, so they need `-PallowDebugSigning=true` to install over earlier versions. Changing the key forces users to uninstall first, so it needs the owner's decision.
+3. Signing: **one release key for every widget**, `keystore/release.jks` at the repo root (alias `helpme`, certificate "CN=Help Me Widgets", SHA-256 `0A:5A:69:0C:36:FF:61:93:30:02:77:94:42:91:8B:C6:40:31:77:13:37:0D:8F:B5:4A:FD:C4:0E:31:73:34:53`; created 2026-11-20, from 1.0.5). The keystore and `keystore/keystore.properties` (passwords) are git-ignored; never commit them, never print the passwords, and the owner keeps a backup (a lost key means the apps can never be updated). The same certificate is registered for every package name in the Android Developer Console (developer verification). Check every release with `apksigner verify --print-certs`. Changing the key forces users to uninstall first, so it needs the owner's decision.
 4. Install the release APK on the emulator, then tap through the widget (pin, refresh, editor, logs).
 5. Write `releases/RELEASE_NOTES-<version>.md`: what's new or fixed in plain words, upgrade notes, and the SHA-256 (`shasum -a 256 <apk>`).
 6. Publish only when asked: a GitHub Release in this repo tagged `<widget>-v<version>` (e.g. `stocks-v0.1.2`, `weather-v0.1.4`), with the APK attached and the notes as the body. Update the download link and SHA-256 in that widget's README.

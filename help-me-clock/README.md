@@ -14,9 +14,11 @@ Pixel's clock widgets each have their own look and squeeze the date and alarm in
 
 ## Download
 
-**[⬇ Download Help Me Clock 1.0.4 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/clock-v1.0.4/help-me-clock-1.0.4.apk)** · Android 12+ · 3.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/clock-v1.0.4) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+**[⬇ Download Help Me Clock 1.0.5 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/clock-v1.0.5/help-me-clock-1.0.5.apk)** · Android 12+ · 3.2 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/clock-v1.0.5) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-SHA-256 `64fb82e38d21a30a5aeabcd52707fcecd7b8e2187b44491bb3842d0ded625893`
+SHA-256 `a5f8106c54aefc00648b9188a653e544166dc6948130fff544ba80cbee3fb98f`
+
+> **Upgrading to 1.0.5 or later from an earlier version:** 1.0.5 moved to a new signing key (registered with Google's developer verification), so Android won't install it over an older version. Uninstall the old app once, install the new one and add the widget again. Later updates install over it normally.
 
 1. Download the APK on your phone and open it (allow "Install unknown apps" for your browser when asked).
 2. Open **Help Me Clock** once.

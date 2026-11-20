@@ -14,9 +14,11 @@ iPhone has had a clean Stocks widget for years: your watchlist, the day's chart,
 
 ## Download
 
-**[⬇ Download Help Me Stocks 1.0.4 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v1.0.4/help-me-stocks-1.0.4.apk)** · Android 12+ · 3.9 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/stocks-v1.0.4) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+**[⬇ Download Help Me Stocks 1.0.5 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v1.0.5/help-me-stocks-1.0.5.apk)** · Android 12+ · 3.9 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/stocks-v1.0.5) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-SHA-256 `858d2abe040e496931754cb3557540df38f1fc7f1eca24c05210f8c08a1ed39d`
+SHA-256 `f6e73a677916bcc86806c0da30805303835f4d8750209ab3914ac753f1562a42`
+
+> **Upgrading to 1.0.5 or later from an earlier version:** 1.0.5 moved to a new signing key (registered with Google's developer verification), so Android won't install it over an older version. Uninstall the old app once, install the new one and add the widget again. Later updates install over it normally.
 
 1. Download the APK on your phone and open it (allow "Install unknown apps" for your browser when asked).
 2. Open **Help Me Stocks** once, and add or reorder stocks in **Watchlist**.
