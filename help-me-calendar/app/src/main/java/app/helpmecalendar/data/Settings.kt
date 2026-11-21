@@ -34,6 +34,8 @@ data class WidgetConfig(
     val showLocation: Boolean = false,
     /** 3-day upcoming mini-strip with calendar-color dots under the date on 4×2. */
     val showUpcomingDays: Boolean = true,
+    /** Show a cozy lounging cat illustration when there are no upcoming events. */
+    val showEmptyCat: Boolean = true,
     /** How many days ahead to include in the agenda: 1 (today), 3, 7, or 14. */
     val daysAhead: Int = 7,
     val tapAction: TapAction = TapAction.CALENDAR,

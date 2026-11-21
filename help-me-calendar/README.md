@@ -8,9 +8,9 @@ No feeds, no accounts, no ads, no notifications, and **no internet permission**.
 
 ## Download
 
-**[⬇ Download Help Me Calendar 0.1.1 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/calendar-v0.1.1/help-me-calendar-0.1.1.apk)** · Android 12+ · 3.6 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/calendar-v0.1.1) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+**[⬇ Download Help Me Calendar 0.1.2 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/calendar-v0.1.2/help-me-calendar-0.1.2.apk)** · Android 12+ · 3.6 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/calendar-v0.1.2) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-SHA-256 `b94aac805ce187726abd373a8f4d9b42b1ad0b997e99acc9f532cc21e5182c3b`
+SHA-256 `83be885957398727743af91f6c6c01ee66700c062c422935b1caf695c4616061`
 
 1. Download the APK on your phone and open it.
 2. Open **Help Me Calendar** once and allow **Calendar access** (read-only, stays on your phone).

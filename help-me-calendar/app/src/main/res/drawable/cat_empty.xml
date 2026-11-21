@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Minimal peeking grey tabby face (ears, forehead stripes, curious eyes, nose) flush to the bottom edge. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="112dp"
+    android:height="62dp"
+    android:viewportWidth="120"
+    android:viewportHeight="66">
+
+    <!-- Left ear (upright, pointed) -->
+    <path
+        android:fillColor="#94979F"
+        android:pathData="M24,42 L19,10 C18.5,6.5 23,5 25.5,7.8 L45,28 Z" />
+    <path
+        android:fillColor="#CFA49E"
+        android:pathData="M27,36 L24,16 L39,29 Z" />
+
+    <!-- Right ear (slightly tilted out, matching the photo) -->
+    <path
+        android:fillColor="#94979F"
+        android:pathData="M72,27 L96,15 C99.5,13.2 102,17 99.5,20.2 L86,43 Z" />
+    <path
+        android:fillColor="#CFA49E"
+        android:pathData="M76,30 L92,21 L83,37 Z" />
+
+    <!-- Peeking head dome cropped cleanly at bottom edge (y=66) -->
+    <path
+        android:fillColor="#A1A4AC"
+        android:pathData="M18,66 C18,38 35,23 59,23 C83,23 100,38 100,66 Z" />
+
+    <!-- Subtle creamy muzzle hint rising at bottom center -->
+    <path
+        android:fillColor="#ECE8E1"
+        android:pathData="M43,66 C43,56 50,53 59,55 C68,53 75,56 75,66 Z" />
+
+    <!-- Minimal forehead tabby M ticks -->
+    <path
+        android:pathData="M51,26 L53,34 M59,25 L59,34 M67,26 L65,34"
+        android:strokeColor="#6E7179"
+        android:strokeWidth="2.8"
+        android:strokeLineCap="round" />
+
+    <!-- Subtle cheek tabby ticks -->
+    <path
+        android:pathData="M22,52 L30,53 M21,59 L29,59"
+        android:strokeColor="#767981"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M88,53 L96,52 M89,59 L97,59"
+        android:strokeColor="#767981"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round" />
+
+    <!-- Left eye: big curious dark olive with crisp catchlight -->
+    <path
+        android:fillColor="#5B6E47"
+        android:pathData="M35.5,46 A6.2,6.2 0 1,0 47.9,46 A6.2,6.2 0 1,0 35.5,46 Z" />
+    <path
+        android:fillColor="#1A1E17"
+        android:pathData="M37.3,45.8 A4.5,4.7 0 1,0 46.3,45.8 A4.5,4.7 0 1,0 37.3,45.8 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38.8,43.5 A1.8,1.8 0 1,0 42.4,43.5 A1.8,1.8 0 1,0 38.8,43.5 Z" />
+
+    <!-- Right eye -->
+    <path
+        android:fillColor="#5B6E47"
+        android:pathData="M70.5,46 A6.2,6.2 0 1,0 82.9,46 A6.2,6.2 0 1,0 70.5,46 Z" />
+    <path
+        android:fillColor="#1A1E17"
+        android:pathData="M72.3,45.8 A4.5,4.7 0 1,0 81.3,45.8 A4.5,4.7 0 1,0 72.3,45.8 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M73.8,43.5 A1.8,1.8 0 1,0 77.4,43.5 A1.8,1.8 0 1,0 73.8,43.5 Z" />
+
+    <!-- Terracotta-brown little nose peeking near the bottom edge -->
+    <path
+        android:fillColor="#9A5F52"
+        android:pathData="M55,56.5 C55,54.8 63,54.8 63,56.5 C63,58.5 60.5,60.8 59,60.8 C57.5,60.8 55,58.5 55,56.5 Z" />
+
+    <!-- Delicate whiskers -->
+    <path
+        android:pathData="M38,59 Q22,57 8,55 M37,63 Q21,63 7,64"
+        android:strokeColor="#DEDAD3"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M80,59 Q96,57 110,55 M81,63 Q97,63 111,64"
+        android:strokeColor="#DEDAD3"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round" />
+</vector>

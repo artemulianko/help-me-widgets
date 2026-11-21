@@ -236,6 +236,7 @@ fun WidgetEditor(
                     ) { cfg = cfg.copy(daysAhead = it) }
                     switchRow("All-day events", cfg.showAllDay, tag = "sw_allday") { cfg = cfg.copy(showAllDay = it) }
                     switchRow("Upcoming days strip", cfg.showUpcomingDays, "Next 3 days with event dots under the date (4×2)", tag = "sw_upcoming_days") { cfg = cfg.copy(showUpcomingDays = it) }
+                    switchRow("Cat when free", cfg.showEmptyCat, "Show a lounging cat illustration when you have no upcoming events", tag = "sw_empty_cat") { cfg = cfg.copy(showEmptyCat = it) }
                     switchRow("Event location", cfg.showLocation, "Shown beside the time when space allows", tag = "sw_location") { cfg = cfg.copy(showLocation = it) }
                 }
 
