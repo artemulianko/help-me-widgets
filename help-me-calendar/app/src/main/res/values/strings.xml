@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Help Me Calendar</string>
+    <string name="widget_name">Calendar</string>
+    <string name="widget_description">Today\'s date and upcoming events in a clean Material You card, with per-widget calendar filtering.</string>
+    <string name="all_day">All day</string>
+    <string name="no_events">No upcoming events</string>
+    <string name="no_events_today">Nothing left today</string>
+    <string name="today">Today</string>
+    <string name="tomorrow">Tomorrow</string>
+    <string name="tap_to_allow_calendar">Tap to allow calendar access</string>
+</resources>
