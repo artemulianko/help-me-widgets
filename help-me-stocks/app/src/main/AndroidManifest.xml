@@ -12,6 +12,9 @@
          never shown: POST_NOTIFICATIONS stays removed. WorkManager's own foreground path stays
          removed too. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Lets the in-app "Unrestricted battery" button show Android's 1-tap exemption dialog so
+         Doze/App Standby doesn't hold background refreshes back for hours (owner-approved 2026-11-21). -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:node="remove" />
 
     <!-- Tap targets: open quotes in Yahoo Finance or the Google app when installed. -->

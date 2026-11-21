@@ -10,6 +10,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -119,6 +120,8 @@ private fun HomeScreen() {
     var hasPrecise by remember { mutableStateOf(Locations.hasPrecise(ctx)) }
     // Android 12+ "Pause app activity if unused" can stop a rarely-opened app after ~3 months.
     var hibernationExempt by remember { mutableStateOf(ctx.packageManager.isAutoRevokeWhitelisted) }
+    // Doze / App Standby can defer background refreshes for hours on mobile data unless unrestricted.
+    var batteryUnrestricted by remember { mutableStateOf(ctx.getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(ctx.packageName) == true) }
     var widgets by remember { mutableStateOf<List<Pair<Int, WidgetConfig>>>(emptyList()) }
     var tick by remember { mutableIntStateOf(0) }
 
@@ -133,6 +136,7 @@ private fun HomeScreen() {
         hasBg = Locations.hasBackground(ctx)
         hasPrecise = Locations.hasPrecise(ctx)
         hibernationExempt = ctx.packageManager.isAutoRevokeWhitelisted
+        batteryUnrestricted = ctx.getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(ctx.packageName) == true
         tick++
         refresh(false) // cheap no-op when fresh; refreshes location while we have foreground access
         // Cheap re-render on open so widgets reflect any setting or system change immediately.
@@ -257,6 +261,17 @@ private fun HomeScreen() {
                                 label = { Text(label) }, modifier = Modifier.testTag("interval_$m"),
                             )
                         }
+                    }
+                }
+                if (!batteryUnrestricted) {
+                    infoRow("Unrestricted battery", "Let Android refresh on schedule in Doze and on mobile data instead of holding updates back for hours") {
+                        TextButton(onClick = {
+                            runCatching {
+                                ctx.startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.fromParts("package", ctx.packageName, null)))
+                            }.onFailure {
+                                ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", ctx.packageName, null)))
+                            }
+                        }, modifier = Modifier.testTag("battery_unrestricted")) { Text("Allow") }
                     }
                 }
                 if (!hibernationExempt && widgets.isNotEmpty()) {

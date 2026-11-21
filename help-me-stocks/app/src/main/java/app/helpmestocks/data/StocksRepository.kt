@@ -27,7 +27,7 @@ object StocksRepository {
      * holds widget updates back and applies them afterwards, and on a Pixel 11 Pro one of those
      * late updates sometimes left the widget an empty frame until the next update.
      */
-    suspend fun refresh(ctx: Context, force: Boolean, reason: String = "scheduled", widgets: Boolean = true, spinner: Boolean = force): Result<Unit> = lock.withLock {
+    suspend fun refresh(ctx: Context, force: Boolean, reason: String = "scheduled", widgets: Boolean = true, spinner: Boolean = force): Result<Boolean> = lock.withLock {
         val started = System.currentTimeMillis()
         val store = Store(ctx)
         var changed = false
@@ -44,7 +44,7 @@ object StocksRepository {
             if (symbols.isEmpty()) {
                 store.setError(null)
                 AppLog.i(ctx, "Refresh", "Watchlist is empty; nothing to fetch")
-                return Result.success(Unit)
+                return Result.success(widgets && force)
             }
             val cached = store.quotesNow()
             val now = System.currentTimeMillis()
@@ -54,12 +54,12 @@ object StocksRepository {
             if (!force && due.isEmpty()) {
                 val open = symbols.mapNotNull { cached[it] }.count { Market.isOpen(it, now / 1000) }
                 AppLog.i(ctx, "Fetch", if (open == 0) "Markets closed and prices final; skipped (no network)" else "Quotes still fresh; skipped")
-                return Result.success(Unit)
+                return Result.success(false)
             }
             // Protect the free endpoint: even a manual refresh reuses quotes fetched <1 min ago.
             if (force && due.isEmpty() && now - cached.fetchedAt < 60_000L) {
                 AppLog.i(ctx, "Fetch", "Fetched under a minute ago, reusing it")
-                return Result.success(Unit)
+                return Result.success(widgets)
             }
 
             val t0 = System.currentTimeMillis()
@@ -91,7 +91,7 @@ object StocksRepository {
             }
             store.setError(error)
             AppLog.i(ctx, "Refresh", "Done in ${System.currentTimeMillis() - started} ms${if (error != null) " (with errors)" else ""}")
-            return if (error == null) Result.success(Unit) else Result.failure(Exception(error))
+            return if (error == null) Result.success(widgets && (force || changed)) else Result.failure(Exception(error))
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e // the worker logs why Android stopped it
         } catch (e: Exception) {

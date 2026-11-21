@@ -38,9 +38,9 @@ class RefreshWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ct
             // redraw it sends can be held back too, which once left the spinner up until the app
             // was opened (Pixel 11 Pro, 1.0.0).
             val r = WeatherRepository.refresh(ctx, force = force, reason = reason, spinner = false)
-            // Glance applies the redraw in its own session; stay running a moment so Android
-            // doesn't freeze the app before it lands.
-            kotlinx.coroutines.delay(SETTLE_MS)
+            // Glance applies the redraw in its own session; stay running a moment only when we
+            // actually sent a redraw so Android doesn't freeze the app before it lands.
+            if (r.getOrDefault(false)) kotlinx.coroutines.delay(SETTLE_MS)
             return when {
                 r.isSuccess -> Result.success()
                 runAttemptCount < 2 -> {

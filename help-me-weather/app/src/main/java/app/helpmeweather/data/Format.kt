@@ -79,6 +79,28 @@ class Fmt(private val ctx: Context, app: AppSettings, zone: String?) {
 fun WeatherData.upcomingHours(nowSec: Long = System.currentTimeMillis() / 1000): List<Hour> =
     hourly.dropWhile { it.epochSec + 3600 <= nowSec }
 
+/** Strictly future hourly entries after [nowSec] (for slots after "Now", never past hours). */
+fun WeatherData.futureHours(nowSec: Long = System.currentTimeMillis() / 1000): List<Hour> =
+    hourly.dropWhile { it.epochSec <= nowSec }
+
+/**
+ * Current conditions to display: uses the live [current] observation during the hour it was
+ * fetched, and shifts to the matching cached hourly forecast once the clock moves into a later
+ * hour without a network refresh (offline, Wi-Fi only, or multi-hour refresh interval).
+ */
+fun WeatherData.effectiveCurrent(nowSec: Long = System.currentTimeMillis() / 1000): Current {
+    if (fetchedAt / 3_600_000L == nowSec / 3600L) return current
+    val h = hourly.firstOrNull { nowSec in it.epochSec until (it.epochSec + 3600) } ?: return current
+    return Current(
+        tempC = h.tempC,
+        feelsLikeC = null,
+        condition = h.condition,
+        isDay = h.isDay,
+        description = null,
+        precipProb = h.precipProb,
+    )
+}
+
 /** Days from today (in the location's zone) on. */
 fun WeatherData.upcomingDays(nowSec: Long = System.currentTimeMillis() / 1000): List<Day> =
     daily.dropWhile { it.epochSec + 86_400 <= nowSec }

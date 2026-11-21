@@ -14,9 +14,9 @@ iPhone has had a clean Stocks widget for years: your watchlist, the day's chart,
 
 ## Download
 
-**[⬇ Download Help Me Stocks 1.0.6 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v1.0.6/help-me-stocks-1.0.6.apk)** · Android 12+ · 3.9 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/stocks-v1.0.6) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
+**[⬇ Download Help Me Stocks 1.0.7 (APK)](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v1.0.7/help-me-stocks-1.0.7.apk)** · Android 12+ · 3.9 MB · [release notes](https://github.com/artemulianko/help-me-widgets/releases/tag/stocks-v1.0.7) · [all releases](https://github.com/artemulianko/help-me-widgets/releases)
 
-SHA-256 `e0c323b8b40d9790c1ec888091a483d34b7bc09c016850b696276fbfa2c38dd9`
+SHA-256 `b67cd6b50f083ce6bb4adb4cf8b84fdb84df764ba9be60b0ac259913bd55551d`
 
 > **Upgrading to 1.0.5 or later from an earlier version:** 1.0.5 moved to a new signing key (registered with Google's developer verification), so Android won't install it over an older version. Uninstall the old app once, install the new one and add the widget again. Later updates install over it normally.
 

@@ -9,6 +9,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -107,6 +108,8 @@ private fun HomeScreen() {
     val lastError by store.lastError.collectAsState(null)
     // Android 12+ "Pause app activity if unused" can stop a rarely-opened app after ~3 months.
     var hibernationExempt by remember { mutableStateOf(ctx.packageManager.isAutoRevokeWhitelisted) }
+    // Doze / App Standby can defer background refreshes for hours on mobile data unless unrestricted.
+    var batteryUnrestricted by remember { mutableStateOf(ctx.getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(ctx.packageName) == true) }
     var widgets by remember { mutableStateOf<List<Pair<Int, WidgetConfig>>>(emptyList()) }
     var tick by remember { mutableIntStateOf(0) }
 
@@ -117,6 +120,7 @@ private fun HomeScreen() {
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         hibernationExempt = ctx.packageManager.isAutoRevokeWhitelisted
+        batteryUnrestricted = ctx.getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(ctx.packageName) == true
         tick++
         refresh(false) // cheap no-op when fresh or markets are closed
         // Cheap re-render on open so widgets reflect any setting or system change immediately.
@@ -208,6 +212,17 @@ private fun HomeScreen() {
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 8.dp),
                     )
+                }
+                if (!batteryUnrestricted) {
+                    infoRow("Unrestricted battery", "Let Android refresh on schedule in Doze and on mobile data instead of holding updates back for hours") {
+                        TextButton(onClick = {
+                            runCatching {
+                                ctx.startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.fromParts("package", ctx.packageName, null)))
+                            }.onFailure {
+                                ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", ctx.packageName, null)))
+                            }
+                        }, modifier = Modifier.testTag("battery_unrestricted")) { Text("Allow") }
+                    }
                 }
                 if (!hibernationExempt && widgets.isNotEmpty()) {
                     infoRow("Keep updating if unused", "Turn off “Pause app activity if unused” so Android never pauses the widget when you don’t open the app for months") {

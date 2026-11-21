@@ -18,7 +18,8 @@ class HelpMeStocksApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        AppLog.i(this, "App", "Process started (v${BuildConfig.VERSION_NAME})")
+        val unrestricted = getSystemService(android.os.PowerManager::class.java)?.isIgnoringBatteryOptimizations(packageName) == true
+        AppLog.i(this, "App", "Process started (v${BuildConfig.VERSION_NAME}, ${if (unrestricted) "battery unrestricted" else "battery optimized"})")
         logPreviousExit()
         clearStaleSpinner()
         val previous = Thread.getDefaultUncaughtExceptionHandler()

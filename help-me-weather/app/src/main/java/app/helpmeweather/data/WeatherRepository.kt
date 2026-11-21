@@ -60,10 +60,10 @@ object WeatherRepository {
      * holds widget updates back and applies them afterwards, and on a Pixel 11 Pro one of those
      * late updates sometimes left the widget an empty frame until the next update.
      */
-    suspend fun refresh(ctx: Context, force: Boolean, foreground: Boolean = false, reason: String = "scheduled", widgets: Boolean = true, spinner: Boolean = force): Result<Unit> =
+    suspend fun refresh(ctx: Context, force: Boolean, foreground: Boolean = false, reason: String = "scheduled", widgets: Boolean = true, spinner: Boolean = force): Result<Boolean> =
         lock.withLock { refreshLocked(ctx, force, foreground, reason, widgets, spinner) }
 
-    private suspend fun refreshLocked(ctx: Context, force: Boolean, foreground: Boolean, reason: String, widgets: Boolean, spinner: Boolean): Result<Unit> {
+    private suspend fun refreshLocked(ctx: Context, force: Boolean, foreground: Boolean, reason: String, widgets: Boolean, spinner: Boolean): Result<Boolean> {
         init(ctx)
         val started = System.currentTimeMillis()
         val store = Store(ctx)
@@ -74,6 +74,9 @@ object WeatherRepository {
             spinnerMs = timed { WidgetRenderer.renderAll(ctx) }
         }
         var changed = false
+        val prefs = ctx.getSharedPreferences("meta", Context.MODE_PRIVATE)
+        val currentHour = System.currentTimeMillis() / 3_600_000L
+        val hourRolled = prefs.getLong("rendered_hour", -1L) != currentHour
         try {
             var app = store.appNow()
             val configs = widgetIds(ctx).map { store.widgetNow(it) }
@@ -153,7 +156,8 @@ object WeatherRepository {
             AppLog.i(ctx, "Refresh", "Done in ${System.currentTimeMillis() - started} ms${if (error != null) " (with errors)" else ""}")
             // A failure when nothing could be fetched, so the worker's backoff and the refresh
             // button's retry kick in (it used to report success whenever a place was configured).
-            return if (error == null || changed) Result.success(Unit) else Result.failure(Exception(error))
+            val willRedraw = widgets && (force || changed || (hourRolled && places.isNotEmpty()))
+            return if (error == null || changed) Result.success(willRedraw) else Result.failure(Exception(error))
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e // the worker logs why Android stopped it
         } catch (e: Exception) {
@@ -162,11 +166,13 @@ object WeatherRepository {
             return Result.failure(e)
         } finally {
             // Must run even when cancelled (a widget tap's time budget ran out, or the job was
-            // stopped), or the spinner would outlive the refresh. Skipped when nothing changed.
+            // stopped), or the spinner would outlive the refresh. Also redraw when the clock hour
+            // rolled over since the last render so hourly slots never show past hours.
             withContext(NonCancellable) {
                 if (spinner && widgets) store.setRefreshing(false)
-                if (widgets && (force || changed)) {
+                if (widgets && (force || changed || hourRolled)) {
                     val ms = timed { WidgetRenderer.renderAll(ctx) }
+                    prefs.edit().putLong("rendered_hour", System.currentTimeMillis() / 3_600_000L).apply()
                     if (force) AppLog.i(ctx, "Refresh", "Widgets redrawn in $ms ms")
                 }
             }

@@ -6,6 +6,8 @@ import app.helpmeweather.data.Http
 import app.helpmeweather.data.OpenMeteoSource
 import app.helpmeweather.data.Place
 import app.helpmeweather.data.Provider
+import app.helpmeweather.data.effectiveCurrent
+import app.helpmeweather.data.futureHours
 import app.helpmeweather.data.upcomingHours
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -107,6 +109,30 @@ class ParsingTest {
         val up = w.upcomingHours(nowSec = base + 7300)
         assertEquals(base + 7200, up.first().epochSec) // current hour stays as "now"
         assertEquals(2, up.size)
+        // Strictly future slots after "Now": at base+7300 (e.g. 16:01) only 17:00+ remain,
+        // and at base+3500 (e.g. 13:58) 14:00 is kept even if 13:00 was already dropped.
+        assertEquals(listOf(base + 10800), w.futureHours(nowSec = base + 7300).map { it.epochSec })
+        assertEquals(listOf(base + 7200, base + 10800), w.futureHours(nowSec = base + 3600).map { it.epochSec })
+        assertEquals(listOf(base + 3600, base + 7200, base + 10800), w.futureHours(nowSec = base + 3500).map { it.epochSec })
+    }
+
+    @Test fun effectiveCurrentShiftsToCachedHourWithoutRefresh() {
+        val j = Http.json.parseToJsonElement(
+            """{"timezone":"UTC","current":{"temperature_2m":3.5,"weather_code":2,"is_day":1},
+              "hourly":{"time":[$base,${base + 3600},${base + 7200},${base + 10800}],
+                        "temperature_2m":[3.5,3.0,2.0,1.0],"weather_code":[2,3,0,0],"is_day":[1,1,0,0]},
+              "daily":{"time":[],"weather_code":[],"temperature_2m_max":[],"temperature_2m_min":[]}}""",
+        )
+        val w = OpenMeteoSource.parse(place, j).copy(fetchedAt = (base + 3480) * 1000L) // fetched at :58 of base hour
+        // Same hour as fetch → keeps live current observation.
+        val sameHour = w.effectiveCurrent(nowSec = base + 3500)
+        assertEquals(3.5, sameHour.tempC, 0.001)
+        assertTrue(sameHour.isDay)
+        // Two hours later with no refresh → shifts to the cached +7200 hourly forecast (temp, condition, night icon).
+        val later = w.effectiveCurrent(nowSec = base + 7500)
+        assertEquals(2.0, later.tempC, 0.001)
+        assertEquals(Condition.CLEAR, later.condition)
+        assertFalse(later.isDay)
     }
 
     @Test fun poisonedTimestampsAreDropped() {

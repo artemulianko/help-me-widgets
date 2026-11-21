@@ -45,10 +45,11 @@ import app.helpmeweather.data.IconTone
 import app.helpmeweather.data.ThemeMode
 import app.helpmeweather.data.WeatherData
 import app.helpmeweather.data.WidgetStyle
+import app.helpmeweather.data.effectiveCurrent
+import app.helpmeweather.data.futureHours
 import app.helpmeweather.data.googleIcon
 import app.helpmeweather.data.symbolIcon
 import app.helpmeweather.data.upcomingDays
-import app.helpmeweather.data.upcomingHours
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -99,19 +100,21 @@ private class Scope(val ctx: Context, val s: WidgetState, val c: WColors, val w:
         }
     }
 
-    @Composable
-    fun NowIcon(size: Dp) = Icon(w.current.condition, w.current.isDay, size)
+    val cur = w.effectiveCurrent()
 
-    val conditionText get() = f.condition(w.current)
-    val temp get() = f.temp(w.current.tempC)
+    @Composable
+    fun NowIcon(size: Dp) = Icon(cur.condition, cur.isDay, size)
+
+    val conditionText get() = f.condition(cur)
+    val temp get() = f.temp(cur.tempC)
     val hiLo: String?
-        get() = w.today?.let { t ->
-            ctx.getString(R.string.hi_lo, f.temp(max(t.highC, w.current.tempC)), f.temp(min(t.lowC, w.current.tempC)))
+        get() = (w.upcomingDays().firstOrNull() ?: w.today)?.let { t ->
+            ctx.getString(R.string.hi_lo, f.temp(max(t.highC, cur.tempC)), f.temp(min(t.lowC, cur.tempC)))
         }
     val subLine: String?
         get() = buildList {
             if (cfg.showHighLow) hiLo?.let(::add)
-            if (cfg.showFeelsLike) w.current.feelsLikeC?.let { add(ctx.getString(R.string.feels_like, f.temp(it))) }
+            if (cfg.showFeelsLike) cur.feelsLikeC?.let { add(ctx.getString(R.string.feels_like, f.temp(it))) }
         }.joinToString("  ").ifEmpty { null }
 }
 
@@ -280,8 +283,8 @@ private fun cells(x: Scope, mode: ForecastMode, n: Int): List<Cell> = if (mode =
         Cell(x.f.day(d.epochSec, i), d.condition, true, x.f.temp(d.highC), x.f.temp(d.lowC), d.precipProb, i == 0)
     }
 } else {
-    listOf(Cell(x.ctx.getString(R.string.now), x.w.current.condition, x.w.current.isDay, x.temp, null, x.w.current.precipProb, true)) +
-        x.w.upcomingHours().drop(1).take(n - 1).map { h ->
+    listOf(Cell(x.ctx.getString(R.string.now), x.cur.condition, x.cur.isDay, x.temp, null, x.cur.precipProb, true)) +
+        x.w.futureHours().take(n - 1).map { h ->
             Cell(x.f.hour(h.epochSec), h.condition, h.isDay, x.f.temp(h.tempC), null, h.precipProb, false)
         }
 }

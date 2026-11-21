@@ -29,7 +29,15 @@ class WeatherWidgetReceiver : GlanceAppWidgetReceiver() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         super.onUpdate(context, appWidgetManager, appWidgetIds)
-        AppLog.i(context, "Widget", "System update for ${appWidgetIds.size} widget(s) (added, restored or rebooted)")
+        // updatePeriodMillis (30 min, non-wakeup) re-renders from cache so "Now" and the hourly
+        // row shift forward even offline or between multi-hour refreshes; only log when the
+        // widget set changes so routine renders don't clutter Logs.
+        val prefs = context.getSharedPreferences("meta", Context.MODE_PRIVATE)
+        val sig = appWidgetIds.sorted().joinToString(",")
+        if (prefs.getString("widget_ids", null) != sig) {
+            prefs.edit().putString("widget_ids", sig).apply()
+            AppLog.i(context, "Widget", "System update for ${appWidgetIds.size} widget(s) (added, restored or rebooted)")
+        }
         // Make sure the periodic schedule exists. No one-time work here (Google's widget skill:
         // a finished one-time job toggles WorkManager's RescheduleReceiver, Android broadcasts
         // PACKAGE_CHANGED and the launcher calls onUpdate again).
