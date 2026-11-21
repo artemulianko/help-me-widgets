@@ -95,21 +95,22 @@ private fun HomeScreen() {
         tick++
         scope.launch(Dispatchers.Default) { WidgetRenderer.renderAll(ctx) }
     }
-    LaunchedEffect(tick) {
-        widgets = WidgetRenderer.ids(ctx).map { it to store.widgetNow(it) }
-        calendars = withContext(Dispatchers.IO) { Calendars.list(ctx) }
-    }
+    var previewState by remember { mutableStateOf(SampleData.state()) }
+    var realCount by remember { mutableIntStateOf(0) }
 
-    val previewState = remember(tick, hasCal) {
-        if (hasCal) {
-            val real = CalendarWidget.loadState(ctx, WidgetConfig(), 0)
-            if (real.events.isNotEmpty()) real else SampleData.state()
-        } else {
-            SampleData.state()
+    LaunchedEffect(tick, hasCal) {
+        widgets = WidgetRenderer.ids(ctx).map { it to store.widgetNow(it) }
+        val (cals, state, count) = withContext(Dispatchers.IO) {
+            val list = Calendars.list(ctx)
+            if (!hasCal) Triple(list, SampleData.state(), 0)
+            else {
+                val real = CalendarWidget.loadState(ctx, WidgetConfig(), 0)
+                Triple(list, if (real.events.isNotEmpty()) real else SampleData.state(), real.events.size)
+            }
         }
-    }
-    val realCount = remember(tick, hasCal) {
-        if (hasCal) Calendars.upcoming(ctx, null, 7, true).size else 0
+        calendars = cals
+        previewState = state
+        realCount = count
     }
 
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()

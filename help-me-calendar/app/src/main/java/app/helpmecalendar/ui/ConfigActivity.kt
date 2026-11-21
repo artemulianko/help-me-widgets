@@ -120,20 +120,24 @@ fun WidgetEditor(
     var cfg by remember { mutableStateOf(initial) }
     var sizeIdx by remember { mutableIntStateOf(0) }
     val ctx = LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     var hasCal by remember { mutableStateOf(Calendars.hasPermission(ctx)) }
     var calendars by remember { mutableStateOf<List<DeviceCalendar>>(emptyList()) }
+    var state by remember { mutableStateOf(SampleData.state(initial)) }
 
     val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         hasCal = granted
+        if (granted) scope.launch(Dispatchers.Default) { WidgetRenderer.renderAll(ctx) }
     }
     LaunchedEffect(hasCal) {
         calendars = if (hasCal) withContext(Dispatchers.IO) { Calendars.list(ctx) } else emptyList()
     }
-
-    val state = remember(cfg, hasCal) {
-        if (hasCal) {
-            val real = CalendarWidget.loadState(ctx, cfg, 0)
-            if (real.events.isNotEmpty() || cfg.calendarIds != null) real else SampleData.state(cfg)
+    LaunchedEffect(cfg, hasCal) {
+        state = if (hasCal) {
+            withContext(Dispatchers.IO) {
+                val real = CalendarWidget.loadState(ctx, cfg, 0)
+                if (real.events.isNotEmpty() || cfg.calendarIds != null) real else SampleData.state(cfg)
+            }
         } else {
             SampleData.state(cfg)
         }

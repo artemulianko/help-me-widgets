@@ -77,7 +77,7 @@ private class Scope(
     val allDayLabel: String = ctx.getString(R.string.all_day)
 
     fun metaLine(e: CalendarEvent, compact: Boolean = false): String {
-        val d = e.localDate(zone)
+        val d = e.effectiveDate(today, zone)
         val dayPrefix = CalendarFmt.shortDayPrefix(ctx, d, today, locale)
         val time = if (compact) CalendarFmt.eventStart(e.allDay, e.startMs, is24h, allDayLabel, zone, locale)
         else CalendarFmt.eventTimeRange(e.allDay, e.startMs, e.endMs, is24h, allDayLabel, zone, locale)
@@ -85,12 +85,10 @@ private class Scope(
         return listOfNotNull(dayPrefix.ifEmpty { null }, time, loc).joinToString(" · ")
     }
 
-    /** Up to 3 distinct calendar colors for events on [d]. */
-    fun dayColors(d: LocalDate): List<Int> {
-        val fromEvents = s.events.filter { it.localDate(zone) == d }.map { it.color }.distinct().take(3)
-        if (fromEvents.isNotEmpty()) return fromEvents
-        return if (d.month == today.month && d.year == today.year) s.monthEventColors[d.dayOfMonth].orEmpty() else emptyList()
-    }
+    /** Up to 3 distinct calendar colors for events on [d] (stable across the day for the current month). */
+    fun dayColors(d: LocalDate): List<Int> =
+        if (d.month == today.month && d.year == today.year) s.monthEventColors[d.dayOfMonth].orEmpty()
+        else s.events.filter { it.effectiveDate(today, zone) == d }.map { it.color }.distinct().take(3)
 }
 
 @Composable
@@ -134,7 +132,7 @@ private fun ColorDots(colors: List<Int>, dotSize: Dp = 4.dp, gap: Dp = 3.dp) {
     }
 }
 
-/** Fantastical / iOS-style event row: 2.5dp vertical calendar color pill + title + time. */
+/** Fantastical / iOS-style event row: 3dp vertical calendar color pill + title + time. */
 @Composable
 private fun EventRow(x: Scope, e: CalendarEvent, compact: Boolean = false, modifier: GlanceModifier = GlanceModifier) {
     val barColor = ColorProvider(Color(e.color))
@@ -142,13 +140,13 @@ private fun EventRow(x: Scope, e: CalendarEvent, compact: Boolean = false, modif
     eventTap(x.ctx, x.s, e)?.let { mod = mod.clickable(it) }
     Row(modifier = mod, verticalAlignment = Alignment.CenterVertically) {
         Box(
-            modifier = GlanceModifier.width(2.5.dp).height(if (compact) 26.dp else 32.dp)
+            modifier = GlanceModifier.width(3.dp).height(if (compact) 30.dp else 36.dp)
                 .cornerRadius(2.dp).background(barColor),
         ) {}
         Spacer(GlanceModifier.width(9.dp))
         Column(modifier = GlanceModifier.defaultWeight()) {
-            Text(e.title, style = style(x.c.text, if (compact) 13f else 14f, FontWeight.Medium), maxLines = 1)
-            Text(x.metaLine(e, compact), style = style(x.c.textVariant, if (compact) 11f else 12f), maxLines = 1)
+            Text(e.title, style = style(x.c.text, if (compact) 15f else 16f, FontWeight.Medium), maxLines = 1)
+            Text(x.metaLine(e, compact), style = style(x.c.textVariant, if (compact) 12f else 13f), maxLines = 1)
         }
     }
 }
@@ -256,7 +254,7 @@ private fun Small(x: Scope) {
         }
         Text(x.today.dayOfMonth.toString(), style = style(x.c.text, 36f, FontWeight.Normal, display = true), maxLines = 1)
         Spacer(GlanceModifier.height(8.dp))
-        val rows = floor((x.height - 32f - 66f) / 36f).toInt().coerceIn(1, 3)
+        val rows = floor((x.height - 32f - 66f) / 42f).toInt().coerceIn(1, 3)
         EventList(x, x.s.events, maxItems = rows, compact = true)
     }
 }
@@ -272,20 +270,20 @@ private fun Tall(x: Scope) {
             Text(CalendarFmt.monthName(x.today, x.locale), style = style(x.c.textVariant, 14f), maxLines = 1, modifier = GlanceModifier.padding(bottom = 8.dp))
         }
         Spacer(GlanceModifier.height(10.dp))
-        val rows = floor((x.height - 32f - 88f) / 42f).toInt().coerceIn(2, 7)
+        val rows = floor((x.height - 32f - 88f) / 48f).toInt().coerceIn(2, 6)
         EventList(x, x.s.events, maxItems = rows, compact = false)
     }
 }
 
 /**
- * 4×2 — big date anchor on the left with a clean 3-day mini strip (and calendar-color event dots
- * neatly centered under each upcoming day), paired with upcoming events on the right.
+ * 4×2 — big date anchor on the left with an optional 3-day mini strip (and calendar-color event
+ * dots neatly centered under each upcoming day), paired with top-aligned upcoming events on the right.
  */
 @Composable
 private fun Medium(x: Scope) {
     val innerW = x.width - 32f
     val leftW = (innerW * 0.34f).coerceIn(108f, 134f)
-    val rows = floor((x.height - 32f) / 40f).toInt().coerceIn(2, 4)
+    val rows = floor((x.height - 32f) / 46f).toInt().coerceIn(2, 4)
     Row(modifier = GlanceModifier.fillMaxSize().padding(PAD)) {
         Column(modifier = GlanceModifier.width(leftW.dp).fillMaxHeight()) {
             Text(CalendarFmt.weekdayFull(x.today, x.locale), style = style(x.c.accent, 11f, FontWeight.Bold), maxLines = 1)
@@ -303,7 +301,7 @@ private fun Medium(x: Scope) {
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text(
-                                CalendarFmt.weekdayShort(d, x.locale).take(2).uppercase(x.locale),
+                                d.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT_STANDALONE, x.locale).uppercase(x.locale),
                                 style = style(x.c.textVariant, 10f, FontWeight.Medium, align = TextAlign.Center),
                                 maxLines = 1,
                             )
@@ -329,8 +327,8 @@ private fun Medium(x: Scope) {
             }
         }
         Spacer(GlanceModifier.width(14.dp))
-        Column(modifier = GlanceModifier.defaultWeight().fillMaxHeight(), verticalAlignment = Alignment.CenterVertically) {
-            EventList(x, x.s.events, maxItems = rows, compact = rows >= 4 && x.height < 200f)
+        Column(modifier = GlanceModifier.defaultWeight().fillMaxHeight(), verticalAlignment = Alignment.Top) {
+            EventList(x, x.s.events, maxItems = rows, compact = rows >= 4 && x.height < 220f)
         }
     }
 }
@@ -342,10 +340,12 @@ private fun Large(x: Scope) {
     val firstDay = WeekFields.of(x.locale).firstDayOfWeek
     val weeks = CalendarFmt.monthGrid(month, firstDay)
     val headers = CalendarFmt.weekHeaders(x.locale)
-    val gridRowH = if (weeks.size >= 6) 24f else 26f
-    val gridH = 18f + weeks.size * gridRowH
-    val availForAgenda = x.height - 32f - 28f - gridH - 20f
-    val agendaRows = floor(availForAgenda / 40f).toInt().coerceIn(1, 5)
+    val sixWeeks = weeks.size >= 6
+    val gridRowH = if (sixWeeks) 22f else 25f
+    val dayBoxSize = if (sixWeeks) 18.dp else 20.dp
+    val gridH = 16f + weeks.size * gridRowH
+    val availForAgenda = x.height - 32f - 26f - gridH - 16f
+    val agendaRows = floor(availForAgenda / 44f).toInt().coerceIn(1, 5)
 
     Column(modifier = GlanceModifier.fillMaxSize().padding(PAD)) {
         // Header: Month Year left, today weekday + day right.
@@ -353,10 +353,10 @@ private fun Large(x: Scope) {
             Text(CalendarFmt.monthYear(month, x.locale), style = style(x.c.text, 16f, FontWeight.Medium, display = true), maxLines = 1, modifier = GlanceModifier.defaultWeight())
             Text("${CalendarFmt.weekdayShort(x.today, x.locale)} ${x.today.dayOfMonth}", style = style(x.c.accent, 13f, FontWeight.Bold), maxLines = 1)
         }
-        Spacer(GlanceModifier.height(8.dp))
+        Spacer(GlanceModifier.height(6.dp))
         // Mini month grid in its own Column (1 header + up to 6 week rows = max 7 children).
         Column(modifier = GlanceModifier.fillMaxWidth()) {
-            Row(modifier = GlanceModifier.fillMaxWidth().height(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(modifier = GlanceModifier.fillMaxWidth().height(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 headers.forEach { h ->
                     Text(h, style = style(x.c.textVariant, 11f, FontWeight.Medium, align = TextAlign.Center), maxLines = 1, modifier = GlanceModifier.defaultWeight())
                 }
@@ -370,8 +370,8 @@ private fun Large(x: Scope) {
                             if (day != null) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalAlignment = Alignment.CenterVertically) {
                                     Box(
-                                        modifier = if (isToday) GlanceModifier.size(20.dp).cornerRadius(10.dp).background(x.c.accent)
-                                        else GlanceModifier.size(20.dp),
+                                        modifier = if (isToday) GlanceModifier.size(dayBoxSize).cornerRadius(dayBoxSize / 2).background(x.c.accent)
+                                        else GlanceModifier.size(dayBoxSize),
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         Text(
@@ -385,7 +385,7 @@ private fun Large(x: Scope) {
                                             maxLines = 1,
                                         )
                                     }
-                                    if (colors.isNotEmpty() && !isToday) {
+                                    if (colors.isNotEmpty()) {
                                         ColorDots(colors, dotSize = 3.dp, gap = 1.5.dp)
                                     }
                                 }
@@ -395,8 +395,8 @@ private fun Large(x: Scope) {
                 }
             }
         }
-        Spacer(GlanceModifier.height(10.dp))
-        EventList(x, x.s.events, maxItems = agendaRows, compact = agendaRows >= 4)
+        Spacer(GlanceModifier.height(8.dp))
+        EventList(x, x.s.events, maxItems = agendaRows, compact = agendaRows >= 3 || sixWeeks)
     }
 }
 

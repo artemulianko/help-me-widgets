@@ -52,6 +52,7 @@ object Palettes {
     }
 }
 
+@android.annotation.SuppressLint("RestrictedApi")
 fun widgetColors(cfg: WidgetConfig): WColors {
     val theme = cfg.themeMode.ordinal               // 0 auto, 1 light, 2 dark
     val tone = cfg.bgTone.ordinal                   // 0 surface, 1 primary, 2 secondary

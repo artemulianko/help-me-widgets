@@ -40,16 +40,17 @@ class CalendarWidgetReceiver : androidx.glance.appwidget.GlanceAppWidgetReceiver
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         super.onDeleted(context, appWidgetIds)
         AppLog.i(context, "Widget", "Removed ${appWidgetIds.size} widget(s)")
-        receiverScope.launch { val store = Store(context); appWidgetIds.forEach { store.deleteWidget(it) } }
+        val appCtx = context.applicationContext
+        async { val store = Store(appCtx); appWidgetIds.forEach { store.deleteWidget(it) } }
     }
 }
 
-/** Re-renders when CalendarContract changes, the day rolls over, or time zone / locale changes. */
+/** Re-renders when CalendarContract changes, or time / time zone / locale changes. */
 class CalendarEventsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) = async {
         when (intent.action) {
             Intent.ACTION_PROVIDER_CHANGED -> AppLog.i(context, "Calendar", "Calendar updated")
-            Intent.ACTION_DATE_CHANGED -> AppLog.i(context, "Calendar", "Day changed")
+            Intent.ACTION_TIME_CHANGED -> AppLog.i(context, "System", "Clock changed")
             Intent.ACTION_TIMEZONE_CHANGED -> AppLog.i(context, "System", "Time zone changed")
             Intent.ACTION_LOCALE_CHANGED -> AppLog.i(context, "System", "Language changed")
         }

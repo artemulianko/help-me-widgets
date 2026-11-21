@@ -35,6 +35,10 @@ data class CalendarEvent(
     fun localDate(zone: ZoneId = ZoneId.systemDefault()): LocalDate =
         if (allDay) Instant.ofEpochMilli(startMs).atZone(ZoneOffset.UTC).toLocalDate()
         else Instant.ofEpochMilli(startMs).atZone(zone).toLocalDate()
+
+    /** Effective display date clamped to [today] so ongoing/multi-day events don't show past dates. */
+    fun effectiveDate(today: LocalDate, zone: ZoneId = ZoneId.systemDefault()): LocalDate =
+        maxOf(localDate(zone), today)
 }
 
 /**
@@ -101,7 +105,19 @@ object Calendars {
         val endDate = today.plusDays(daysAhead.coerceIn(1, 31).toLong())
         val queryEnd = endDate.atStartOfDay(zone).toInstant().toEpochMilli()
         val raw = queryInstances(ctx, queryStart, queryEnd, calendarIds, includeAllDay)
+        return filterUpcoming(raw, daysAhead, nowMs, zone)
+    }
 
+    /** Pure filter + sort over raw [CalendarEvent] instances (unit-testable without ContentResolver). */
+    fun filterUpcoming(
+        raw: List<CalendarEvent>,
+        daysAhead: Int,
+        nowMs: Long,
+        zone: ZoneId = ZoneId.systemDefault(),
+    ): List<CalendarEvent> {
+        val today = Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate()
+        val endDate = today.plusDays(daysAhead.coerceIn(1, 31).toLong())
+        val queryEnd = endDate.atStartOfDay(zone).toInstant().toEpochMilli()
         return raw
             .filter { e ->
                 if (e.allDay) {
@@ -113,7 +129,7 @@ object Calendars {
                 }
             }
             .sortedWith(
-                compareBy<CalendarEvent> { it.localDate(zone) }
+                compareBy<CalendarEvent> { it.effectiveDate(today, zone) }
                     .thenBy { !it.allDay }
                     .thenBy { it.startMs }
                     .thenBy { it.title },
@@ -137,7 +153,17 @@ object Calendars {
         val queryStart = firstDay.minusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         val queryEnd = nextMonth.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         val raw = queryInstances(ctx, queryStart, queryEnd, calendarIds, includeAllDay)
+        return buildMonthEventColors(raw, month, zone)
+    }
 
+    /** Pure month-dot color mapper (unit-testable without ContentResolver). */
+    fun buildMonthEventColors(
+        raw: List<CalendarEvent>,
+        month: YearMonth,
+        zone: ZoneId = ZoneId.systemDefault(),
+    ): Map<Int, List<Int>> {
+        val firstDay = month.atDay(1)
+        val nextMonth = month.plusMonths(1).atDay(1)
         val map = mutableMapOf<Int, LinkedHashSet<Int>>()
         fun add(day: Int, color: Int) {
             val set = map.getOrPut(day) { LinkedHashSet() }
