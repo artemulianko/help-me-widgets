@@ -3,7 +3,7 @@
 **The home screen widgets Pixel should have shipped with.**
 
 <p align="center">
-  <img src="docs/screenshots/home-screen.png" alt="Help Me Stocks and Help Me Weather together on a Pixel home screen, light and dark" width="900">
+  <img src="docs/screenshots/home-screen.png" alt="Help Me Clock, Weather, Calendar and Stocks together on a Pixel home screen, light and dark" width="900">
 </p>
 
 ## Why this exists
@@ -21,16 +21,24 @@ This whole repository is vibe-coded: designed, built, tested and reviewed in con
 | ☀️ | [**Help Me Weather**](help-me-weather/) | Temperature up front and a clean hourly or daily row, with Google's forecast and Google's weather icons, so it agrees with Pixel Weather and At a Glance. | **[⬇ APK 1.0.7](https://github.com/artemulianko/help-me-widgets/releases/download/weather-v1.0.7/help-me-weather-1.0.7.apk)** · 4.2 MB |
 | 🕒 | [**Help Me Clock**](help-me-clock/) | A calm digital clock in the same style as its siblings: date and time on the left, your next alarm on the right, in one 4×1 row. Or turn the time off for date + alarm. No internet permission. | **[⬇ APK 1.0.6](https://github.com/artemulianko/help-me-widgets/releases/download/clock-v1.0.6/help-me-clock-1.0.6.apk)** · 3.4 MB |
 | 📈 | [**Help Me Stocks**](help-me-stocks/) | Your watchlist with the day's chart, price and change at a glance, like the iPhone Stocks widget. Market-hours aware. | **[⬇ APK 1.0.7](https://github.com/artemulianko/help-me-widgets/releases/download/stocks-v1.0.7/help-me-stocks-1.0.7.apk)** · 3.9 MB |
-| 📅 | [**Help Me Calendar**](help-me-calendar/) | Today's date rail with calendar-color event dots, mini month grid and upcoming agenda, with per-widget calendar filtering. No internet permission. | **[⬇ APK 0.1.3](https://github.com/artemulianko/help-me-widgets/releases/download/calendar-v0.1.3/help-me-calendar-0.1.3.apk)** · 3.6 MB |
+| 📅 | [**Help Me Calendar**](help-me-calendar/) | Today's date rail with calendar-color event dots, mini month grid and upcoming agenda, with per-widget calendar filtering. No internet permission. | **[⬇ APK 0.1.4](https://github.com/artemulianko/help-me-widgets/releases/download/calendar-v0.1.4/help-me-calendar-0.1.4.apk)** · 3.6 MB |
 
 They need Android 12 or later and are tuned on a Pixel 11 Pro running Android 17. Open the APK on your phone (allow "Install unknown apps" when asked), open the app once, then long-press the home screen → **Widgets**. Each widget's README has install details, SHA-256 checksums and release notes. All versions are on the [Releases](https://github.com/artemulianko/help-me-widgets/releases) page.
+
+## Layout ideas
+
+Mix and match sizes on a clean home screen page — all four widgets share the same typography, corner radius, palettes and opacity controls.
+
+<p align="center">
+  <img src="docs/screenshots/layouts.png" alt="Three Pixel home screen layout ideas built with Help Me Widgets" width="900">
+</p>
 
 ## Philosophy
 
 - **Widget first.** These aren't apps that happen to have a widget. Each widget's app is a settings screen: a live preview, an editor and in-app logs. That's all.
 - **No ads, no tracking, no accounts.** No analytics, no crash reporting, no notifications you ever see (the permission is removed from the manifest; the refresh button's short foreground service needs one, and Android never shows it). Your settings never leave the phone and are excluded from backups.
 - **Minimal functionality.** Each widget does one job well. Every feature has to earn its place on a home screen, and when something is in doubt we remove it.
-- **Clean design.** Material 3 by the guidelines, with layouts inspired by iOS and One UI. Nothing scrolls inside a widget, every size from 1×1 to 4×4 has its own layout, and nothing should look generic or AI-generated.
+- **Clean design.** Material 3 by the guidelines, with layouts inspired by iOS and One UI. Nothing scrolls inside a widget, and every size from 1×1 to 4×4 has its own layout.
 - **Invisible in battery stats.** No alarms, services, wakelocks or listeners. A refresh is one short WorkManager job, and the widget is drawn once per update with no Glance session left running.
 - **One family.** Every widget has the same editor, the same color, theme and opacity controls, and the same logs, so they look like they belong together on one home screen.
 
@@ -47,6 +55,7 @@ help-me-widgets/
   help-me-weather/     Help Me Weather (see its README)
   help-me-stocks/      Help Me Stocks (see its README)
   help-me-clock/       Help Me Clock (see its README)
+  help-me-calendar/    Help Me Calendar (see its README)
 ```
 
 ## Build
@@ -63,6 +72,10 @@ cd help-me-stocks && ./gradlew assembleDebug testDebugUnitTest
 
 ```bash
 cd help-me-clock && ./gradlew assembleDebug testDebugUnitTest
+```
+
+```bash
+cd help-me-calendar && ./gradlew assembleDebug testDebugUnitTest
 ```
 
 On-device tests, release builds and the end-to-end flow are covered in [docs/testing.md](docs/testing.md).

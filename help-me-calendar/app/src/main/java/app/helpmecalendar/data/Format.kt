@@ -53,7 +53,9 @@ object CalendarFmt {
         locale: Locale = Locale.getDefault(),
     ): String {
         if (allDay) return allDayLabel
-        val fmt = DateTimeFormatter.ofPattern(if (is24h) "HH:mm" else "h:mm a", locale)
+        val pattern = runCatching { DateFormat.getBestDateTimePattern(locale, if (is24h) "Hm" else "hm") }
+            .getOrElse { if (is24h) "HH:mm" else "h:mm a" }
+        val fmt = DateTimeFormatter.ofPattern(pattern, locale)
         val s = fmt.format(Instant.ofEpochMilli(startMs).atZone(zone))
         if (endMs <= startMs) return s
         val e = fmt.format(Instant.ofEpochMilli(endMs).atZone(zone))
@@ -71,11 +73,19 @@ object CalendarFmt {
     ): String {
         if (allDay) return allDayLabel
         val zt = Instant.ofEpochMilli(startMs).atZone(zone)
-        val pattern = when {
-            is24h -> "HH:mm"
-            zt.minute == 0 -> "h a"
-            else -> "h:mm a"
+        val skeleton = when {
+            is24h -> "Hm"
+            zt.minute == 0 -> "h"
+            else -> "hm"
         }
+        val pattern = runCatching { DateFormat.getBestDateTimePattern(locale, skeleton) }
+            .getOrElse {
+                when {
+                    is24h -> "HH:mm"
+                    zt.minute == 0 -> "h a"
+                    else -> "h:mm a"
+                }
+            }
         return DateTimeFormatter.ofPattern(pattern, locale).format(zt)
     }
 

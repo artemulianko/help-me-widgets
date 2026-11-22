@@ -61,9 +61,13 @@ class WidgetRenderTest {
                 FileOutputStream(File(dir, "${name}_${variant}.png")).use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
             }
         }
-        // Edge states: empty events and missing permission.
-        val empty = render(WidgetState(WidgetConfig(), hasPermission = true, events = emptyList(), monthEventColors = emptyMap(), appWidgetId = 0), DpSize(387.dp, 212.dp))
-        assertTrue("empty state should draw pixels", hasNonUniformPixels(empty))
+        // Edge states: empty events (with peeking cat, light + dark) and missing permission.
+        val emptyLight = render(WidgetState(WidgetConfig(palette = Palette.BLUE, themeMode = ThemeMode.LIGHT), hasPermission = true, events = emptyList(), monthEventColors = emptyMap(), appWidgetId = 0), DpSize(387.dp, 212.dp))
+        assertTrue("empty light state should draw pixels", hasNonUniformPixels(emptyLight))
+        FileOutputStream(File(dir, "4x2_empty_light.png")).use { emptyLight.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        val emptyDark = render(WidgetState(WidgetConfig(palette = Palette.BLUE, themeMode = ThemeMode.DARK), hasPermission = true, events = emptyList(), monthEventColors = emptyMap(), appWidgetId = 0), DpSize(387.dp, 212.dp))
+        assertTrue("empty dark state should draw pixels", hasNonUniformPixels(emptyDark))
+        FileOutputStream(File(dir, "4x2_empty_dark.png")).use { emptyDark.compress(Bitmap.CompressFormat.PNG, 100, it) }
         val noPerm = render(WidgetState(WidgetConfig(), hasPermission = false, events = emptyList(), monthEventColors = emptyMap(), appWidgetId = 0), DpSize(387.dp, 212.dp))
         assertTrue("no-permission state should draw pixels", hasNonUniformPixels(noPerm))
     }

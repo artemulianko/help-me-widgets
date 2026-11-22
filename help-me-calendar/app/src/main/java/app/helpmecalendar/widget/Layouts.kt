@@ -2,8 +2,11 @@ package app.helpmecalendar.widget
 
 import android.content.Context
 import android.graphics.Typeface
+import android.util.TypedValue
+import android.widget.RemoteViews
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -14,6 +17,7 @@ import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.action.clickable
+import androidx.glance.appwidget.AndroidRemoteViews
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.layout.Alignment
@@ -60,6 +64,27 @@ private val fontScale: Float get() = android.content.res.Resources.getSystem().c
 
 private fun style(c: ColorProvider, size: Float, weight: FontWeight = FontWeight.Normal, display: Boolean = false, align: TextAlign? = null) =
     TextStyle(color = c, fontSize = (size * minOf(fontScale, 1f) / fontScale).sp, fontWeight = weight, fontFamily = if (display) Fonts.display else Fonts.text, textAlign = align)
+
+/**
+ * Live date label backed by [android.widget.TextClock] so weekday, day number and month roll over
+ * at 00:00:00 sharp without waking the app or scheduling alarms.
+ */
+@android.annotation.SuppressLint("RestrictedApi")
+@Composable
+private fun LiveDateText(x: Scope, pattern: String, size: Float, color: ColorProvider, bold: Boolean = false, modifier: GlanceModifier = GlanceModifier) {
+    val sp = size * minOf(fontScale, 1f) / fontScale
+    val rv = RemoteViews(x.ctx.packageName, if (bold) R.layout.cal_text_clock_bold else R.layout.cal_text_clock).apply {
+        setCharSequence(R.id.clock, "setFormat12Hour", pattern)
+        setCharSequence(R.id.clock, "setFormat24Hour", pattern)
+        setTextViewTextSize(R.id.clock, TypedValue.COMPLEX_UNIT_SP, sp)
+        if (color is androidx.glance.unit.ResourceColorProvider) {
+            setColorStateList(R.id.clock, "setTextColor", color.resId)
+        } else {
+            setTextColor(R.id.clock, color.getColor(x.ctx).toArgb())
+        }
+    }
+    AndroidRemoteViews(rv, modifier = modifier)
+}
 
 /** Everything a layout needs, resolved once per composition. */
 private class Scope(
@@ -179,7 +204,8 @@ private fun EmptyHint(x: Scope, text: String = x.ctx.getString(R.string.no_event
 private fun EventList(x: Scope, events: List<CalendarEvent>, maxItems: Int, compact: Boolean = false, centerEmpty: Boolean = false) {
     val shown = events.take(maxItems.coerceAtMost(8))
     if (shown.isEmpty()) {
-        EmptyHint(x, centered = centerEmpty)
+        val emptyText = if (x.width < 150f) "No events" else x.ctx.getString(R.string.no_events)
+        EmptyHint(x, text = emptyText, centered = centerEmpty)
         return
     }
     Column(modifier = GlanceModifier.fillMaxWidth()) {
@@ -202,8 +228,8 @@ private fun Tiny(x: Scope) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(CalendarFmt.weekdayShort(x.today, x.locale), style = style(x.c.accent, 11f, FontWeight.Bold), maxLines = 1)
-        Text(x.today.dayOfMonth.toString(), style = style(x.c.text, 34f, FontWeight.Medium, display = true), maxLines = 1)
+        LiveDateText(x, "EEE", 11f, x.c.accent, bold = true)
+        LiveDateText(x, "d", 34f, x.c.text)
         if (dots.isNotEmpty()) {
             Spacer(GlanceModifier.height(3.dp))
             ColorDots(dots, dotSize = 4.dp)
@@ -217,8 +243,8 @@ private fun Compact(x: Scope) {
     val dots = x.dayColors(x.today)
     Row(modifier = GlanceModifier.fillMaxSize().padding(horizontal = PAD, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = GlanceModifier.width(46.dp)) {
-            Text(CalendarFmt.weekdayShort(x.today, x.locale), style = style(x.c.accent, 11f, FontWeight.Bold), maxLines = 1)
-            Text(x.today.dayOfMonth.toString(), style = style(x.c.text, 28f, FontWeight.Medium, display = true), maxLines = 1)
+            LiveDateText(x, "EEE", 11f, x.c.accent, bold = true)
+            LiveDateText(x, "d", 28f, x.c.text)
             if (dots.isNotEmpty()) {
                 Spacer(GlanceModifier.height(2.dp))
                 ColorDots(dots, dotSize = 3.5.dp, gap = 2.dp)
@@ -239,8 +265,8 @@ private fun Strip(x: Scope) {
     Box(modifier = GlanceModifier.fillMaxSize()) {
         Row(modifier = GlanceModifier.fillMaxSize().padding(horizontal = PAD, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(horizontalAlignment = Alignment.Start, modifier = GlanceModifier.width(68.dp)) {
-                Text(CalendarFmt.weekdayShort(x.today, x.locale), style = style(x.c.accent, 11f, FontWeight.Bold), maxLines = 1)
-                Text(x.today.dayOfMonth.toString(), style = style(x.c.text, 34f, FontWeight.Normal, display = true), maxLines = 1)
+                LiveDateText(x, "EEE", 11f, x.c.accent, bold = true)
+                LiveDateText(x, "d", 34f, x.c.text)
                 if (dots.isNotEmpty()) {
                     Spacer(GlanceModifier.height(2.dp))
                     ColorDots(dots, dotSize = 4.dp)
@@ -259,8 +285,8 @@ private fun Strip(x: Scope) {
 @Composable
 private fun Narrow(x: Scope) {
     Column(modifier = GlanceModifier.fillMaxSize().padding(12.dp)) {
-        Text(CalendarFmt.weekdayShort(x.today, x.locale), style = style(x.c.accent, 11f, FontWeight.Bold), maxLines = 1)
-        Text(x.today.dayOfMonth.toString(), style = style(x.c.text, 34f, FontWeight.Normal, display = true), maxLines = 1)
+        LiveDateText(x, "EEE", 11f, x.c.accent, bold = true)
+        LiveDateText(x, "d", 34f, x.c.text)
         Spacer(GlanceModifier.height(8.dp))
         EventList(x, x.s.events, maxItems = if (x.height >= 220) 3 else 2, compact = true)
     }
@@ -272,10 +298,10 @@ private fun Small(x: Scope) {
     Box(modifier = GlanceModifier.fillMaxSize()) {
         Column(modifier = GlanceModifier.fillMaxSize().padding(PAD)) {
             Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(CalendarFmt.weekdayFull(x.today, x.locale), style = style(x.c.accent, 11f, FontWeight.Bold), maxLines = 1, modifier = GlanceModifier.defaultWeight())
+                LiveDateText(x, "EEEE", 11f, x.c.accent, bold = true, modifier = GlanceModifier.defaultWeight())
                 ColorDots(x.dayColors(x.today), dotSize = 4.dp)
             }
-            Text(x.today.dayOfMonth.toString(), style = style(x.c.text, 36f, FontWeight.Normal, display = true), maxLines = 1)
+            LiveDateText(x, "d", 36f, x.c.text)
             Spacer(GlanceModifier.height(8.dp))
             val rows = floor((x.height - 32f - 66f) / 42f).toInt().coerceIn(1, 3)
             EventList(x, x.s.events, maxItems = rows, compact = true)
@@ -289,11 +315,11 @@ private fun Small(x: Scope) {
 private fun Tall(x: Scope) {
     Box(modifier = GlanceModifier.fillMaxSize()) {
         Column(modifier = GlanceModifier.fillMaxSize().padding(PAD)) {
-            Text(CalendarFmt.weekdayFull(x.today, x.locale), style = style(x.c.accent, 12f, FontWeight.Bold), maxLines = 1)
+            LiveDateText(x, "EEEE", 12f, x.c.accent, bold = true)
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(x.today.dayOfMonth.toString(), style = style(x.c.text, 44f, FontWeight.Normal, display = true), maxLines = 1)
+                LiveDateText(x, "d", 44f, x.c.text)
                 Spacer(GlanceModifier.width(8.dp))
-                Text(CalendarFmt.monthName(x.today, x.locale), style = style(x.c.textVariant, 14f), maxLines = 1, modifier = GlanceModifier.padding(bottom = 8.dp))
+                LiveDateText(x, "MMMM", 14f, x.c.textVariant, modifier = GlanceModifier.padding(bottom = 8.dp))
             }
             Spacer(GlanceModifier.height(10.dp))
             val rows = floor((x.height - 32f - 88f) / 48f).toInt().coerceIn(2, 6)
@@ -315,9 +341,9 @@ private fun Medium(x: Scope) {
     Box(modifier = GlanceModifier.fillMaxSize()) {
         Row(modifier = GlanceModifier.fillMaxSize().padding(PAD)) {
             Column(modifier = GlanceModifier.width(leftW.dp).fillMaxHeight()) {
-                Text(CalendarFmt.weekdayFull(x.today, x.locale), style = style(x.c.accent, 11f, FontWeight.Bold), maxLines = 1)
-                Text(x.today.dayOfMonth.toString(), style = style(x.c.text, 48f, FontWeight.Normal, display = true), maxLines = 1)
-                Text(CalendarFmt.monthName(x.today, x.locale), style = style(x.c.textVariant, 13f), maxLines = 1)
+                LiveDateText(x, "EEEE", 11f, x.c.accent, bold = true)
+                LiveDateText(x, "d", 48f, x.c.text)
+                LiveDateText(x, "MMMM", 13f, x.c.textVariant)
                 if (x.cfg.showUpcomingDays) {
                     Spacer(GlanceModifier.defaultWeight())
                     // Clean 3-day upcoming mini strip with centered calendar-color dots underneath.
@@ -375,15 +401,15 @@ private fun Large(x: Scope) {
     val gridRowH = if (sixWeeks) 22f else 25f
     val dayBoxSize = if (sixWeeks) 18.dp else 20.dp
     val gridH = 16f + weeks.size * gridRowH
-    val availForAgenda = x.height - 32f - 26f - gridH - 16f
-    val agendaRows = floor(availForAgenda / 44f).toInt().coerceIn(1, 5)
+    val availForAgenda = x.height - 32f - 26f - gridH - 14f
+    val agendaRows = floor(availForAgenda / 38f).toInt().coerceIn(1, 5)
 
     Box(modifier = GlanceModifier.fillMaxSize()) {
         Column(modifier = GlanceModifier.fillMaxSize().padding(PAD)) {
-            // Header: Month Year left, today weekday + day right.
+            // Header: Month Year left, live today weekday + day right.
             Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(CalendarFmt.monthYear(month, x.locale), style = style(x.c.text, 16f, FontWeight.Medium, display = true), maxLines = 1, modifier = GlanceModifier.defaultWeight())
-                Text("${CalendarFmt.weekdayShort(x.today, x.locale)} ${x.today.dayOfMonth}", style = style(x.c.accent, 13f, FontWeight.Bold), maxLines = 1)
+                LiveDateText(x, "EEE d", 13f, x.c.accent, bold = true)
             }
             Spacer(GlanceModifier.height(6.dp))
             // Mini month grid in its own Column (1 header + up to 6 week rows = max 7 children).

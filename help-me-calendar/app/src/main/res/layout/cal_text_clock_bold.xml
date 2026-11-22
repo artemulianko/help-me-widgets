@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Live uppercase bold weekday label. TextClock rolls over at 00:00:00 without waking the app. -->
+<TextClock xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/clock"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:fontFamily="google-sans-flex"
+    android:textAllCaps="true"
+    android:textFontWeight="700"
+    android:includeFontPadding="false"
+    android:maxLines="1"
+    android:singleLine="true" />
