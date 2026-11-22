@@ -72,18 +72,21 @@ private fun style(c: ColorProvider, size: Float, weight: FontWeight = FontWeight
 @android.annotation.SuppressLint("RestrictedApi")
 @Composable
 private fun LiveDateText(x: Scope, pattern: String, size: Float, color: ColorProvider, bold: Boolean = false, modifier: GlanceModifier = GlanceModifier) {
-    val sp = size * minOf(fontScale, 1f) / fontScale
+    val dp = size * minOf(fontScale, 1f)
     val rv = RemoteViews(x.ctx.packageName, if (bold) R.layout.cal_text_clock_bold else R.layout.cal_text_clock).apply {
         setCharSequence(R.id.clock, "setFormat12Hour", pattern)
         setCharSequence(R.id.clock, "setFormat24Hour", pattern)
-        setTextViewTextSize(R.id.clock, TypedValue.COMPLEX_UNIT_SP, sp)
+        setTextViewTextSize(R.id.clock, TypedValue.COMPLEX_UNIT_DIP, dp)
         if (color is androidx.glance.unit.ResourceColorProvider) {
             setColorStateList(R.id.clock, "setTextColor", color.resId)
         } else {
             setTextColor(R.id.clock, color.getColor(x.ctx).toArgb())
         }
     }
-    AndroidRemoteViews(rv, modifier = modifier)
+    // Glance requires an explicit height box around AndroidRemoteViews or it can collapse to 0dp.
+    Box(modifier = modifier.height((dp * 1.2f).dp), contentAlignment = Alignment.CenterStart) {
+        AndroidRemoteViews(rv)
+    }
 }
 
 /** Everything a layout needs, resolved once per composition. */
