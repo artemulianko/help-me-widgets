@@ -4,7 +4,7 @@ A calm, Material You calendar widget for Android — built for Pixel, styled aft
 
 ## It's just a widget
 
-No feeds, no accounts, no ads, no notifications, and **no internet permission**. The app reads only your phone's local calendar store (`CalendarContract`) and exists solely to preview, add, and customize your widgets.
+No feeds, no accounts, no ads, no notifications, and **nothing is ever sent to the internet** (the app has no `INTERNET` permission and reads only your phone's local `CalendarContract`). It exists solely to preview, add, and customize your widgets.
 
 ## Download
 
