@@ -162,7 +162,12 @@ private fun PeekingCat(x: Scope, width: Dp = 112.dp, height: Dp = 62.dp) {
 @Composable
 private fun EmptyHint(x: Scope, text: String = x.ctx.getString(R.string.no_events), centered: Boolean = false) {
     if (centered) {
-        Box(modifier = GlanceModifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        // Upper optical third (~1/3 down, aligned with the hero date on the left) so it breathes
+        // cleanly above the peeking cat in the bottom-right corner.
+        Box(
+            modifier = GlanceModifier.fillMaxSize().padding(bottom = if (x.cfg.showEmptyCat) 56.dp else 16.dp),
+            contentAlignment = Alignment.Center,
+        ) {
             Text(text, style = style(x.c.textVariant, 14f, FontWeight.Medium, align = TextAlign.Center), maxLines = 2)
         }
     } else {
