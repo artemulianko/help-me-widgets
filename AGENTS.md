@@ -52,7 +52,7 @@ The projects share **no code and no Gradle build**. They share these rules, the 
 - No network or heavy work on the main thread. No alarms, no foreground services (except `RefreshService`), no wakelocks, no registered location listeners.
 
 **Security hardening (from the Codex security reviews, keep all of it)**
-- Widget and system receivers are `exported="false"`. Only the system delivers widget broadcasts.
+- Widget and system receivers are `exported="false"`. Only the system delivers widget broadcasts. Single exception: Calendar's `CalendarChangedReceiver` (`PROVIDER_CHANGED` for `com.android.calendar`) is exported, because the calendar provider is another app and a private receiver never gets its broadcast (owner-approved 2026-11-26). It reads nothing from the intent and only triggers a coalesced, throttled redraw. A WorkManager content-URI job was tried instead and loses the change whenever it cold-starts the app (WorkManager reschedules on start-up and cancels the triggering run).
 - `allowBackup="false"` plus data-extraction rules that exclude everything.
 - `ConfigActivity` rejects widget ids that don't belong to this app (`RESULT_CANCELED`, nothing created).
 - HTTP reads are bounded (2 MB body, 16 KB error body) with a 30 s deadline. No Retrofit or OkHttp, just `HttpURLConnection` with `Http.kt` helpers.

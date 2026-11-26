@@ -4,12 +4,18 @@ import android.appwidget.AppWidgetManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.SystemClock
+import android.provider.CalendarContract
 import app.helpmecalendar.data.AppLog
 import app.helpmecalendar.data.Store
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicBoolean
 
 private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -45,11 +51,41 @@ class CalendarWidgetReceiver : androidx.glance.appwidget.GlanceAppWidgetReceiver
     }
 }
 
-/** Re-renders when CalendarContract changes, or time / time zone / locale changes. */
+/**
+ * Redraws when the calendar provider reports a change. Exported, because the provider is another
+ * app; a non-exported receiver never got the broadcast (0.1.0-0.1.5). Nothing in the intent is
+ * used, and redraws are coalesced (one running, at most one queued) and spaced at least
+ * [MIN_GAP_MS] apart, so anyone else sending it can cause at most an occasional redraw.
+ */
+class CalendarChangedReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action != Intent.ACTION_PROVIDER_CHANGED || intent.data?.authority != CalendarContract.AUTHORITY) return
+        if (!queued.compareAndSet(false, true)) return // a queued redraw will read the latest data
+        async {
+            lock.withLock {
+                queued.set(false)
+                val wait = lastMs + MIN_GAP_MS - SystemClock.elapsedRealtime()
+                if (wait > 0) delay(wait)
+                lastMs = SystemClock.elapsedRealtime()
+                if (WidgetRenderer.ids(context).isEmpty()) return@withLock
+                AppLog.i(context, "Calendar", "Calendar updated")
+                WidgetRenderer.renderAll(context)
+            }
+        }
+    }
+
+    private companion object {
+        const val MIN_GAP_MS = 2_000L
+        val queued = AtomicBoolean(false)
+        val lock = Mutex()
+        @Volatile var lastMs = -MIN_GAP_MS
+    }
+}
+
+/** Re-renders when the time, time zone or locale changes. */
 class CalendarEventsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) = async {
         when (intent.action) {
-            Intent.ACTION_PROVIDER_CHANGED -> AppLog.i(context, "Calendar", "Calendar updated")
             Intent.ACTION_TIME_CHANGED -> AppLog.i(context, "System", "Clock changed")
             Intent.ACTION_TIMEZONE_CHANGED -> AppLog.i(context, "System", "Time zone changed")
             Intent.ACTION_LOCALE_CHANGED -> AppLog.i(context, "System", "Language changed")

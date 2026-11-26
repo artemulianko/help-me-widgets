@@ -10,7 +10,7 @@ paths:
 # Build and manifest rules
 
 - No new permissions without the owner's approval. `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE` and `SystemForegroundService` stay removed with `tools:node="remove"`.
-- Receivers stay `exported="false"`. `ConfigActivity` is the only exported activity besides the launcher activity, and it validates the widget id.
+- Receivers stay `exported="false"` (sole exception: Calendar's `CalendarChangedReceiver`, see AGENTS.md §3). `ConfigActivity` is the only exported activity besides the launcher activity, and it validates the widget id.
 - `allowBackup="false"` and data-extraction rules that exclude everything.
 - Keep the R8 keep rule for `ActionCallback` constructors. Any new class Glance or WorkManager instantiates by reflection needs the same treatment, verified on a **release** build.
 - Never embed API keys in `BuildConfig`, `resValue` or resources. Keys come from the user at runtime.

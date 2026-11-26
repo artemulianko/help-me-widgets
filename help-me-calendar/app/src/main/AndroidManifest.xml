@@ -81,14 +81,24 @@
             </intent-filter>
         </receiver>
 
-        <!-- Calendar provider edits, date rollover, time zone and language changes. -->
+        <!-- Calendar edits (added, changed, deleted, synced). The calendar provider is another app,
+             so this receiver must be exported or the broadcast never arrives (0.1.0-0.1.5 showed
+             "No upcoming events" for hours). Owner-approved 2026-11-26. It reads nothing from the
+             intent, only redraws, coalesced and throttled, so a spoofed broadcast can do no more
+             than cause a redraw. -->
         <receiver
-            android:name=".widget.CalendarEventsReceiver"
-            android:exported="false">
+            android:name=".widget.CalendarChangedReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.PROVIDER_CHANGED" />
                 <data android:scheme="content" android:host="com.android.calendar" />
             </intent-filter>
+        </receiver>
+
+        <!-- Clock, time zone and language changes (system broadcasts). -->
+        <receiver
+            android:name=".widget.CalendarEventsReceiver"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
